@@ -1,0 +1,228 @@
+/*
+ * @NOTE: Prepend a `~` to css file paths that are in your node_modules
+ *        See https://github.com/webpack-contrib/sass-loader#imports
+ */
+@import '~antd/dist/antd.css';
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  position: relative;
+  color: white;
+  height: 100vh;
+  background: #c4bfbf;
+  font-family: sans-serif;
+  overflow-y: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  width: 100%;
+  height: 100%;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.App {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+
+  padding: 10px 0;
+}
+
+.wordItem {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  /* overflow: hidden; */
+}
+
+.wordItemPlay {
+  opacity: 0;
+  cursor: pointer;
+  position: absolute;
+  top: -25px;
+  left: -25px;
+  width: calc(100% + 50px);
+  height: calc(100% + 50px);
+  background: blue;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 500ms;
+}
+
+.wordItemPlay:hover {
+  opacity: 0.6;
+}
+
+.left {
+  width: 0;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+
+  transition: width 250ms;
+  max-width: 380px;
+}
+
+.middle {
+  width: 50%;
+  min-width: 512px;
+  /* background: yellow; */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-grow: 1;
+  padding: 10px 20px;
+  justify-content: space-between;
+  overflow: auto;
+}
+.video-box-wrapper {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-box {
+  position: relative;
+  outline: none;
+  text-align: center;
+  border-radius: 5px;
+  background: black;
+  overflow: hidden;
+}
+
+.video-box.full-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0px;
+}
+
+.video-box > canvas {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.video-box.full-screen > canvas {
+  border-radius: 0;
+  width: 100%;
+}
+
+.video-box.full-screen > div {
+  border-radius: 0;
+}
+
+.video-box > div {
+  overflow: hidden;
+}
+
+.del-btn {
+  cursor: pointer;
+}
+
+.del-btn:hover {
+  color: red;
+}
+
+.right {
+  width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+
+  transition: width 250ms;
+}
+
+.word-card {
+  background-color: rgb(255, 255, 255);
+  width: 100%;
+  transition: background-color 0.5s;
+}
+
+.word-card.shine {
+  background-color: rgb(169, 118, 236);
+}
+
+.play-board {
+  margin: 10px 0;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.play-board > div {
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+  color: #000;
+  height: 40px;
+}
+.controller-name {
+  line-height: 40px;
+  padding-left: 14px;
+}
+.controller-widget {
+  line-height: 40px;
+  padding-right: 14px;
+  text-align: center;
+}
+
+.showLeft,
+.showRight {
+  width: 25%;
+  min-width: 340px;
+  padding: 20px;
+}
+
+.initApp {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}

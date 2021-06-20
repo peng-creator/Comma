@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Comma</title>
+    <style>
+      #back-circles {
+        height: 100%;
+        width: 100%;
+        position: relative;
+      }
+
+      #back-circles > div {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        position: absolute;
+      }
+    </style>
+    <script>
+      (() => {
+        if (process?.env?.NODE_ENV !== 'development') {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = './dist/style.css';
+          // HACK: Writing the script path should be done with webpack
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+      })();
+    </script>
+
+    <script src="https://vjs.zencdn.net/7.10.2/video.min.js"></script>
+    <script>
+      window.HELP_IMPROVE_VIDEOJS = false;
+    </script>
+  </head>
+  <body>
+    <div id="back-circles">
+      <div
+        style="
+          top: 0;
+          left: 0;
+          background-color: rgba(185, 196, 23, 0.5);
+          box-shadow: 0 0 600px 600px rgba(185, 196, 23, 0.5);
+        "
+      ></div>
+      <div
+        style="
+          top: 2%;
+          right: 3%;
+          background-color: rgba(230, 86, 86, 0.37);
+          box-shadow: 0 0 500px 500px rgba(230, 86, 86, 0.37);
+        "
+      ></div>
+      <div
+        style="
+          bottom: 0;
+          right: 5%;
+          background-color: rgba(141, 92, 231, 0.37);
+          box-shadow: 0 0 200px 200px rgba(141, 92, 231, 0.37);
+        "
+      ></div>
+      <div
+        style="
+          width: 10px;
+          height: 10px;
+          top: 40%;
+          left: 30%;
+          background-color: rgba(236, 92, 205, 0.3);
+          box-shadow: 0 0 600px 600px rgba(236, 92, 205, 0.3);
+        "
+      ></div>
+      <div
+        style="
+          width: 10px;
+          height: 10px;
+          bottom: -10%;
+          left: 45%;
+          background-color: rgba(20, 30, 170, 0.37);
+          box-shadow: 0 0 400px 400px rgba(20, 30, 170, 0.37);
+        "
+      ></div>
+    </div>
+    <div id="root"></div>
+    <script>
+      const scripts = [];
+
+      if (process.env.NODE_ENV === 'development') {
+        // Dynamically insert the DLL script in development env in the
+        // renderer process
+        scripts.push('../.erb/dll/renderer.dev.dll.js');
+
+        // Dynamically insert the bundled app script in the renderer process
+        const port = process.env.PORT || 1212;
+        scripts.push(`http://localhost:${port}/dist/renderer.dev.js`);
+      } else {
+        scripts.push('./dist/renderer.prod.js');
+      }
+
+      if (scripts.length) {
+        document.write(
+          scripts
+            .map((script) => `<script defer src="${script}"><\/script>`)
+            .join('')
+        );
+      }
+    </script>
+  </body>
+</html>
