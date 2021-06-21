@@ -72,7 +72,9 @@ class MyPlayer {
     this.isDirty = false;
     this.domReady = false;
     this.playSpeed = 1;
-    this.container.innerHTML = '';
+    if (this.container !== null) {
+      this.container.innerHTML = '';
+    }
   }
 
   togglePause() {

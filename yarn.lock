@@ -2914,11 +2914,6 @@ assign-symbols@^1.0.0:
   resolved "https://registry.npm.taobao.org/assign-symbols/download/assign-symbols-1.0.0.tgz#59667f41fadd4f20ccbc2bb96b8d4f7f78ec0367"
   integrity sha1-WWZ/QfrdTyDMvCu5a41Pf3jsA2c=
 
-assjs@^0.0.11:
-  version "0.0.11"
-  resolved "https://registry.nlark.com/assjs/download/assjs-0.0.11.tgz#6baff190a29ce10a2bc22f23b707e10d14e71629"
-  integrity sha1-a6/xkKKc4Qorwi8jtwfhDRTnFik=
-
 ast-metadata-inferer@^0.4.0:
   version "0.4.0"
   resolved "https://registry.npm.taobao.org/ast-metadata-inferer/download/ast-metadata-inferer-0.4.0.tgz#6be85ceeffcf267bd79db8e1ae731da44880b45f"
@@ -13702,11 +13697,6 @@ verror@1.10.0, verror@^1.10.0:
     safe-json-parse "4.0.0"
     videojs-font "3.2.0"
     videojs-vtt.js "^0.15.3"
-
-videojs-canvas-plugin@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.nlark.com/videojs-canvas-plugin/download/videojs-canvas-plugin-1.0.8.tgz#084e8072fea24aa29c131a03c4a9aed01bb570d6"
-  integrity sha1-CE6Acv6iSqKcExoDxKmu0Bu1cNY=
 
 videojs-font@3.2.0:
   version "3.2.0"
