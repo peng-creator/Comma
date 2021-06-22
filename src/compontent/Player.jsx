@@ -2,6 +2,8 @@ import { Empty } from 'antd';
 import React, { useEffect } from 'react';
 import { myPlayer } from '../player/player';
 
+let count = 0;
+
 export const PlayerComponent = ({
   isFullScreen,
   togglePause,
@@ -55,10 +57,23 @@ export const PlayerComponent = ({
             togglePause();
           }
         }}
-        onClick={togglePause}
-        onDoubleClick={() => {
-          setIsFullScreen(!isFullScreen);
+        onClick={() => {
+          count += 1;
+          setTimeout(() => {
+            if (count === 1) {
+              console.log('single click: ', count);
+              togglePause();
+            } else if (count === 2) {
+              console.log('setTimeout onDoubleClick: ', count);
+              setIsFullScreen(!isFullScreen);
+            }
+            count = 0;
+          }, 210);
         }}
+        // onClick={togglePause}
+        // onDoubleClick={() => {
+        //   setIsFullScreen(!isFullScreen);
+        // }}
       />
     </div>
   );
