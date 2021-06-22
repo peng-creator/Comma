@@ -45,9 +45,14 @@ class MyPlayer {
     this.domReady = false;
     this.playSpeed = 1;
     this.playButton = null;
+    this.searchWord = () => {};
     window.addEventListener('resize', () => {
       this.resizeSubtitle();
     });
+  }
+
+  onSearchWord(callback) {
+    this.searchWord = callback;
   }
 
   resizeSubtitle() {
@@ -206,6 +211,13 @@ class MyPlayer {
               const words = subtitle.split(' ');
               words.forEach((w) => {
                 const span = document.createElement('span');
+                span.style.cursor = 'pointer';
+                span.addEventListener('click', () => {
+                  let word = w.replace(/[^a-zA-Z'-]+/g, '');
+                  if (word.length > 0) {
+                    this.searchWord(word);
+                  }
+                });
                 span.innerHTML = `${w} `;
                 // const isTransform = false;
                 const emphasized =

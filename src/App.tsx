@@ -59,6 +59,16 @@ export default function App() {
     localStorage.getItem('hideGuide') || false
   );
 
+  const [searchWord, setSearchWord] = useState<string | null>(null);
+
+  useEffect(() => {
+    myPlayer.onSearchWord((w: string) => setSearchWord(w));
+  }, []);
+
+  useEffect(() => {
+    setSearchWord(wordPlaying);
+  }, [wordPlaying]);
+
   useEffect(() => {
     if (fileIndexToPlay !== -1 && fileIndexToPlay !== filesToPlay.length) {
       message.info(
@@ -597,7 +607,7 @@ export default function App() {
         />
       </div>
       <div className={['right', (showRight && 'showRight') || ''].join(' ')}>
-        <WordExplainComponent wordPlaying={wordPlaying} />
+        <WordExplainComponent searchWord={searchWord} />
       </div>
     </div>
   );

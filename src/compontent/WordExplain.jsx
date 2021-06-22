@@ -1,8 +1,8 @@
 import { Empty } from 'antd';
 import React from 'react';
 
-export const WordExplainComponent = ({ wordPlaying }) => {
-  if (wordPlaying === null || wordPlaying === undefined) {
+export const WordExplainComponent = ({ searchWord }) => {
+  if (searchWord === null || searchWord === undefined) {
     return (
       <div
         style={{
@@ -23,7 +23,7 @@ export const WordExplainComponent = ({ wordPlaying }) => {
       <iframe
         title="youdao"
         style={{ width: '100%', height: '100%' }}
-        src={`http://mobile.youdao.com/dict?le=eng&q=${wordPlaying}`}
+        src={`http://mobile.youdao.com/dict?le=eng&q=${searchWord}`}
       />
     </div>
   );
