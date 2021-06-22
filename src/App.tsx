@@ -449,7 +449,7 @@ export default function App() {
         >
           <Steps current={current} style={{ marginBottom: '10px' }}>
             <Step title="增加一个单词本" />
-            <Step title="导入单词" description="选取一个包含单词的TXT文件" />
+            <Step title="导入单词" />
             <Step
               title="导入视频"
               description="请将视频文件与同名ASS字幕文件放置在同一目录下，并选取该目录进行导入"
