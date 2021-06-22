@@ -57,7 +57,7 @@ export const PlayerComponent = ({
             togglePause();
           }
         }}
-        onClick={() => {
+        onClick={(e) => {
           count += 1;
           setTimeout(() => {
             if (count === 1) {
@@ -66,14 +66,11 @@ export const PlayerComponent = ({
             } else if (count === 2) {
               console.log('setTimeout onDoubleClick: ', count);
               setIsFullScreen(!isFullScreen);
+              myPlayer.resizeSubtitle();
             }
             count = 0;
           }, 210);
         }}
-        // onClick={togglePause}
-        // onDoubleClick={() => {
-        //   setIsFullScreen(!isFullScreen);
-        // }}
       />
     </div>
   );

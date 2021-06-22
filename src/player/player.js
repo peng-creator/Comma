@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import jschardet from 'jschardet';
 import { assContentToCutProject } from '../util/index.mjs';
+import playSVG from '../../assets/play.svg';
 
 export class SubtitleStrategy {
   constructor({
@@ -42,6 +43,7 @@ class MyPlayer {
     this.isDirty = false;
     this.domReady = false;
     this.playSpeed = 1;
+    this.playButton = null;
     window.addEventListener('resize', () => {
       this.resizeSubtitle();
     });
@@ -65,18 +67,42 @@ class MyPlayer {
       return;
     }
     this.domReady = true;
-    this.canvas = document.createElement('canvas');
-    this.container.appendChild(this.canvas);
+    let canvasInContainer = this.container.querySelector('canvas');
+    if (canvasInContainer === null) {
+      canvasInContainer = document.createElement('canvas');
+      this.container.appendChild(canvasInContainer);
+    }
+    this.canvas = canvasInContainer;
 
-    this.subtitleContainer = document.createElement('div');
-    this.subtitleContainer.style.width = '100%';
-    this.subtitleContainer.style.position = 'absolute';
-    this.subtitleContainer.style.bottom = '0';
-    this.subtitleContainer.style.left = '0';
-    this.subtitleContainer.style.textAlign = 'center';
-    this.subtitleContainer.style.boxSizing = 'content-box';
+    const subtitleContainerClassName = 'subtitle-container';
+    let subtitleContainer = this.container.querySelector(
+      `.${subtitleContainerClassName}`
+    );
+    if (subtitleContainer === null || subtitleContainer === undefined) {
+      subtitleContainer = document.createElement('div');
+      subtitleContainer.className = subtitleContainerClassName;
+      subtitleContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('click');
+      });
+      subtitleContainer.addEventListener('mouseup', (e) => {
+        e.stopPropagation();
+        console.log('mouseup');
+      });
+      this.container.appendChild(subtitleContainer);
+    }
+    this.subtitleContainer = subtitleContainer;
 
-    this.container.appendChild(this.subtitleContainer);
+    const playButtonClassName = 'play-button';
+    let playButton = this.container.querySelector(`.${playButtonClassName}`);
+    if (playButton === null) {
+      playButton = document.createElement('img');
+      playButton.src = playSVG;
+      playButton.className = playButtonClassName;
+      playButton.style.display = 'none';
+      this.container.appendChild(playButton);
+    }
+    this.playButton = playButton;
   }
 
   clear() {
@@ -93,11 +119,32 @@ class MyPlayer {
   }
 
   togglePause() {
-    if (this.player && this.player.paused()) {
-      this.player.play();
-    } else {
-      this.player.pause();
+    if (this.player === null) {
+      return;
     }
+    if (this.player.paused()) {
+      this.unpause();
+    } else {
+      this.pause();
+    }
+  }
+
+  unpause() {
+    if (this.player === null) {
+      return;
+    }
+    this.player.play();
+    if (this.playButton !== null) {
+      this.playButton.style.display = 'none';
+    }
+  }
+
+  pause() {
+    if (this.player === null) {
+      return;
+    }
+    this.player.pause();
+    this.playButton.style.display = 'block';
   }
 
   initPlayer() {
@@ -132,48 +179,50 @@ class MyPlayer {
         canvasContext.strokeText(this.word, 30, 80);
         canvasContext.fillText(this.word, 30, 80);
         const currentTime = player.currentTime() * 1000;
-        this.subtitleContainer.innerHTML = '';
         const ass =
           this.ass.find(({ start, end }) => {
             // console.log("start, end, currentTime:", start, end, currentTime);
             return start <= currentTime && end >= currentTime;
           }) || prevAss;
-        prevAss = ass;
-        if (ass !== undefined) {
-          const subtitles = ass.subtitles || [];
-          for (let i = 0; i < subtitles.length; i += 1) {
-            // console.log('i ===>', i);
-            const subtitle = subtitles[i];
-            const subtitleStrategy =
-              this.subtitleStrategies[i] || this.defaultSubtitleStrategy;
-            const p = document.createElement('p');
-            if (subtitleStrategy.show === false) {
-              continue;
-            }
-            p.style.color = subtitleStrategy.color;
-            p.style.font = subtitleStrategy.font;
-            p.style.background = subtitleStrategy.background;
-            p.style.margin = '0';
-            const words = subtitle.split(' ');
-            words.forEach((w) => {
-              const span = document.createElement('span');
-              span.innerHTML = `${w} `;
-              // const isTransform = false;
-              const emphasized =
-                w
-                  .split(/[^a-zA-Z'-]+/)
-                  .map((s) => s.toLowerCase())
-                  .flat()
-                  .filter((s) => s.length > 1)
-                  .filter((w) => w === this.word).length > 0;
-              if (emphasized) {
-                span.style.color = subtitleStrategy.emphasisColor;
-                span.style.font = subtitleStrategy.emphasisFont;
-                span.style.margin = '0 5px';
+        if (ass !== prevAss) {
+          this.subtitleContainer.innerHTML = '';
+          prevAss = ass;
+          if (ass !== undefined) {
+            const subtitles = ass.subtitles || [];
+            for (let i = 0; i < subtitles.length; i += 1) {
+              // console.log('i ===>', i);
+              const subtitle = subtitles[i];
+              const subtitleStrategy =
+                this.subtitleStrategies[i] || this.defaultSubtitleStrategy;
+              const p = document.createElement('p');
+              if (subtitleStrategy.show === false) {
+                continue;
               }
-              p.appendChild(span);
-            });
-            this.subtitleContainer.appendChild(p);
+              p.style.color = subtitleStrategy.color;
+              p.style.font = subtitleStrategy.font;
+              p.style.background = subtitleStrategy.background;
+              p.style.margin = '0';
+              const words = subtitle.split(' ');
+              words.forEach((w) => {
+                const span = document.createElement('span');
+                span.innerHTML = `${w} `;
+                // const isTransform = false;
+                const emphasized =
+                  w
+                    .split(/[^a-zA-Z'-]+/)
+                    .map((s) => s.toLowerCase())
+                    .flat()
+                    .filter((s) => s.length > 1)
+                    .filter((w) => w === this.word).length > 0;
+                if (emphasized) {
+                  span.style.color = subtitleStrategy.emphasisColor;
+                  span.style.font = subtitleStrategy.emphasisFont;
+                  span.style.margin = '0 5px';
+                }
+                p.appendChild(span);
+              });
+              this.subtitleContainer.appendChild(p);
+            }
           }
         }
         renderToCanvas();

@@ -227,3 +227,23 @@ body {
   align-items: center;
   height: 100%;
 }
+
+.subtitle-container {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  text-align: center;
+  box-sizing: content-box;
+  user-select: none;
+}
+
+.play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 10%;
+  user-select: none;
+}
