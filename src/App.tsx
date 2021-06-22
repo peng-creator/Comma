@@ -394,32 +394,35 @@ export default function App() {
               }}
             />
           )}
-          {current === 2 && progress !== null && (
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'row-reverse',
-              }}
-            >
-              {progress && progress.percent && (
-                <Button
-                  onClick={() => {
-                    setHideGuide(true);
-                    selectWordsFromWordbook(wordbook);
-                    localStorage.setItem('hideGuide', 'true');
-                  }}
-                >
-                  直接进入
-                </Button>
-              )}
-              <div style={{ width: '400px' }}>
-                <VideoImportProgressComponent
-                  style={{ color: '#1f1d1d' }}
-                  progress={progress}
-                  onCancel={cancelVideoImport}
-                />
+          {current === 2 && (
+            <div>
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'row-reverse',
+                }}
+              >
+                {progress !== null && (
+                  <div style={{ width: '400px' }}>
+                    <VideoImportProgressComponent
+                      style={{ color: '#1f1d1d' }}
+                      progress={progress}
+                      onCancel={cancelVideoImport}
+                    />
+                  </div>
+                )}
               </div>
+              <Button
+                style={{ width: '100%', marginTop: '10px' }}
+                onClick={() => {
+                  setHideGuide(true);
+                  selectWordsFromWordbook(wordbook);
+                  localStorage.setItem('hideGuide', 'true');
+                }}
+              >
+                直接进入
+              </Button>
             </div>
           )}
         </div>
