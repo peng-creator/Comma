@@ -42,6 +42,21 @@ class MyPlayer {
     this.isDirty = false;
     this.domReady = false;
     this.playSpeed = 1;
+    window.addEventListener('resize', () => {
+      this.resizeSubtitle();
+    });
+  }
+
+  resizeSubtitle() {
+    if (
+      this.subtitleContainer === null ||
+      this.subtitleContainer === undefined
+    ) {
+      return;
+    }
+    const subtitleContainerWidth = this.subtitleContainer.clientWidth;
+    const subtitleContainerFontSize = subtitleContainerWidth * 0.03;
+    this.subtitleContainer.style.fontSize = `${subtitleContainerFontSize}px`;
   }
 
   attach() {
@@ -107,10 +122,7 @@ class MyPlayer {
         if (videoWidth === 0 || videoHeight === 0) {
           return renderToCanvas();
         }
-        const subtitleContainerWidth = this.subtitleContainer.clientWidth;
-        const subtitleContainerFontSize = subtitleContainerWidth * 0.03;
-        this.subtitleContainer.style.fontSize = `${subtitleContainerFontSize}px`;
-
+        this.resizeSubtitle();
         canvasEl.width = videoWidth;
         canvasEl.height = videoHeight;
         canvasContext.drawImage(videoEl, 0, 0, videoWidth, videoHeight);
