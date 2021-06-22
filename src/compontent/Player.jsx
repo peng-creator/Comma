@@ -13,6 +13,7 @@ export const PlayerComponent = ({
   onPlayNextFile,
   onPlayPrevFile,
   onPlayNextWord,
+  onPlayPrevWord,
   onWordLevelChange,
 }) => {
   useEffect(() => {
@@ -55,6 +56,10 @@ export const PlayerComponent = ({
           case 'l':
           case 'ArrowRight':
             onPlayNextFile();
+            break;
+          case 'k':
+          case 'ArrowUp':
+            onPlayPrevWord();
             break;
           case 'j':
           case 'ArrowDown':

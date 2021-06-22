@@ -31,6 +31,9 @@ const s1 = new SubtitleStrategy({
   background: 'rgb(169, 118, 236)',
 });
 
+let playWordHistoryStackLeft: string[] = [];
+let playWordHistoryStackRight: string[] = [];
+
 export default function App() {
   const [wordbooks, setWordbooks] = useState<Wordbook[] | null>(null);
   const [wordbook, setWordbook] = useState<Wordbook | null>(null);
@@ -149,11 +152,47 @@ export default function App() {
     selectWordsFromWordbook(wordbook);
   }, [wordbook]);
 
+  const playPrevWord = () => {
+    if (wordsToPlay === null || wordsToPlay.length === 0) {
+      return;
+    }
+    while (playWordHistoryStackLeft.length > 0) {
+      let prevWord = playWordHistoryStackLeft.pop();
+      if (prevWord !== null && prevWord !== undefined) {
+        const index = wordsToPlay.indexOf(prevWord);
+        if (index !== -1) {
+          playWordHistoryStackRight.push(prevWord);
+          if (index === playIndex) {
+            continue;
+          }
+          setPlayIndex(index);
+          return;
+        }
+      }
+    }
+    message.warn('没有更多播放历史');
+  };
+
   const computeAndSetPlayIndex = async () => {
     console.log('切换单词计算中。。。');
     if (wordsToPlay === null || wordsToPlay.length === 0) {
       return;
     }
+    while (playWordHistoryStackRight.length > 0) {
+      let prevWord = playWordHistoryStackRight.pop();
+      if (prevWord !== null && prevWord !== undefined) {
+        const index = wordsToPlay.indexOf(prevWord);
+        if (index !== -1) {
+          playWordHistoryStackLeft.push(prevWord);
+          if (index === playIndex) {
+            continue;
+          }
+          setPlayIndex(index);
+          return;
+        }
+      }
+    }
+
     const weightList = wordsToPlay.map((word) => {
       const { playTimes, level } = (studyRecord !== null &&
         studyRecord[word]) || {
@@ -171,10 +210,6 @@ export default function App() {
       const weight = (Math.pow(70 / 69, level) + 1) / (playTimes + 1);
       return weight;
     });
-    const sortedWordsByWeight = weightList
-      .map((weight, index) => ({ weight, word: wordsToPlay[index] }))
-      .sort((a, b) => a.weight - b.weight);
-    console.log('sortedWordsByWeight:', sortedWordsByWeight);
     const picked = pick(weightList);
     console.log(
       '切换单词计算结束，当前正在播放 index:',
@@ -192,6 +227,11 @@ export default function App() {
         setFileIndexToPlay(0);
       }
       return;
+    }
+    let pickWord = wordsToPlay[picked];
+    playWordHistoryStackLeft.push(pickWord);
+    if (playWordHistoryStackLeft.length > 10) {
+      playWordHistoryStackLeft.shift();
     }
     setPlayIndex(picked);
   };
@@ -526,6 +566,7 @@ export default function App() {
           onPlayNextFile={onPlayNextFile}
           onPlayPrevFile={onPlayPrevFile}
           onPlayNextWord={computeAndSetPlayIndex}
+          onPlayPrevWord={playPrevWord}
           onWordLevelChange={onWordLevelChange}
         />
         <ControlPanelComponent
@@ -537,6 +578,7 @@ export default function App() {
           wordPlayingLevel={wordPlayingLevel}
           setWordPlayingLevel={setWordPlayingLevel}
           setPlaySpeed={setPlaySpeed}
+          onPlayPrevWord={playPrevWord}
           computeAndSetPlayIndex={computeAndSetPlayIndex}
           setFileIndexToPlay={setFileIndexToPlay}
           fileIndexToPlay={fileIndexToPlay}

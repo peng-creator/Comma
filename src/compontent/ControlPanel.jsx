@@ -31,6 +31,7 @@ export const ControlPanelComponent = ({
   onWordLevelChange,
   onPlayNextFile,
   onPlayPrevFile,
+  onPlayPrevWord,
 }) => {
   const [showMore, setShowMore] = useState(false);
   if (filesToPlay === null) {
@@ -194,8 +195,17 @@ export const ControlPanelComponent = ({
           </Row>
         </>
       )}
+
       <Row>
-        <Col span={8}>
+        <Col span={12}>
+          <Button
+            style={{ width: '100%', height: '100%' }}
+            onClick={onPlayPrevWord}
+          >
+            上个单词
+          </Button>
+        </Col>
+        <Col span={12}>
           <Button
             style={{ width: '100%', height: '100%' }}
             onClick={onPlayPrevFile}
@@ -203,15 +213,17 @@ export const ControlPanelComponent = ({
             上一视频
           </Button>
         </Col>
-        <Col span={8}>
+      </Row>
+      <Row>
+        <Col span={12}>
           <Button
             style={{ width: '100%', height: '100%' }}
             onClick={computeAndSetPlayIndex}
           >
-            切换单词
+            下个单词
           </Button>
         </Col>
-        <Col span={8}>
+        <Col span={12}>
           <Button
             style={{ width: '100%', height: '100%' }}
             onClick={onPlayNextFile}
