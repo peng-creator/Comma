@@ -206,6 +206,7 @@ body {
 .controller-name {
   line-height: 40px;
   padding-left: 14px;
+  user-select: none;
 }
 .controller-widget {
   line-height: 40px;
