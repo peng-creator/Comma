@@ -21,6 +21,7 @@ import {
   delWordbook,
   Wordbook,
 } from '../database/wordbook.mjs';
+import { myPlayer } from '../player/player';
 
 const { Option } = Select;
 const { Search } = Input;
@@ -211,6 +212,7 @@ export const WordListComponent = ({
                 if (nextWordToPlayIndex === -1) {
                   message.error('这个词没有视频可以播放！');
                 } else {
+                  myPlayer.unpause();
                   setPlayIndex(nextWordToPlayIndex);
                 }
               }}
