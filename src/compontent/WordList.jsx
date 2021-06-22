@@ -174,7 +174,7 @@ export const WordListComponent = ({
                 if (index === -1) {
                   return;
                 }
-                console.log('index of word playing:', index);
+                console.log('index of word delete:', index);
                 const nextWords = [
                   ...words.slice(0, index),
                   ...words.slice(index + 1),
@@ -186,7 +186,10 @@ export const WordListComponent = ({
                 setWordbook(nextWordbook);
                 Object.setPrototypeOf(nextWordbook, Wordbook.prototype);
                 saveWordbook(wordbook);
-                setPlayIndex(-1);
+                if (word === wordPlaying) {
+                  console.log('删除正在播放的单词！');
+                  setPlayIndex(-1);
+                }
               }}
               okText="确认"
               cancelText="取消"

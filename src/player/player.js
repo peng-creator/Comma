@@ -45,10 +45,33 @@ class MyPlayer {
     this.domReady = false;
     this.playSpeed = 1;
     this.playButton = null;
+    this.rightClickWord = '';
+    this.addWordsToWordBook = () => {};
+    this.menu = document.createElement('div');
+    this.menu.className = 'word-right-click-menu';
+    this.menu.rightClickItem = document.createElement('div');
+    this.menu.rightClickItem.innerHTML = '加入单词本';
+    this.menu.rightClickItem.className = 'word-right-click-menu-item';
+    this.menu.appendChild(this.menu.rightClickItem);
+    this.menu.rightClickItem.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.menu.style.height = 0;
+      if (this.rightClickWord.length > 0) {
+        console.log('addWordsToWordBook:', this.rightClickWord);
+        this.addWordsToWordBook(this.rightClickWord.toLowerCase());
+      }
+    });
+    window.addEventListener('click', () => {
+      this.menu.style.height = 0;
+    });
     this.searchWord = () => {};
     window.addEventListener('resize', () => {
       this.resizeSubtitle();
     });
+  }
+
+  onAddWordsToWordBook(callback) {
+    this.addWordsToWordBook = callback;
   }
 
   onSearchWord(callback) {
@@ -73,6 +96,9 @@ class MyPlayer {
       return;
     }
     this.domReady = true;
+
+    this.container.appendChild(this.menu);
+
     let canvasInContainer = this.container.querySelector('canvas');
     if (canvasInContainer === null) {
       canvasInContainer = document.createElement('canvas');
@@ -212,11 +238,18 @@ class MyPlayer {
               words.forEach((w) => {
                 const span = document.createElement('span');
                 span.style.cursor = 'pointer';
+                let word = w.replace(/[^a-zA-Z'-]+/g, '');
                 span.addEventListener('click', () => {
-                  let word = w.replace(/[^a-zA-Z'-]+/g, '');
                   if (word.length > 0) {
                     this.searchWord(word);
                   }
+                });
+                span.addEventListener('contextmenu', (e) => {
+                  e.preventDefault();
+                  this.menu.style.left = `${e.target.offsetLeft}px`;
+                  this.menu.style.bottom = '22px';
+                  this.menu.style.height = 'auto';
+                  this.rightClickWord = word;
                 });
                 span.innerHTML = `${w} `;
                 // const isTransform = false;
@@ -283,6 +316,7 @@ class MyPlayer {
       .play()
       .then(() => {
         if (!this.shouldPlay) {
+          this.resizeSubtitle();
           this.pause();
         }
       })

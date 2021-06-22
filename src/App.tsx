@@ -13,7 +13,7 @@ import {
 } from './database/wordbook.mjs';
 import { myPlayer, SubtitleStrategy } from './player/player';
 import { pick, Semaphore } from './util/index.mjs';
-import { getWordVideos } from './database/db.mjs';
+import { getWordVideos, saveWordbook } from './database/db.mjs';
 import { AddWordbookComponent } from './compontent/AddWordbook';
 import { WordsImportComponent } from './compontent/WordImport';
 import { VideoImportComponent } from './compontent/VideoImport';
@@ -60,10 +60,6 @@ export default function App() {
   );
 
   const [searchWord, setSearchWord] = useState<string | null>(null);
-
-  useEffect(() => {
-    myPlayer.onSearchWord((w: string) => setSearchWord(w));
-  }, []);
 
   useEffect(() => {
     setSearchWord(wordPlaying);
@@ -152,6 +148,18 @@ export default function App() {
       wordLoadSemaphore.release(10);
     }
   };
+
+  useEffect(() => {
+    myPlayer.onSearchWord((w: string) => setSearchWord(w));
+    myPlayer.onAddWordsToWordBook((w: string) => {
+      if (wordbook === null) {
+        return;
+      }
+      wordbook.add(w);
+      saveWordbook(wordbook);
+      selectWordsFromWordbook(wordbook);
+    });
+  }, [wordbook]);
 
   useEffect(() => {
     // 从单词本中筛选出有视频剪辑的单词列表
@@ -411,6 +419,8 @@ export default function App() {
   const onPlayPrevFile = () => {
     if (fileIndexToPlay - 1 >= 0) {
       setFileIndexToPlay(fileIndexToPlay - 1);
+    } else {
+      message.warn('已经是第一个视频了');
     }
   };
   const cancelVideoImport = () => {

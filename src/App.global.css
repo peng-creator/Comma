@@ -121,7 +121,6 @@ body {
   text-align: center;
   border-radius: 5px;
   background: black;
-  overflow: hidden;
 }
 
 .video-box.full-screen {
@@ -246,4 +245,25 @@ body {
 
   width: 10%;
   user-select: none;
+}
+
+.word-right-click-menu {
+  /* width: 0; */
+  height: 0px;
+  position: absolute; /*自定义菜单相对与body元素进行定位*/
+  z-index: 2;
+  color: #000;
+}
+.word-right-click-menu-item {
+  width: 130px;
+  height: 25px;
+  line-height: 25px;
+  padding: 0 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.word-right-click-menu-item:hover {
+  background: rgb(169, 118, 236);
+  color: #fff;
 }
