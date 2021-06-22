@@ -18,6 +18,7 @@ export class SubtitleStrategy {
     this.emphasisFont = emphasisFont;
     this.show = show;
     this.background = background;
+    this.shouldPlay = false;
   }
 }
 
@@ -133,10 +134,9 @@ class MyPlayer {
     if (this.player === null) {
       return;
     }
-    this.player.play();
-    if (this.playButton !== null) {
-      this.playButton.style.display = 'none';
-    }
+    this.shouldPlay = true;
+    this._play();
+    this.hidePlayButton();
   }
 
   pause() {
@@ -145,6 +145,7 @@ class MyPlayer {
     }
     this.player.pause();
     this.playButton.style.display = 'block';
+    this.shouldPlay = false;
   }
 
   initPlayer() {
@@ -259,14 +260,32 @@ class MyPlayer {
     }
   }
 
+  hidePlayButton() {
+    if (this.playButton !== undefined && this.playButton !== null) {
+      this.playButton.style.display = 'none';
+    }
+  }
+
+  _play() {
+    this.player
+      .play()
+      .then(() => {
+        if (!this.shouldPlay) {
+          this.pause();
+        }
+      })
+      .catch((e) => {
+        console.log('play error:', e);
+      });
+  }
+
   play(subtitleStrategies) {
     const { player } = this;
     this.subtitleStrategies = subtitleStrategies;
+    this.hidePlayButton();
     return new Promise((resolve, reject) => {
       player.ready(() => {
-        player.play().catch((e) => {
-          console.log('play error:', e);
-        });
+        this._play();
         player.playbackRate(this.playSpeed);
       });
       player.on('ended', () => resolve());

@@ -4,6 +4,7 @@ import './App.global.css';
 import { Button, message, Steps } from 'antd';
 import { promises as fs } from 'fs';
 import { SyncOutlined } from '@ant-design/icons';
+import { Subscription } from 'rxjs';
 import {
   loadWordbooksFromDB,
   Wordbook,
@@ -49,11 +50,20 @@ export default function App() {
 
   const [showRight, setShowRight] = useState(true);
   const [showLeft, setShowLeft] = useState(true);
-  const [videoImportSubscription, setVideoImportSubscription] = useState(null);
+  const [videoImportSubscription, setVideoImportSubscription] =
+    useState<Subscription | null>(null);
   const [hideGuide, setHideGuide] = useState(
     localStorage.getItem('hideGuide') || false
   );
 
+  useEffect(() => {
+    if (fileIndexToPlay !== -1 && fileIndexToPlay !== filesToPlay.length) {
+      message.info(
+        `播放进度：${fileIndexToPlay + 1} / ${filesToPlay.length}`,
+        0.5
+      );
+    }
+  }, [fileIndexToPlay, filesToPlay]);
   useEffect(() => {
     getStudyRecord()
       .then((studyRecord) => {
@@ -321,12 +331,44 @@ export default function App() {
   const togglePause = async () => {
     myPlayer.togglePause();
   };
-
-  const cancelVideoImport = () => {
-    if (videoImportSubscription !== null) {
-      videoImportSubscription.unsubscribe();
-      setVideoImportSubscription(null);
+  type LevelChanger = (prevLevel: number) => number;
+  const onWordLevelChange = (level: number | LevelChanger) => {
+    if (wordPlaying === null) {
+      return;
     }
+    if (typeof level === 'function') {
+      level = level(wordPlayingLevel);
+    }
+    if (level >= 1000) {
+      level = 1000;
+    }
+    if (level <= 0) {
+      level = 0;
+    }
+    setWordPlayingLevel(level);
+    message.info(`生疏度： ${level}`, 0.25);
+    const wordRecord = studyRecord[wordPlaying] || {
+      playTimes: 0,
+      level: 500,
+    };
+    wordRecord.level = level;
+    studyRecord[wordPlaying] = wordRecord;
+    saveStudyRecord(studyRecord);
+  };
+  const onPlayNextFile = () => {
+    setFileIndexToPlay(fileIndexToPlay + 1);
+  };
+  const onPlayPrevFile = () => {
+    if (fileIndexToPlay - 1 >= 0) {
+      setFileIndexToPlay(fileIndexToPlay - 1);
+    }
+  };
+  const cancelVideoImport = () => {
+    if (videoImportSubscription === null) {
+      return;
+    }
+    videoImportSubscription.unsubscribe();
+    setVideoImportSubscription(null);
   };
   if (wordbooks === null && wordbook === null) {
     return null;
@@ -481,8 +523,14 @@ export default function App() {
           isFullScreen={isFullScreen}
           togglePause={togglePause}
           setIsFullScreen={setIsFullScreen}
+          onPlayNextFile={onPlayNextFile}
+          onPlayPrevFile={onPlayPrevFile}
+          onPlayNextWord={computeAndSetPlayIndex}
+          onWordLevelChange={onWordLevelChange}
         />
         <ControlPanelComponent
+          onPlayNextFile={onPlayNextFile}
+          onPlayPrevFile={onPlayPrevFile}
           filesToPlay={filesToPlay}
           wordPlaying={wordPlaying}
           studyRecord={studyRecord}
@@ -503,6 +551,7 @@ export default function App() {
           onToggleLeft={() => {
             setShowLeft(!showLeft);
           }}
+          onWordLevelChange={onWordLevelChange}
         />
       </div>
       <div className={['right', (showRight && 'showRight') || ''].join(' ')}>

@@ -10,6 +10,10 @@ export const PlayerComponent = ({
   setIsFullScreen,
   wordsToPlay,
   wordbook,
+  onPlayNextFile,
+  onPlayPrevFile,
+  onPlayNextWord,
+  onWordLevelChange,
 }) => {
   useEffect(() => {
     if (wordsToPlay && wordsToPlay.length === 0) {
@@ -27,8 +31,58 @@ export const PlayerComponent = ({
   if (wordbook === null) {
     showEmpty = true;
   }
+  const fullScreen = () => {
+    setIsFullScreen(true);
+    myPlayer.resizeSubtitle();
+  };
+  const exitFullScreen = () => {
+    setIsFullScreen(false);
+    myPlayer.resizeSubtitle();
+  };
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+    myPlayer.resizeSubtitle();
+  };
   return (
-    <div className="video-box-wrapper" style={{ position: 'relative' }}>
+    <div
+      tabIndex={0}
+      onKeyDown={(e) => {
+        console.log('e.key:', e.key);
+        switch (e.key) {
+          case ' ':
+            togglePause();
+            break;
+          case 'l':
+          case 'ArrowRight':
+            onPlayNextFile();
+            break;
+          case 'j':
+          case 'ArrowDown':
+            onPlayNextWord();
+            break;
+          case 'h':
+          case 'ArrowLeft':
+            onPlayPrevFile();
+            break;
+          case 'a':
+            onWordLevelChange((level) => level - 100);
+            break;
+          case 'g':
+            onWordLevelChange((level) => level + 100);
+            break;
+          case 'f':
+            toggleFullScreen();
+            break;
+          case 'Escape':
+            exitFullScreen();
+            break;
+          default:
+            break;
+        }
+      }}
+      className="video-box-wrapper"
+      style={{ position: 'relative' }}
+    >
       {showEmpty && (
         <div
           style={{
@@ -48,25 +102,18 @@ export const PlayerComponent = ({
           <Empty description="暂无可播放资源，请导入更多单词或视频" />
         </div>
       )}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
       <div
-        tabIndex={0}
         className={`video-box ${isFullScreen ? 'full-screen' : ''}`}
         id="video-box"
-        onKeyDown={(e) => {
-          if (e.key === ' ') {
-            togglePause();
-          }
-        }}
-        onClick={(e) => {
+        onClick={() => {
           count += 1;
           setTimeout(() => {
             if (count === 1) {
               console.log('single click: ', count);
               togglePause();
             } else if (count === 2) {
-              console.log('setTimeout onDoubleClick: ', count);
-              setIsFullScreen(!isFullScreen);
-              myPlayer.resizeSubtitle();
+              toggleFullScreen();
             }
             count = 0;
           }, 210);

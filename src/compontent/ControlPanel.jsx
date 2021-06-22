@@ -28,6 +28,9 @@ export const ControlPanelComponent = ({
   setWordbooks,
   wordbooks,
   setPlayIndex,
+  onWordLevelChange,
+  onPlayNextFile,
+  onPlayPrevFile,
 }) => {
   const [showMore, setShowMore] = useState(false);
   if (filesToPlay === null) {
@@ -79,21 +82,10 @@ export const ControlPanelComponent = ({
         </Col>
         <Col className="controller-widget" span={18}>
           <MySlider
-            debounce={false}
+            debounceTime={100}
             max={1000}
             value={wordPlayingLevel}
-            onChange={(v) => {
-              // wordPlaying && (wordPlaying.level = v);
-
-              setWordPlayingLevel(v);
-              const wordRecord = studyRecord[wordPlaying] || {
-                playTimes: 0,
-                level: 500,
-              };
-              wordRecord.level = v;
-              studyRecord[wordPlaying] = wordRecord;
-              saveStudyRecord(studyRecord);
-            }}
+            onChange={onWordLevelChange}
           />
         </Col>
       </Row>
@@ -203,7 +195,15 @@ export const ControlPanelComponent = ({
         </>
       )}
       <Row>
-        <Col span={12}>
+        <Col span={8}>
+          <Button
+            style={{ width: '100%', height: '100%' }}
+            onClick={onPlayPrevFile}
+          >
+            上一视频
+          </Button>
+        </Col>
+        <Col span={8}>
           <Button
             style={{ width: '100%', height: '100%' }}
             onClick={computeAndSetPlayIndex}
@@ -211,12 +211,10 @@ export const ControlPanelComponent = ({
             切换单词
           </Button>
         </Col>
-        <Col span={12}>
+        <Col span={8}>
           <Button
             style={{ width: '100%', height: '100%' }}
-            onClick={() => {
-              setFileIndexToPlay(fileIndexToPlay + 1);
-            }}
+            onClick={onPlayNextFile}
           >
             下一视频
           </Button>
