@@ -10,10 +10,11 @@ import {
   Wordbook,
   getStudyRecord,
   saveStudyRecord,
+  saveWordbook,
 } from './database/wordbook.mjs';
 import { myPlayer, SubtitleStrategy } from './player/player';
 import { pick, Semaphore } from './util/index.mjs';
-import { getWordVideos, saveWordbook } from './database/db.mjs';
+import { getWordVideos } from './database/db.mjs';
 import { AddWordbookComponent } from './compontent/AddWordbook';
 import { WordsImportComponent } from './compontent/WordImport';
 import { VideoImportComponent } from './compontent/VideoImport';
