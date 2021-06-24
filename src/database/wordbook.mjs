@@ -1,12 +1,12 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { mkdir } from '../util/index.mjs';
+import { mkdir, sleep } from '../util/index.mjs';
 import { getJSONDB, dbRoot } from './db.mjs';
 
 export class Wordbook {
-  constructor({ name }) {
+  constructor({ name, words }) {
     this.name = name;
-    this.words = [];
+    this.words = words || [];
   }
 
   add(word) {
@@ -26,6 +26,10 @@ export class Wordbook {
       ...this.words.slice(0, index),
       ...this.words.slice(index + 1),
     ];
+  }
+
+  copy() {
+    return new Wordbook({ name: this.name, words: this.words });
   }
 }
 
@@ -71,15 +75,19 @@ export async function saveWordbook(wordbook) {
 
 const initPromise = mkdir(dbRoot);
 
+const init = async () => {
+  await Promise.race([initPromise, sleep(1000)]);
+};
+
 export async function getStudyRecord() {
-  await initPromise;
+  await init();
   const filePath = path.join(dbRoot, 'study_record.json');
   const db = await getJSONDB(filePath);
   return db.data;
 }
 
 export async function saveStudyRecord(studyRecord) {
-  await initPromise;
+  await init();
   const filePath = path.join(dbRoot, 'study_record.json');
   const db = await getJSONDB(filePath);
   db.data = studyRecord;

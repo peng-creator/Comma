@@ -42,11 +42,13 @@ export const dbRoot = join(app.getPath('userData'), 'comma_data');
 const wordToVideosHomeDir = join(dbRoot, 'word_videos');
 const videoToWordsHomeDir = join(dbRoot, 'video_words');
 
-const init = () => {
-  return Promise.all([mkdir(wordToVideosHomeDir), mkdir(videoToWordsHomeDir)]);
+const initPromise = Promise.all([
+  mkdir(wordToVideosHomeDir),
+  mkdir(videoToWordsHomeDir),
+]);
+const init = async () => {
+  await Promise.race([initPromise, sleep(1000)]);
 };
-
-const initPromise = init();
 const formatWord = (word) =>
   word
     .split("'")
@@ -57,15 +59,19 @@ const formatWord = (word) =>
     .join('-');
 
 export const getWordVideos = async (word) => {
-  await initPromise;
+  console.log('await init promise');
+  await init();
+  console.log('init promise resolved');
   const localWord = formatWord(word);
   const file = join(wordToVideosHomeDir, `${localWord}.json`);
+  console.log('await getJSONDB, file: ', file);
   const db = await getJSONDB(file);
+  console.log('await getJSONDB resolved');
   return db.data;
 };
 
 export const addWordVideos = async (word, videos) => {
-  await initPromise;
+  await init();
   const localWord = formatWord(word);
   if (localWord.length < 1) {
     return;
@@ -81,7 +87,7 @@ export const addWordVideos = async (word, videos) => {
 };
 
 export const setWordVideos = async (word, videos) => {
-  await initPromise;
+  await init();
   const localWord = formatWord(word);
   if (localWord.length < 1) {
     return;
@@ -93,14 +99,14 @@ export const setWordVideos = async (word, videos) => {
 };
 
 export const getVideoWords = async (videoFilePath) => {
-  await initPromise;
+  await init();
   const file = join(videoToWordsHomeDir, `${md5(videoFilePath)}.json`);
   const db = await getJSONDB(file);
   return db.data;
 };
 
 export const addVideoWords = async (videoFilePath, words) => {
-  await initPromise;
+  await init();
   const file = join(videoToWordsHomeDir, `${md5(videoFilePath)}.json`);
   const db = await getJSONDB(file);
   let prevData = db.data;
@@ -120,7 +126,7 @@ export const addVideoWords = async (videoFilePath, words) => {
 };
 
 export const removeVideo = async (videoFilePath) => {
-  await initPromise;
+  await init();
   const file = join(videoToWordsHomeDir, `${md5(videoFilePath)}.json`);
   const db = await getJSONDB(file);
   const { words } = db.data;

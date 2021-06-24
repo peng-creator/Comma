@@ -16,6 +16,7 @@ import {
   mergeWith,
   combineLatestWith,
 } from 'rxjs/operators';
+import { message } from 'antd';
 import { cutVideo, getWordsWithTimeSection } from './ffmpeg.mjs';
 import { mkdir, millisecondsToTime } from '../util/index.mjs';
 import {
@@ -61,7 +62,6 @@ export function processVideos$(
     (async () => {
       const files = [...sourcePathList];
       for (const file of files) {
-        console.log('file of files:', file, files);
         const stat = await fs.stat(file);
         if (stat.isDirectory()) {
           const innerFiles = await fs.readdir(file);
@@ -78,6 +78,7 @@ export function processVideos$(
         if (isHidingFile || notMkvNorMp4) {
           continue;
         }
+        console.log('next video file:', file);
         observer.next(file);
       }
       observer.complete();
@@ -179,12 +180,24 @@ export function processVideos$(
                   cutInfoList: cutInfoList.filter((info) => info !== undefined),
                 };
               })
+              .catch((e) => {
+                console.log('getWordsWithTimeSection error:', e);
+                message.warn(e.message);
+                return { file, cutInfoList: [] };
+              })
           );
+        }),
+        catchError((e) => {
+          console.log('mergeMap getWordsWithTimeSection error:', e);
         })
         // shareReplay()
       );
     }),
+    catchError((e) => {
+      console.log('mergeMap videoFile$ error:', e);
+    }),
     mergeMap(({ file, cutInfoList }) => {
+      console.log('file and cutInfoList, file:', file);
       return from(
         Promise.all(
           cutInfoList.map((cutInfo) => {

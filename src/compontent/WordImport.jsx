@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Button, Input, message, Modal } from 'antd';
-import { ipcRenderer } from 'electron';
-import { promises as fs } from 'fs';
 import { saveWordbook } from '../database/wordbook.mjs';
 
-export const WordsImportComponent = ({ wordbook, selectWordsFromWordbook }) => {
+export const WordsImportComponent = ({ wordbook, onNewWordsImported }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [content, setContent] = useState('');
 
@@ -27,7 +25,7 @@ export const WordsImportComponent = ({ wordbook, selectWordsFromWordbook }) => {
     console.log('wordbook:', wordbook);
     saveWordbook(wordbook);
     console.log('select words from wordbook');
-    selectWordsFromWordbook(wordbook);
+    onNewWordsImported(wordbook, wordsToAdd);
     closeModal();
   };
 

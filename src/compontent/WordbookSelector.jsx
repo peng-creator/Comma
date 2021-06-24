@@ -3,7 +3,12 @@ import { Select } from 'antd';
 
 const { Option } = Select;
 
-export const WordbookSelector = ({ wordbook, wordbooks, setWordbook }) => {
+export const WordbookSelector = ({
+  wordbook,
+  wordbooks,
+  onWordbookSelected,
+}) => {
+  console.log('render WordbookSelector, wordbooks:', wordbooks);
   return (
     <Select
       showSearch
@@ -14,7 +19,7 @@ export const WordbookSelector = ({ wordbook, wordbooks, setWordbook }) => {
         console.log(`selected:`, value);
         const wb = wordbooks.find((wordbook) => wordbook.name === value);
         if (wb !== undefined) {
-          setWordbook(wb);
+          onWordbookSelected(wb);
         }
       }}
     >

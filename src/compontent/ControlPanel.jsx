@@ -3,40 +3,31 @@ import React, { useState } from 'react';
 import { promises as fs } from 'fs';
 import { DeleteOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { removeVideo } from '../database/db.mjs';
-import {
-  saveStudyRecord,
-  saveWordbook,
-  delWordbook,
-  Wordbook,
-} from '../database/wordbook.mjs';
+import { delWordbook } from '../database/wordbook.mjs';
 import { MySlider } from './MySlider';
 
 export const ControlPanelComponent = ({
   filesToPlay,
-  wordPlaying,
   wordPlayingLevel,
-  setWordPlayingLevel,
   setPlaySpeed,
-  computeAndSetPlayIndex,
-  setFileIndexToPlay,
+  onChangeFileIndexToPlay,
   fileIndexToPlay,
-  studyRecord,
   onToggleRight,
   onToggleLeft,
   wordbook,
-  setWordbook,
-  setWordbooks,
-  wordbooks,
-  setPlayIndex,
   onWordLevelChange,
   onPlayNextFile,
   onPlayPrevFile,
   onPlayPrevWord,
+  onPlayNextWord,
+  onDeleteWordbook,
+  onDeleteVideoFile,
 }) => {
   const [showMore, setShowMore] = useState(false);
   if (filesToPlay === null) {
     return null;
   }
+  console.log('render 播放进度, fileIndexToPlay:', fileIndexToPlay);
   return (
     <div className="play-board">
       <Row>
@@ -45,12 +36,13 @@ export const ControlPanelComponent = ({
         </Col>
         <Col className="controller-widget" span={18}>
           <MySlider
+            marks
             debounceTime={100}
             min={0}
             max={filesToPlay.length}
             value={fileIndexToPlay}
             onChange={async (v) => {
-              setFileIndexToPlay(v);
+              onChangeFileIndexToPlay(v);
             }}
             defaultValue={0}
           />
@@ -62,6 +54,7 @@ export const ControlPanelComponent = ({
         </Col>
         <Col className="controller-widget" span={18}>
           <MySlider
+            marks
             debounceTime={500}
             min={0.5}
             max={2}
@@ -74,11 +67,7 @@ export const ControlPanelComponent = ({
         </Col>
       </Row>
       <Row>
-        <Col
-          className="controller-name"
-          style={{ lineHeight: '32px' }}
-          span={6}
-        >
+        <Col className="controller-name" span={6}>
           生疏程度
         </Col>
         <Col className="controller-widget" span={18}>
@@ -140,21 +129,16 @@ export const ControlPanelComponent = ({
                 placement="top"
                 title="确认删除当前剪辑？"
                 onConfirm={() => {
-                  console.log('fileIndexToPlay:', fileIndexToPlay);
-                  console.log('filesToPlay:', filesToPlay);
                   const currentFile = filesToPlay[fileIndexToPlay];
-                  console.log('current file:', currentFile);
                   removeVideo(currentFile);
                   fs.unlink(currentFile);
                   fs.unlink(`${currentFile}.ass`);
-                  setFileIndexToPlay(fileIndexToPlay + 1);
+                  onDeleteVideoFile(currentFile);
                 }}
                 okText="确认"
                 cancelText="取消"
               >
-                <div style={{ width: '100%', height: '100%' }}>
-                  <DeleteOutlined />
-                </div>
+                <DeleteOutlined />
               </Popconfirm>
             </Col>
           </Row>
@@ -167,29 +151,13 @@ export const ControlPanelComponent = ({
                 placement="top"
                 title="确认删除当前单词本？"
                 onConfirm={() => {
-                  const _wordbook = wordbooks.find(
-                    (wb) => wb.name === wordbook.name
-                  );
-                  const index = wordbooks.indexOf(_wordbook);
-                  const nextWordbooks = [
-                    ...wordbooks.slice(0, index),
-                    ...wordbooks.slice(index + 1),
-                  ];
-                  console.log('nextWordbooks', nextWordbooks);
-                  setWordbooks(nextWordbooks);
-                  if (nextWordbooks.length > 0) {
-                    setWordbook(nextWordbooks[0]);
-                  } else {
-                    setWordbook(null);
-                  }
+                  onDeleteWordbook(wordbook);
                   delWordbook(wordbook);
                 }}
                 okText="确认"
                 cancelText="取消"
               >
-                <div style={{ width: '100%', height: '100%' }}>
-                  <DeleteOutlined />
-                </div>
+                <DeleteOutlined />
               </Popconfirm>
             </Col>
           </Row>
@@ -218,7 +186,7 @@ export const ControlPanelComponent = ({
         <Col span={12}>
           <Button
             style={{ width: '100%', height: '100%' }}
-            onClick={computeAndSetPlayIndex}
+            onClick={onPlayNextWord}
           >
             下个单词
           </Button>

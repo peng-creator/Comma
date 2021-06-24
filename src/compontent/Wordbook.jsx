@@ -8,8 +8,7 @@ import { VideoImportComponent } from './VideoImport';
 export const WordbookComponent = ({
   wordbook,
   wordbooks,
-  setWordbook,
-  selectWordsFromWordbook,
+  onWordbookChange,
   setProgress,
   progress,
   setNewWordbookName,
@@ -17,7 +16,16 @@ export const WordbookComponent = ({
   newWordbookName,
   videoImportSubscription,
   setVideoImportSubscription,
+  onNewWordsImported,
+  onWordbookSelected,
 }) => {
+  let nameToWordbook = {};
+  for (let wb of wordbooks) {
+    if (nameToWordbook[wb.name] === undefined) {
+      nameToWordbook[wb.name] = wb;
+    }
+  }
+  wordbooks = Object.values(nameToWordbook);
   return (
     <>
       <div className="wordbooks">
@@ -25,7 +33,9 @@ export const WordbookComponent = ({
           {wordbooks.length > 0 && (
             <Row>
               <Col span={24}>
-                <WordbookSelector {...{ wordbook, wordbooks, setWordbook }} />
+                <WordbookSelector
+                  {...{ wordbook, wordbooks, onWordbookSelected }}
+                />
               </Col>
             </Row>
           )}
@@ -37,21 +47,21 @@ export const WordbookComponent = ({
                   setNewWordbookName,
                   setWordbooks,
                   newWordbookName,
-                  setWordbook,
+                  onWordbookChange,
                 }}
               />
             </Col>
             <Col span={8}>
               <WordsImportComponent
                 wordbook={wordbook}
-                selectWordsFromWordbook={selectWordsFromWordbook}
+                onNewWordsImported={onNewWordsImported}
               />
             </Col>
             <Col span={8}>
               <VideoImportComponent
                 {...{
                   setProgress,
-                  selectWordsFromWordbook,
+                  onWordbookChange,
                   wordbook,
                   progress,
                   videoImportSubscription,

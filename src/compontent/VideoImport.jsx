@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal } from 'antd';
+import { Button, message, Modal } from 'antd';
 import { ipcRenderer } from 'electron';
 import path from 'path';
 import { finalize } from 'rxjs/operators';
@@ -32,7 +32,7 @@ window.addEventListener('beforeunload', (e) => {
 
 export const VideoImportComponent = ({
   setProgress,
-  selectWordsFromWordbook,
+  onWordbookChange,
   wordbook,
   videoImportSubscription,
   setVideoImportSubscription,
@@ -56,12 +56,16 @@ export const VideoImportComponent = ({
                   finalize(() => {
                     setVideoImportSubscription(null);
                     setProgress(null);
-                    selectWordsFromWordbook(wordbook);
+                    onWordbookChange(wordbook);
                   })
                 )
                 .subscribe({
                   next(progress) {
                     setProgress(progress);
+                  },
+                  error(err) {
+                    console.log(err);
+                    message.error(`${err.message}`);
                   },
                 })
             );

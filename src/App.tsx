@@ -4,7 +4,17 @@ import './App.global.css';
 import { Button, message, Steps } from 'antd';
 import { promises as fs } from 'fs';
 import { SyncOutlined } from '@ant-design/icons';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, from, of, Subscription } from 'rxjs';
+import {
+  combineLatestWith,
+  debounce,
+  debounceTime,
+  mapTo,
+  mergeMap,
+  share,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import {
   loadWordbooksFromDB,
   Wordbook,
@@ -34,11 +44,146 @@ const s1 = new SubtitleStrategy({
 
 let playWordHistoryStackLeft: string[] = [];
 let playWordHistoryStackRight: string[] = [];
+const _selectWordsToPlay = async (words: string[]) => {
+  if (words.length > 0) {
+    const wordsList: string[] = [];
+    const wordToFileList: any = {};
+    const hide = message.loading('数据加载中', 0);
+    const wordLoadSemaphore = new Semaphore(10);
+    for (const w of words) {
+      await wordLoadSemaphore.acquire();
+      getWordVideos(w)
+        .then((videos) => {
+          if (videos !== null && videos.length > 0) {
+            wordsList.push(w);
+            wordToFileList[w] = videos;
+          }
+        })
+        .finally(() => {
+          wordLoadSemaphore.release();
+        })
+        .catch((err) => console.error('get videos of word ', w, ' error', err));
+    }
+    await wordLoadSemaphore.acquire(10);
+    hide();
+    wordLoadSemaphore.release(10);
+    return {
+      wordsToPlay: wordsList,
+      wordToFileList,
+    };
+  }
+  return {
+    wordsToPlay: [],
+    wordToFileList: null,
+  };
+};
+
+const computeWordToPlay = async (
+  wordsToPlay: string[],
+  wordToFileList: { [prop: string]: string[] },
+  studyRecord: { [prop: string]: { playTimes: number; level: number } }
+) => {
+  console.log('切换单词计算中。。。');
+  if (wordsToPlay === null || wordsToPlay.length === 0) {
+    console.log('没有可播放单词.');
+    return null;
+  }
+  console.log('words to play:', wordsToPlay);
+  console.log('playWordHistoryStackRight:', playWordHistoryStackRight);
+  console.log('playWordHistoryStackLeft:', playWordHistoryStackLeft);
+  while (playWordHistoryStackRight.length > 0) {
+    let prevWord = playWordHistoryStackRight.pop();
+    if (prevWord !== null && prevWord !== undefined) {
+      console.log('play history prevWord:', prevWord);
+      return prevWord;
+    }
+  }
+  const weightList = wordsToPlay.map((word) => {
+    const { playTimes, level } = (studyRecord !== null &&
+      studyRecord[word]) || {
+      playTimes: 0,
+      level: 500,
+    };
+    let wordCount = 0;
+    if (wordToFileList !== null && wordToFileList[word] !== undefined) {
+      wordCount = wordToFileList[word].length;
+      return (
+        (Math.log2(wordCount + 1) * (Math.pow(70 / 69, level) + 1)) /
+        (playTimes + 1)
+      );
+    }
+    const weight = (Math.pow(70 / 69, level) + 1) / (playTimes + 1);
+    if (Number.isNaN(weight)) {
+      return 1;
+    }
+    return weight;
+  });
+  console.log('weightList:', weightList);
+  const picked = pick(weightList);
+  console.log('picked index:', picked);
+  const wordPicked = wordsToPlay[picked];
+  console.log('word picked:', wordPicked);
+  return wordPicked;
+};
+
+const filesToPlay$ = new BehaviorSubject<string[]>([]);
+const fileIndexToPlay$ = new BehaviorSubject<number>(0);
+let _wordToPlay = '';
+const play$ = filesToPlay$.pipe(
+  // filter((files) => files.length > 0),
+  switchMap((files) => {
+    return fileIndexToPlay$.pipe(
+      tap((index) => console.log('tap file index to play:', index)),
+      combineLatestWith(of(files))
+    );
+    // return range(0, files.length).pipe(mapTo(files), zipWith());
+  }),
+  debounceTime(300),
+  switchMap(([index, files]) => {
+    console.log('switchMap index:', index);
+    console.log('switchMap files:', files);
+    const file = files[index];
+    return from(
+      (async () => {
+        try {
+          console.log('try to figure out if file exists: ', file);
+          const stat = await fs.stat(file);
+          console.log('file does exist:', stat);
+        } catch (err) {
+          // 文件不存在。
+          console.log('fs stat error:', err);
+          console.log('fileIndexToPlay$.next');
+          if (index + 1 < files.length) {
+            fileIndexToPlay$.next(index + 1);
+          }
+          return;
+        }
+        try {
+          await myPlayer.load(file, _wordToPlay);
+          await myPlayer.play([s1, s1]);
+          await myPlayer.play([
+            { ...s1, show: false },
+            { ...s1, show: false },
+          ]);
+          console.log('fileIndexToPlay$.next');
+          if (index + 1 < files.length) {
+            fileIndexToPlay$.next(index + 1);
+          }
+        } catch (err) {
+          console.log('word', _wordToPlay, ' play error:', err);
+        }
+      })()
+    ).pipe(mapTo(index));
+  }),
+  share()
+);
+play$.subscribe();
+
+const wordbookSelect$ = new BehaviorSubject<Wordbook>(null);
 
 export default function App() {
   const [wordbooks, setWordbooks] = useState<Wordbook[] | null>(null);
   const [wordbook, setWordbook] = useState<Wordbook | null>(null);
-  const [playIndex, setPlayIndex] = useState(-1);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [newWordbookName, setNewWordbookName] = useState('');
   const [wordsToPlay, setWordsToPlay] = useState<string[] | null>(null);
@@ -67,13 +212,14 @@ export default function App() {
   }, [wordPlaying]);
 
   useEffect(() => {
-    if (fileIndexToPlay !== -1 && fileIndexToPlay !== filesToPlay.length) {
+    if (fileIndexToPlay !== -1 && fileIndexToPlay <= filesToPlay.length - 1) {
       message.info(
         `播放进度：${fileIndexToPlay + 1} / ${filesToPlay.length}`,
         0.5
       );
     }
   }, [fileIndexToPlay, filesToPlay]);
+
   useEffect(() => {
     getStudyRecord()
       .then((studyRecord) => {
@@ -107,290 +253,159 @@ export default function App() {
     })();
   }, []);
 
-  useEffect(() => {
-    const wbs: Wordbook[] = wordbooks;
-    if (wbs !== null && wbs.length > 0 && wordbook === null) {
-      console.log(
-        'react===>  单词本列表切换为:',
-        wordbooks,
-        ' ，选中第一个单词本'
-      );
-      const wordbook = wbs[0];
-      setWordbook(wordbook);
-    }
-  }, [wordbooks]);
-
-  const selectWordsFromWordbook = async (wordbook: Wordbook) => {
-    if (wordbook.words.length > 0) {
-      const wordsList: string[] = [];
-      const wordToFileList: any = {};
-      const wordLoadSemaphore = new Semaphore(10);
-      const hide = message.loading('数据加载中', 0);
-      for (const w of wordbook.words) {
-        await wordLoadSemaphore.acquire();
-        getWordVideos(w)
-          .then((videos) => {
-            if (videos !== null && videos.length > 0) {
-              wordsList.push(w);
-              wordToFileList[w] = videos;
-            }
-          })
-          .finally(() => {
-            wordLoadSemaphore.release();
-          })
-          .catch((err) =>
-            console.error('get videos of word ', w, ' error', err)
-          );
-      }
-      await wordLoadSemaphore.acquire(10);
-      hide();
-      setWordsToPlay(wordsList);
-      setWordToFileList(wordToFileList);
-      wordLoadSemaphore.release(10);
-    }
+  const changeFileIndexToPlay = (index: number) => {
+    setFileIndexToPlay(index);
+    fileIndexToPlay$.next(index);
   };
 
-  useEffect(() => {
-    myPlayer.onSearchWord((w: string) => setSearchWord(w));
-    myPlayer.onAddWordsToWordBook((w: string) => {
-      if (wordbook === null) {
-        return;
+  const changeWordToPlay = async ({ wordToPlay, studyRecord }: any) => {
+    if (wordToPlay === null || wordToPlay === undefined) {
+      return;
+    }
+    console.log('react===>  切换播放单词为', wordToPlay);
+    const wordRecord = studyRecord !== null && studyRecord[wordToPlay];
+    if (wordRecord !== undefined) {
+      setWordPlayingLevel(wordRecord.level);
+    } else {
+      setWordPlayingLevel(500);
+    }
+    console.log('try to get word videos...');
+    const files = await getWordVideos(wordToPlay);
+    _wordToPlay = wordToPlay;
+    setWordPlaying(wordToPlay);
+    console.log('word files:', files);
+    setFilesToPlay(files);
+    filesToPlay$.next(files);
+    changeFileIndexToPlay(0);
+  };
+
+  const playNextWord = async ({
+    wordsToPlay,
+    wordToFileList,
+    studyRecord,
+  }: any) => {
+    const nextWordToPlay = await computeWordToPlay(
+      wordsToPlay,
+      wordToFileList,
+      studyRecord
+    );
+    if (nextWordToPlay === null || nextWordToPlay === undefined) {
+      return;
+    }
+    if (wordPlaying !== undefined && wordPlaying !== null) {
+      playWordHistoryStackLeft.push(wordPlaying);
+      if (playWordHistoryStackLeft.length > 10) {
+        playWordHistoryStackLeft.shift();
       }
-      wordbook.add(w);
-      saveWordbook(wordbook);
-      selectWordsFromWordbook(wordbook);
+    }
+    changeWordToPlay({
+      wordToPlay: nextWordToPlay,
+      studyRecord,
     });
-  }, [wordbook]);
-
-  useEffect(() => {
-    // 从单词本中筛选出有视频剪辑的单词列表
-    if (wordbook === null) {
-      return;
-    }
-    console.log('react===>  单词本切换为:', wordbook);
-    selectWordsFromWordbook(wordbook);
-  }, [wordbook]);
-
-  const playPrevWord = () => {
-    if (wordsToPlay === null || wordsToPlay.length === 0) {
-      return;
-    }
-    while (playWordHistoryStackLeft.length > 0) {
-      let prevWord = playWordHistoryStackLeft.pop();
-      if (prevWord !== null && prevWord !== undefined) {
-        const index = wordsToPlay.indexOf(prevWord);
-        if (index !== -1) {
-          playWordHistoryStackRight.push(prevWord);
-          if (index === playIndex) {
-            continue;
-          }
-          setPlayIndex(index);
-          return;
-        }
-      }
-    }
-    message.warn('没有更多播放历史');
-  };
-
-  const computeAndSetPlayIndex = async () => {
-    console.log('切换单词计算中。。。');
-    if (wordsToPlay === null || wordsToPlay.length === 0) {
-      return;
-    }
-    while (playWordHistoryStackRight.length > 0) {
-      let prevWord = playWordHistoryStackRight.pop();
-      if (prevWord !== null && prevWord !== undefined) {
-        const index = wordsToPlay.indexOf(prevWord);
-        if (index !== -1) {
-          playWordHistoryStackLeft.push(prevWord);
-          if (index === playIndex) {
-            continue;
-          }
-          setPlayIndex(index);
-          return;
-        }
-      }
-    }
-
-    const weightList = wordsToPlay.map((word) => {
-      const { playTimes, level } = (studyRecord !== null &&
-        studyRecord[word]) || {
-        playTimes: 0,
-        level: 500,
-      };
-      let wordCount = 0;
-      if (wordToFileList !== null && wordToFileList[word] !== undefined) {
-        wordCount = wordToFileList[word].length;
-        return (
-          (Math.log2(wordCount + 1) * (Math.pow(70 / 69, level) + 1)) /
-          (playTimes + 1)
-        );
-      }
-      const weight = (Math.pow(70 / 69, level) + 1) / (playTimes + 1);
-      return weight;
-    });
-    const picked = pick(weightList);
-    console.log(
-      '切换单词计算结束，当前正在播放 index:',
-      playIndex,
-      '，即将播放index:',
-      picked,
-      ', weight:',
-      weightList[picked]
-    );
-    if (picked === playIndex) {
-      // setFileCountToPlayRemain(maxFileCountToPlay);
-      if (fileIndexToPlay === 0) {
-        myPlayer.player.currentTime(0);
-      } else {
-        setFileIndexToPlay(0);
-      }
-      return;
-    }
-    let pickWord = wordsToPlay[picked];
-    playWordHistoryStackLeft.push(pickWord);
-    if (playWordHistoryStackLeft.length > 10) {
-      playWordHistoryStackLeft.shift();
-    }
-    setPlayIndex(picked);
   };
 
   useEffect(() => {
-    console.log('react===>  单词播放列表切换为:', wordsToPlay);
-    if (wordsToPlay === null || wordsToPlay.length === 0) {
-      return;
-    }
-    setPlayIndex(-1);
-  }, [wordsToPlay]);
-
-  useEffect(() => {
-    console.log('react===>  自动选择playIndex，当前playIndex:', playIndex);
-    if (wordsToPlay === null || wordsToPlay.length === 0) {
-      return;
-    }
-    if (playIndex === -1) {
-      computeAndSetPlayIndex();
-    }
-  }, [wordsToPlay, playIndex]);
-
-  useEffect(() => {
-    // 查询该单词的全部视频文件
-    if (
-      wordsToPlay === null ||
-      wordsToPlay.length === 0 ||
-      wordbook === null ||
-      playIndex === -1
-    ) {
-      return;
-    }
-    const wordToPlay = wordsToPlay[playIndex];
-    console.log(
-      'react===>  切换播放单词至下标:',
-      playIndex,
-      ', 单词为:',
-      wordToPlay
-    );
-    if (wordToPlay !== undefined) {
-      (async () => {
-        setWordPlaying(wordToPlay);
-        const wordRecord = studyRecord !== null && studyRecord[wordToPlay];
-        if (wordRecord !== undefined) {
-          setWordPlayingLevel(wordRecord.level);
-        } else {
-          setWordPlayingLevel(500);
+    let subscription = play$.subscribe({
+      next: (index) => {
+        if (index >= filesToPlay.length - 1) {
+          console.log('文件播放完毕，play next word');
+          playNextWord({
+            wordsToPlay,
+            wordToFileList,
+            studyRecord,
+          });
         }
-        const files = await getWordVideos(wordToPlay);
-        setFileIndexToPlay(-1);
-        setFilesToPlay(files);
-      })();
-    }
-  }, [playIndex]);
-
-  useEffect(() => {
-    // 重置文件播放下标
-    if (filesToPlay.length === 0) {
-      return;
-    }
-    console.log('react===>  文件播放列表变更为:', filesToPlay);
-    setFileIndexToPlay(0);
-    // setFileCountToPlayRemain(maxFileCountToPlay);
-  }, [filesToPlay]);
-
-  useEffect(() => {
-    // 播放视频
-    if (
-      fileIndexToPlay === -1 ||
-      wordsToPlay === null ||
-      wordsToPlay.length === 0
-    ) {
-      return;
-    }
-    console.log(
-      'react===> 播放文件切换至 index:',
-      fileIndexToPlay,
-      '，最大index为：',
-      filesToPlay.length - 1
-    );
-    // console.log('当前单词剩余播放次数:', fileCountToPlayRemain);
-    if (wordbook == null || wordsToPlay === null) {
-      return;
-    }
-    const changeToNextFile = () => {
-      if (fileIndexToPlay < filesToPlay.length - 1) {
-        setFileIndexToPlay(fileIndexToPlay + 1);
-      } else {
-        setFileIndexToPlay(-1);
-        setPlayIndex(-1);
-      }
-    };
-    (async () => {
-      const files = filesToPlay;
-      const wordToPlay = wordsToPlay[playIndex];
-      try {
-        const file = files[fileIndexToPlay];
-        if (file === undefined) {
-          console.log(
-            '播放文件 index 溢出，当前单词播放结束，切换到下一单词！'
-          );
-          computeAndSetPlayIndex();
-          return;
-        }
-        try {
-          console.log('try to figure out if file exists: ', file);
-          const stat = await fs.stat(file);
-          console.log('file does exist:', stat);
-        } catch (err) {
-          // 文件不存在。
-          console.log('fs stat error:', err);
-          changeToNextFile();
-          return;
-        }
-        await myPlayer.load(file, wordToPlay);
-        await myPlayer.play([s1, s1]);
-        await myPlayer.play([
-          { ...s1, show: false },
-          { ...s1, show: false },
-        ]);
-        const wordRecord = (studyRecord !== null &&
-          studyRecord[wordToPlay]) || {
+        const wordRecord = studyRecord[_wordToPlay] || {
           playTimes: 0,
           level: 500,
         };
         wordRecord.playTimes += 1;
-        studyRecord[wordToPlay] = wordRecord;
+        studyRecord[_wordToPlay] = wordRecord;
         setStudyRecord({ ...studyRecord });
-        await saveStudyRecord(studyRecord);
-        changeToNextFile();
-      } catch (e) {
-        console.log(wordToPlay, ' playing error:', e);
+        saveStudyRecord(studyRecord);
+      },
+    });
+    return () => subscription.unsubscribe();
+  }, [filesToPlay, wordsToPlay, wordToFileList, studyRecord]);
+
+  const updateWordsToPlay = async (wb: Wordbook) => {
+    if (wb === null) {
+      return { wordsToPlay: [], wordToFileList: [] };
+    }
+    const { wordsToPlay, wordToFileList } = await _selectWordsToPlay(wb.words);
+    setWordsToPlay(wordsToPlay);
+    setWordToFileList(wordToFileList);
+    return { wordsToPlay, wordToFileList };
+  };
+
+  const updateWordbook = (wb: Wordbook) => {
+    if (wb !== null) {
+      wb = wb.copy();
+      if (wordbooks !== null && wordbooks.length > 0) {
+        const prevWordbook = wordbooks.find(
+          (wordbook: Wordbook) => wordbook.name === wb.name
+        );
+        const prevWordbookIndex = wordbooks.indexOf(prevWordbook);
+        setWordbooks([
+          ...wordbooks.slice(0, prevWordbookIndex),
+          wb,
+          ...wordbooks.slice(prevWordbookIndex + 1),
+        ]);
       }
-    })();
-  }, [fileIndexToPlay]);
+    }
+    setWordbook(wb);
+  };
+
+  const changeWordbook = async (wb: Wordbook) => {
+    updateWordbook(wb);
+    setWordPlaying(null);
+    const { wordsToPlay, wordToFileList } = await updateWordsToPlay(wb);
+    playNextWord({
+      wordsToPlay,
+      wordToFileList,
+      studyRecord,
+    });
+  };
+
+  useEffect(() => {
+    let dealing$ = of<any>(1);
+    wordbookSelect$
+      .pipe(
+        debounce(() => {
+          return dealing$;
+        }),
+        mergeMap((wb: Wordbook) => {
+          dealing$ = from(
+            changeWordbook(wb).catch((e) => {
+              console.log('select wordboock update error:', e);
+            })
+          );
+          return dealing$;
+        }, 1)
+      )
+      .subscribe();
+  }, []);
+
+  useEffect(() => {
+    const wbs: Wordbook[] = wordbooks;
+    if (wbs !== null && wbs.length > 0 && wordbook === null) {
+      const nextWordbook = wbs[0];
+      console.log(
+        'react===>  单词本列表切换为:',
+        wordbooks,
+        ' ，选中第一个单词本:',
+        nextWordbook
+      );
+      changeWordbook(nextWordbook);
+    }
+  }, [wordbooks]);
 
   const togglePause = async () => {
     myPlayer.togglePause();
   };
+
   type LevelChanger = (prevLevel: number) => number;
+
   const onWordLevelChange = (level: number | LevelChanger) => {
     if (wordPlaying === null) {
       return;
@@ -412,14 +427,14 @@ export default function App() {
     };
     wordRecord.level = level;
     studyRecord[wordPlaying] = wordRecord;
+    setStudyRecord({ ...studyRecord });
     saveStudyRecord(studyRecord);
   };
-  const onPlayNextFile = () => {
-    setFileIndexToPlay(fileIndexToPlay + 1);
-  };
+
   const onPlayPrevFile = () => {
-    if (fileIndexToPlay - 1 >= 0) {
-      setFileIndexToPlay(fileIndexToPlay - 1);
+    const nextFileIndex = fileIndexToPlay - 1;
+    if (nextFileIndex >= 0) {
+      changeFileIndexToPlay(nextFileIndex);
     } else {
       message.warn('已经是第一个视频了');
     }
@@ -431,6 +446,103 @@ export default function App() {
     videoImportSubscription.unsubscribe();
     setVideoImportSubscription(null);
   };
+
+  const handleNewWordsImportedToWordbook = (
+    wb: Wordbook,
+    newWords: string[]
+  ) => {
+    _selectWordsToPlay(newWords)
+      .then(
+        ({
+          wordsToPlay: newWordsToPlay,
+          wordToFileList: newWordToFileList,
+        }) => {
+          const nextWordsToPlay = [
+            ...new Set([...(wordsToPlay || []), ...newWordsToPlay]),
+          ];
+          const nextWordToFileList = {
+            ...(wordToFileList || {}),
+            ...newWordToFileList,
+          };
+          setWordsToPlay(nextWordsToPlay);
+          setWordToFileList(nextWordToFileList);
+          console.log('decide wheather to playNextWord');
+          // 如果导入之前没有单词可以播放，且导入后有单词可以播放，则直接计算下一个播放单词，否则不计算
+          if (
+            (wordsToPlay === null || wordsToPlay.length === 0) &&
+            nextWordsToPlay.length > 0
+          ) {
+            console.log('playNextWord');
+            playNextWord({
+              wordsToPlay: nextWordsToPlay,
+              wordToFileList: nextWordToFileList,
+              studyRecord,
+            });
+          }
+        }
+      )
+      .catch((e) => console.log('handleNewWordsImportedToWordbook error:', e));
+    updateWordbook(wb);
+  };
+
+  useEffect(() => {
+    myPlayer.onSearchWord((w: string) => setSearchWord(w));
+    myPlayer.onAddWordsToWordBook((w: string) => {
+      if (wordbook === null) {
+        return;
+      }
+      wordbook.add(w);
+      saveWordbook(wordbook);
+      handleNewWordsImportedToWordbook(wordbook, [w]);
+    });
+  }, [wordbook, wordsToPlay, wordToFileList]);
+
+  const playPrevWord = (studyRecord: any) => {
+    if (playWordHistoryStackLeft.length === 0) {
+      message.warn('没有更多播放历史');
+      return;
+    }
+    if (wordPlaying !== undefined && wordPlaying !== null) {
+      playWordHistoryStackRight.push(wordPlaying);
+    }
+    console.log('playWordHistoryStackLeft:', playWordHistoryStackLeft);
+    console.log('playWordHistoryStackRight:', playWordHistoryStackRight);
+    while (playWordHistoryStackLeft.length > 0) {
+      let prevWord = playWordHistoryStackLeft.pop();
+      if (prevWord !== null && prevWord !== undefined) {
+        changeWordToPlay({
+          wordToPlay: prevWord,
+          studyRecord,
+        });
+        return;
+      }
+    }
+  };
+
+  const onPlayPrevWord = () => {
+    if (wordsToPlay === null || wordsToPlay.length === 0) {
+      return;
+    }
+    console.log('playPrevWord');
+    playPrevWord(studyRecord);
+  };
+
+  const onPlayNextWord = () =>
+    playNextWord({
+      wordsToPlay,
+      wordToFileList,
+      studyRecord,
+    });
+
+  const onPlayNextFile = () => {
+    const nextFileIndex = fileIndexToPlay + 1;
+    if (nextFileIndex === filesToPlay.length) {
+      onPlayNextWord();
+      return;
+    }
+    changeFileIndexToPlay(nextFileIndex);
+  };
+
   if (wordbooks === null && wordbook === null) {
     return null;
   }
@@ -473,7 +585,7 @@ export default function App() {
                 setNewWordbookName,
                 setWordbooks,
                 newWordbookName,
-                setWordbook,
+                onWordbookChange: changeWordbook,
               }}
             >
               增加一个单词本
@@ -482,14 +594,14 @@ export default function App() {
           {current === 1 && (
             <WordsImportComponent
               wordbook={wordbook}
-              selectWordsFromWordbook={selectWordsFromWordbook}
+              onNewWordsImported={handleNewWordsImportedToWordbook}
             />
           )}
           {current === 2 && progress === null && (
             <VideoImportComponent
               {...{
                 setProgress,
-                selectWordsFromWordbook,
+                onWordbookChange: changeWordbook,
                 wordbook,
                 progress,
                 videoImportSubscription,
@@ -520,7 +632,7 @@ export default function App() {
                 style={{ width: '100%', marginTop: '10px' }}
                 onClick={() => {
                   setHideGuide(true);
-                  selectWordsFromWordbook(wordbook);
+                  changeWordbook(wordbook);
                   localStorage.setItem('hideGuide', 'true');
                 }}
               >
@@ -535,16 +647,18 @@ export default function App() {
   if (wordsToPlay === null && wordbooks === null && wordbook === null) {
     return null;
   }
+  console.log('app render function , wordbooks:', wordbooks);
   return (
     <div className="App">
       <div className={['left', (showLeft && 'showLeft') || ''].join(' ')}>
         <WordbookComponent
+          onWordbookSelected={(wb: Wordbook) => wordbookSelect$.next(wb)}
+          onNewWordsImported={handleNewWordsImportedToWordbook}
           setNewWordbookName={setNewWordbookName}
           newWordbookName={newWordbookName}
           wordbook={wordbook}
           wordbooks={wordbooks}
-          setWordbook={setWordbook}
-          selectWordsFromWordbook={selectWordsFromWordbook}
+          onWordbookChange={changeWordbook}
           setProgress={setProgress}
           progress={progress}
           setWordbooks={setWordbooks}
@@ -559,7 +673,7 @@ export default function App() {
         {progress && progress.percent > 0 && (
           <Button
             onClick={() => {
-              selectWordsFromWordbook(wordbook);
+              changeWordbook(wordbook);
             }}
             style={{ marginBottom: '5px' }}
             icon={<SyncOutlined />}
@@ -568,13 +682,41 @@ export default function App() {
           </Button>
         )}
         <WordListComponent
+          onWordDeleted={(word: string, wordbook: Wordbook) => {
+            updateWordbook(wordbook);
+            if (wordToFileList !== null) {
+              delete wordToFileList[word];
+              setWordToFileList({ ...wordToFileList });
+              const nextWordsToPlay = Object.keys(wordToFileList);
+              setWordsToPlay(nextWordsToPlay);
+              if (word === wordPlaying) {
+                playNextWord({
+                  wordsToPlay: nextWordsToPlay,
+                  wordToFileList,
+                  studyRecord,
+                });
+              }
+            }
+          }}
+          onWordbookUpdate={updateWordbook}
+          onChangeWordToPlay={(wordToPlay: string) => {
+            if (wordPlaying !== undefined && wordPlaying !== null) {
+              playWordHistoryStackLeft.push(wordPlaying);
+              if (playWordHistoryStackLeft.length > 10) {
+                playWordHistoryStackLeft.shift();
+              }
+            }
+            changeWordToPlay({
+              wordToPlay,
+              studyRecord,
+            });
+          }}
           wordPlaying={wordPlaying}
           wordbook={wordbook}
           wordsToPlay={wordsToPlay}
-          setPlayIndex={setPlayIndex}
           wordToFileList={wordToFileList}
           studyRecord={studyRecord}
-          setWordbook={setWordbook}
+          onWordbookChange={changeWordbook}
         />
       </div>
       <div className="middle">
@@ -586,11 +728,61 @@ export default function App() {
           setIsFullScreen={setIsFullScreen}
           onPlayNextFile={onPlayNextFile}
           onPlayPrevFile={onPlayPrevFile}
-          onPlayNextWord={computeAndSetPlayIndex}
-          onPlayPrevWord={playPrevWord}
+          onPlayNextWord={onPlayNextWord}
+          onPlayPrevWord={onPlayPrevWord}
           onWordLevelChange={onWordLevelChange}
         />
         <ControlPanelComponent
+          onDeleteVideoFile={(file: string) => {
+            if (wordToFileList !== null && wordToFileList !== undefined) {
+              const nextWordToFileList: any = {};
+              Object.keys(wordToFileList).forEach((word: string) => {
+                const videos = wordToFileList[word];
+                const nextVideos = videos.filter((vf: string) => vf !== file);
+                if (nextVideos.length > 0) {
+                  nextWordToFileList[word] = nextVideos;
+                }
+              });
+              setWordToFileList(nextWordToFileList);
+              setWordsToPlay(Object.keys(nextWordToFileList));
+              if (wordPlaying !== null) {
+                const nextFilesToPlay = nextWordToFileList[wordPlaying];
+                setFilesToPlay(nextFilesToPlay || []);
+                filesToPlay$.next(nextFilesToPlay || []);
+                fileIndexToPlay$.next(fileIndexToPlay);
+              }
+            }
+          }}
+          onDeleteWordbook={async (wordbook: Wordbook) => {
+            if (wordbooks === null || wordbooks.length === 0) {
+              return;
+            }
+            const _wordbook = wordbooks.find((wb) => wb.name === wordbook.name);
+            const index = wordbooks.indexOf(_wordbook);
+            const nextWordbooks = [
+              ...wordbooks.slice(0, index),
+              ...wordbooks.slice(index + 1),
+            ];
+            console.log('nextWordbooks', nextWordbooks);
+            setWordbooks(nextWordbooks);
+            setWordPlaying(null);
+            if (nextWordbooks.length > 0) {
+              const nextWordbook = nextWordbooks[0];
+              setWordbook(nextWordbook);
+              const { wordsToPlay, wordToFileList } = await updateWordsToPlay(
+                nextWordbook
+              );
+              playNextWord({
+                wordsToPlay,
+                wordToFileList,
+                studyRecord,
+              });
+            } else {
+              setWordbook(null);
+              setWordsToPlay(null);
+              setWordPlaying(null);
+            }
+          }}
           onPlayNextFile={onPlayNextFile}
           onPlayPrevFile={onPlayPrevFile}
           filesToPlay={filesToPlay}
@@ -599,15 +791,13 @@ export default function App() {
           wordPlayingLevel={wordPlayingLevel}
           setWordPlayingLevel={setWordPlayingLevel}
           setPlaySpeed={setPlaySpeed}
-          onPlayPrevWord={playPrevWord}
-          computeAndSetPlayIndex={computeAndSetPlayIndex}
-          setFileIndexToPlay={setFileIndexToPlay}
+          onPlayPrevWord={onPlayPrevWord}
+          onPlayNextWord={onPlayNextWord}
+          onChangeFileIndexToPlay={changeFileIndexToPlay}
           fileIndexToPlay={fileIndexToPlay}
           wordbook={wordbook}
-          setWordbook={setWordbook}
           setWordbooks={setWordbooks}
           wordbooks={wordbooks}
-          setPlayIndex={setPlayIndex}
           onToggleRight={() => {
             setShowRight(!showRight);
           }}

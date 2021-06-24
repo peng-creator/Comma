@@ -208,7 +208,9 @@ body {
   user-select: none;
 }
 .controller-widget {
-  line-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding-right: 14px;
   text-align: center;
 }

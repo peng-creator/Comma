@@ -15,12 +15,7 @@ import {
 import { DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { AutoSizer } from 'react-virtualized';
 import VList from 'react-virtualized/dist/commonjs/List';
-import {
-  saveStudyRecord,
-  saveWordbook,
-  delWordbook,
-  Wordbook,
-} from '../database/wordbook.mjs';
+import { saveWordbook } from '../database/wordbook.mjs';
 import { myPlayer } from '../player/player';
 
 const { Option } = Select;
@@ -30,10 +25,10 @@ export const WordListComponent = ({
   wordPlaying,
   wordbook,
   wordsToPlay,
-  setPlayIndex,
   wordToFileList,
   studyRecord,
-  setWordbook,
+  onChangeWordToPlay,
+  onWordDeleted,
 }) => {
   const [scrollToIndex, setScrollToIndex] = useState(0);
   const [shine, setShine] = useState(false);
@@ -81,7 +76,7 @@ export const WordListComponent = ({
     const indexOfWordPlaying =
       (wordbook && sortedWords && sortedWords.indexOf(wordPlaying)) || 0;
     setScrollToIndex(indexOfWordPlaying);
-  }, [wordPlaying]);
+  }, [wordPlaying, wordsToPlay]);
 
   useEffect(() => {
     setShine(true);
@@ -182,14 +177,8 @@ export const WordListComponent = ({
                 console.log('current words of wordbook:', words);
                 console.log('next words of wordbook:', nextWords);
                 wordbook.words = nextWords;
-                const nextWordbook = { ...wordbook, words: nextWords };
-                setWordbook(nextWordbook);
-                Object.setPrototypeOf(nextWordbook, Wordbook.prototype);
+                onWordDeleted(word, wordbook);
                 saveWordbook(wordbook);
-                if (word === wordPlaying) {
-                  console.log('删除正在播放的单词！');
-                  setPlayIndex(-1);
-                }
               }}
               okText="确认"
               cancelText="取消"
@@ -216,7 +205,7 @@ export const WordListComponent = ({
                   message.error('这个词没有视频可以播放！');
                 } else {
                   myPlayer.unpause();
-                  setPlayIndex(nextWordToPlayIndex);
+                  onChangeWordToPlay(word);
                 }
               }}
             >

@@ -95,7 +95,7 @@ async function getEnglishSubtitle(source) {
     const stat = await fs.stat(subtitleFilePath);
     console.log('stat: ', stat);
   } catch (err) {
-    throw new Error('该视频文件没有字幕!');
+    throw new Error(`视频文件没有字幕: ${source}`);
   }
   const txt = await fs.readFile(subtitleFilePath);
   const { encoding } = jschardet.detect(txt);

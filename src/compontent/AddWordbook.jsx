@@ -7,7 +7,7 @@ export const AddWordbookComponent = ({
   setNewWordbookName,
   setWordbooks,
   newWordbookName,
-  setWordbook,
+  onWordbookChange,
   children = null,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -28,7 +28,7 @@ export const AddWordbookComponent = ({
     const newWordbook = new Wordbook({ name: newWordbookName });
     wordbooks.push(newWordbook);
     setWordbooks([...wordbooks]);
-    setWordbook(newWordbook);
+    onWordbookChange(newWordbook);
     saveWordbook(newWordbook);
   };
 
