@@ -12,7 +12,6 @@ import {
   mapTo,
   mergeMap,
   share,
-  startWith,
   switchMap,
   tap,
 } from 'rxjs/operators';

@@ -61,19 +61,21 @@ ipcMain.on('onAdjustHeight', (event, middleContentHeight) => {
   });
 });
 
-ipcMain.on('showContollButton', (event) => {
-  if (mainWindow === null) {
-    return;
-  }
-  mainWindow.setWindowButtonVisibility(true);
-});
+if (process.platform === 'darwin') {
+  ipcMain.on('showContollButton', (event) => {
+    if (mainWindow === null) {
+      return;
+    }
+    mainWindow.setWindowButtonVisibility(true);
+  });
 
-ipcMain.on('hideContollButton', (event) => {
-  if (mainWindow === null) {
-    return;
-  }
-  mainWindow.setWindowButtonVisibility(false);
-});
+  ipcMain.on('hideContollButton', (event) => {
+    if (mainWindow === null) {
+      return;
+    }
+    mainWindow.setWindowButtonVisibility(false);
+  });
+}
 
 ipcMain.on('onPlayerMaximumChange', (event, isPlayerMaximum, width, height) => {
   if (mainWindow === null) {
@@ -155,7 +157,10 @@ const createWindow = async () => {
 
   mainWindow.setFullScreenable(true);
   mainWindow.setMaximizable(true);
-  mainWindow.setWindowButtonVisibility(true);
+
+  if (process.platform === 'darwin') {
+    mainWindow.setWindowButtonVisibility(true);
+  }
 
   // mainWindow.setFullScreen(true);
   mainWindow.loadURL(`file://${__dirname}/index.html`);
@@ -189,7 +194,7 @@ const createWindow = async () => {
 
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
-  new AppUpdater();
+   new AppUpdater();
 };
 
 /**
