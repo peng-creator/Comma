@@ -100,16 +100,21 @@ body {
   width: 50%;
   min-width: 512px;
   /* background: yellow; */
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
   flex-grow: 1;
   padding: 10px 20px;
-  justify-content: space-between;
   overflow: auto;
+
+  display: flex;
+  align-items: center;
 }
+
+.middle-wrapper {
+  width: 100%;
+}
+
 .video-box-wrapper {
-  flex-grow: 1;
+  /* flex-grow: 1; */
+  min-height: 330px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -202,11 +207,13 @@ body {
   color: #000;
   height: 40px;
 }
+
 .controller-name {
   line-height: 40px;
   padding-left: 14px;
   user-select: none;
 }
+
 .controller-widget {
   display: flex;
   align-items: center;
@@ -219,7 +226,7 @@ body {
 .showRight {
   width: 25%;
   min-width: 340px;
-  padding: 20px;
+  padding: 0 20px;
 }
 
 .initApp {
@@ -257,7 +264,7 @@ body {
   color: #000;
 }
 .word-right-click-menu-item {
-  width: 130px;
+  width: 100px;
   height: 25px;
   line-height: 25px;
   padding: 0 10px;
@@ -268,4 +275,24 @@ body {
 .word-right-click-menu-item:hover {
   background: rgb(169, 118, 236);
   color: #fff;
+}
+
+.titlebar-wrapper {
+  width: 100%;
+}
+
+.titlebar-wrapper.titlebar-player-maximum {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  display: none;
+}
+
+.titlebar-wrapper.titlebar-player-maximum.show {
+  display: block;
+}
+
+.titlebar-wrapper.fullscreen {
+  display: none !important;
 }

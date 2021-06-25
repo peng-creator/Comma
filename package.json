@@ -234,6 +234,7 @@
     "electron-log": "^4.2.4",
     "electron-updater": "^4.3.4",
     "ffmpeg-static": "^4.3.0",
+    "frameless-titlebar": "^2.1.4",
     "history": "^5.0.0",
     "jschardet": "^3.0.0",
     "md5": "^2.3.0",

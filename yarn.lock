@@ -6688,6 +6688,14 @@ fragment-cache@^0.2.1:
   dependencies:
     map-cache "^0.2.2"
 
+frameless-titlebar@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.nlark.com/frameless-titlebar/download/frameless-titlebar-2.1.4.tgz#d769cbd1a0293e0bf65bcb68f5bf597e61f8974e"
+  integrity sha1-12nL0aApPgv2W8to9b9ZfmH4l04=
+  dependencies:
+    classnames "^2.2.6"
+    deepmerge "^4.2.2"
+
 fresh@0.5.2:
   version "0.5.2"
   resolved "https://registry.nlark.com/fresh/download/fresh-0.5.2.tgz?cache=0&sync_timestamp=1618846779488&other_urls=https%3A%2F%2Fregistry.nlark.com%2Ffresh%2Fdownload%2Ffresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"

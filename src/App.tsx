@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.global.css';
 // import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { Button, message, Steps } from 'antd';
 import { promises as fs } from 'fs';
 import { SyncOutlined } from '@ant-design/icons';
-import { BehaviorSubject, from, of, Subscription } from 'rxjs';
+import { BehaviorSubject, from, fromEvent, of, Subscription } from 'rxjs';
 import {
   combineLatestWith,
   debounce,
@@ -12,9 +12,12 @@ import {
   mapTo,
   mergeMap,
   share,
+  startWith,
   switchMap,
   tap,
 } from 'rxjs/operators';
+import { ipcRenderer, remote } from 'electron';
+import TitleBar from 'frameless-titlebar';
 import {
   loadWordbooksFromDB,
   Wordbook,
@@ -181,10 +184,9 @@ play$.subscribe();
 
 const wordbookSelect$ = new BehaviorSubject<Wordbook>(null);
 
-export default function App() {
+function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
   const [wordbooks, setWordbooks] = useState<Wordbook[] | null>(null);
   const [wordbook, setWordbook] = useState<Wordbook | null>(null);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const [newWordbookName, setNewWordbookName] = useState('');
   const [wordsToPlay, setWordsToPlay] = useState<string[] | null>(null);
   const [wordPlaying, setWordPlaying] = useState<string | null>(null);
@@ -206,6 +208,7 @@ export default function App() {
   );
 
   const [searchWord, setSearchWord] = useState<string | null>(null);
+  const middleRef = useRef(null);
 
   useEffect(() => {
     setSearchWord(wordPlaying);
@@ -245,7 +248,7 @@ export default function App() {
   useEffect(() => {
     console.log('react===> 自动加载单词本列表...');
     (async () => {
-      let wbs: Wordbook[] = wordbooks;
+      let wbs: Wordbook[] | null = wordbooks;
       if (wbs === null) {
         wbs = await loadWordbooksFromDB();
         setWordbooks(wbs);
@@ -387,7 +390,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const wbs: Wordbook[] = wordbooks;
+    const wbs: Wordbook[] | null = wordbooks;
     if (wbs !== null && wbs.length > 0 && wordbook === null) {
       const nextWordbook = wbs[0];
       console.log(
@@ -542,6 +545,21 @@ export default function App() {
     }
     changeFileIndexToPlay(nextFileIndex);
   };
+
+  const adjustHeight = () => {
+    const { current } = middleRef;
+    if (current !== null) {
+      setTimeout(() => {
+        ipcRenderer.send('onAdjustHeight', current.clientHeight);
+      }, 260);
+    }
+  };
+
+  useEffect(() => {
+    if (!isPlayerMaximum) {
+      adjustHeight();
+    }
+  }, [isPlayerMaximum]);
 
   if (wordbooks === null && wordbook === null) {
     return null;
@@ -698,7 +716,6 @@ export default function App() {
               }
             }
           }}
-          onWordbookUpdate={updateWordbook}
           onChangeWordToPlay={(wordToPlay: string) => {
             if (wordPlaying !== undefined && wordPlaying !== null) {
               playWordHistoryStackLeft.push(wordPlaying);
@@ -716,100 +733,261 @@ export default function App() {
           wordsToPlay={wordsToPlay}
           wordToFileList={wordToFileList}
           studyRecord={studyRecord}
-          onWordbookChange={changeWordbook}
         />
       </div>
       <div className="middle">
-        <PlayerComponent
-          wordbook={wordbook}
-          wordsToPlay={wordsToPlay}
-          isFullScreen={isFullScreen}
-          togglePause={togglePause}
-          setIsFullScreen={setIsFullScreen}
-          onPlayNextFile={onPlayNextFile}
-          onPlayPrevFile={onPlayPrevFile}
-          onPlayNextWord={onPlayNextWord}
-          onPlayPrevWord={onPlayPrevWord}
-          onWordLevelChange={onWordLevelChange}
-        />
-        <ControlPanelComponent
-          onDeleteVideoFile={(file: string) => {
-            if (wordToFileList !== null && wordToFileList !== undefined) {
-              const nextWordToFileList: any = {};
-              Object.keys(wordToFileList).forEach((word: string) => {
-                const videos = wordToFileList[word];
-                const nextVideos = videos.filter((vf: string) => vf !== file);
-                if (nextVideos.length > 0) {
-                  nextWordToFileList[word] = nextVideos;
+        <div className="middle-wrapper" ref={middleRef}>
+          <PlayerComponent
+            wordbook={wordbook}
+            wordsToPlay={wordsToPlay}
+            isPlayerMaximum={isPlayerMaximum}
+            togglePause={togglePause}
+            setIsPlayerMaximum={setIsPlayerMaximum}
+            onPlayNextFile={onPlayNextFile}
+            onPlayPrevFile={onPlayPrevFile}
+            onPlayNextWord={onPlayNextWord}
+            onPlayPrevWord={onPlayPrevWord}
+            onWordLevelChange={onWordLevelChange}
+          />
+          <ControlPanelComponent
+            onDeleteVideoFile={(file: string) => {
+              if (wordToFileList !== null && wordToFileList !== undefined) {
+                const nextWordToFileList: any = {};
+                Object.keys(wordToFileList).forEach((word: string) => {
+                  const videos = wordToFileList[word];
+                  const nextVideos = videos.filter((vf: string) => vf !== file);
+                  if (nextVideos.length > 0) {
+                    nextWordToFileList[word] = nextVideos;
+                  }
+                });
+                setWordToFileList(nextWordToFileList);
+                setWordsToPlay(Object.keys(nextWordToFileList));
+                if (wordPlaying !== null) {
+                  const nextFilesToPlay = nextWordToFileList[wordPlaying];
+                  setFilesToPlay(nextFilesToPlay || []);
+                  filesToPlay$.next(nextFilesToPlay || []);
+                  fileIndexToPlay$.next(fileIndexToPlay);
                 }
-              });
-              setWordToFileList(nextWordToFileList);
-              setWordsToPlay(Object.keys(nextWordToFileList));
-              if (wordPlaying !== null) {
-                const nextFilesToPlay = nextWordToFileList[wordPlaying];
-                setFilesToPlay(nextFilesToPlay || []);
-                filesToPlay$.next(nextFilesToPlay || []);
-                fileIndexToPlay$.next(fileIndexToPlay);
               }
-            }
-          }}
-          onDeleteWordbook={async (wordbook: Wordbook) => {
-            if (wordbooks === null || wordbooks.length === 0) {
-              return;
-            }
-            const _wordbook = wordbooks.find((wb) => wb.name === wordbook.name);
-            const index = wordbooks.indexOf(_wordbook);
-            const nextWordbooks = [
-              ...wordbooks.slice(0, index),
-              ...wordbooks.slice(index + 1),
-            ];
-            console.log('nextWordbooks', nextWordbooks);
-            setWordbooks(nextWordbooks);
-            setWordPlaying(null);
-            if (nextWordbooks.length > 0) {
-              const nextWordbook = nextWordbooks[0];
-              setWordbook(nextWordbook);
-              const { wordsToPlay, wordToFileList } = await updateWordsToPlay(
-                nextWordbook
+            }}
+            onDeleteWordbook={async (wordbook: Wordbook) => {
+              if (wordbooks === null || wordbooks.length === 0) {
+                return;
+              }
+              const _wordbook = wordbooks.find(
+                (wb) => wb.name === wordbook.name
               );
-              playNextWord({
-                wordsToPlay,
-                wordToFileList,
-                studyRecord,
-              });
-            } else {
-              setWordbook(null);
-              setWordsToPlay(null);
+              const index = wordbooks.indexOf(_wordbook);
+              const nextWordbooks = [
+                ...wordbooks.slice(0, index),
+                ...wordbooks.slice(index + 1),
+              ];
+              console.log('nextWordbooks', nextWordbooks);
+              setWordbooks(nextWordbooks);
               setWordPlaying(null);
-            }
-          }}
-          onPlayNextFile={onPlayNextFile}
-          onPlayPrevFile={onPlayPrevFile}
-          filesToPlay={filesToPlay}
-          wordPlaying={wordPlaying}
-          studyRecord={studyRecord}
-          wordPlayingLevel={wordPlayingLevel}
-          setWordPlayingLevel={setWordPlayingLevel}
-          setPlaySpeed={setPlaySpeed}
-          onPlayPrevWord={onPlayPrevWord}
-          onPlayNextWord={onPlayNextWord}
-          onChangeFileIndexToPlay={changeFileIndexToPlay}
-          fileIndexToPlay={fileIndexToPlay}
-          wordbook={wordbook}
-          setWordbooks={setWordbooks}
-          wordbooks={wordbooks}
-          onToggleRight={() => {
-            setShowRight(!showRight);
-          }}
-          onToggleLeft={() => {
-            setShowLeft(!showLeft);
-          }}
-          onWordLevelChange={onWordLevelChange}
-        />
+              if (nextWordbooks.length > 0) {
+                const nextWordbook = nextWordbooks[0];
+                setWordbook(nextWordbook);
+                const { wordsToPlay, wordToFileList } = await updateWordsToPlay(
+                  nextWordbook
+                );
+                playNextWord({
+                  wordsToPlay,
+                  wordToFileList,
+                  studyRecord,
+                });
+              } else {
+                setWordbook(null);
+                setWordsToPlay(null);
+                setWordPlaying(null);
+              }
+            }}
+            onPlayNextFile={onPlayNextFile}
+            onPlayPrevFile={onPlayPrevFile}
+            filesToPlay={filesToPlay}
+            wordPlayingLevel={wordPlayingLevel}
+            setPlaySpeed={setPlaySpeed}
+            onPlayPrevWord={onPlayPrevWord}
+            onPlayNextWord={onPlayNextWord}
+            onChangeFileIndexToPlay={changeFileIndexToPlay}
+            fileIndexToPlay={fileIndexToPlay}
+            wordbook={wordbook}
+            onToggleRight={() => {
+              setShowRight(!showRight);
+              adjustHeight();
+            }}
+            onToggleLeft={() => {
+              setShowLeft(!showLeft);
+              adjustHeight();
+            }}
+            onWordLevelChange={onWordLevelChange}
+          />
+        </div>
       </div>
       <div className={['right', (showRight && 'showRight') || ''].join(' ')}>
         <WordExplainComponent searchWord={searchWord} />
       </div>
+    </div>
+  );
+}
+
+const currentWindow = remote.getCurrentWindow();
+const mousemove$ = fromEvent(document, 'mousemove').pipe(share());
+
+export default function App() {
+  const [isPlayerMaximum, setIsPlayerMaximum] = useState(false);
+  const [maximized, setMaximized] = useState(currentWindow.isMaximized());
+  const [showTitleBar, setShowTitleBar] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(
+    currentWindow.isFullScreen()
+  );
+  useEffect(() => {
+    // isPlayerMaximum
+    if (maximized) {
+      return;
+    }
+    ipcRenderer.send(
+      'onPlayerMaximumChange',
+      isPlayerMaximum,
+      myPlayer.video?.videoWidth,
+      myPlayer.video?.videoHeight
+    );
+  }, [isPlayerMaximum]);
+
+  useEffect(() => {
+    setShowTitleBar(!isPlayerMaximum);
+    if (!isPlayerMaximum) {
+      ipcRenderer.send('showContollButton');
+    } else {
+      ipcRenderer.send('hideContollButton');
+    }
+  }, [isPlayerMaximum]);
+
+  useEffect(() => {
+    const subscription = mousemove$.subscribe({
+      next: () => {
+        ipcRenderer.send('showContollButton');
+        setShowTitleBar(true);
+      },
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const subscription = mousemove$.pipe(debounceTime(3000)).subscribe({
+      next: () => {
+        if (isPlayerMaximum) {
+          ipcRenderer.send('hideContollButton');
+          setShowTitleBar(false);
+        }
+      },
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isPlayerMaximum]);
+  // add window listeners for currentWindow
+  useEffect(() => {
+    const onMaximized = () => {
+      console.log('maximized');
+      setMaximized(true);
+    };
+    const onRestore = () => {
+      console.log('unmaximize');
+      setMaximized(false);
+    };
+    const onFullScreen = () => {
+      setIsFullScreen(true);
+    };
+    const onLeaveFullScreen = () => {
+      setIsFullScreen(false);
+    };
+    const onResize = () => {
+      console.log('onResize, set maxmized false');
+      setMaximized(false);
+    };
+    const onMove = () => {
+      console.log('onMove, set maxmized false');
+      setMaximized(false);
+    };
+    currentWindow.on('resize', onResize);
+    currentWindow.on('maximize', onMaximized);
+    currentWindow.on('unmaximize', onRestore);
+    currentWindow.on('enter-full-screen', onFullScreen);
+    currentWindow.on('leave-full-screen', onLeaveFullScreen);
+    currentWindow.on('move', onMove);
+    return () => {
+      currentWindow.removeListener('maximize', onMaximized);
+      currentWindow.removeListener('unmaximize', onRestore);
+      currentWindow.removeListener('enter-full-screen', onFullScreen);
+      currentWindow.removeListener('leave-full-screen', onLeaveFullScreen);
+      currentWindow.removeListener('resize', onResize);
+      currentWindow.removeListener('move', onMove);
+    };
+  }, []);
+
+  // used by double click on the titlebar
+  // and by the maximize control button
+  const handleMaximize = () => {
+    if (maximized) {
+      console.log('currentWindow.unmaximize()');
+      currentWindow.unmaximize();
+    } else {
+      console.log('currentWindow.maximize()');
+      currentWindow.setAspectRatio(0);
+      currentWindow.maximize();
+    }
+  };
+
+  return (
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: showTitleBar ? 'auto' : 'none',
+      }}
+    >
+      <div
+        className={[
+          'titlebar-wrapper',
+          showTitleBar ? 'show' : '',
+          isFullScreen ? 'fullscreen' : '',
+          isPlayerMaximum ? 'titlebar-player-maximum' : '',
+        ].join(' ')}
+      >
+        <TitleBar
+          // iconSrc={icon} // app icon
+          currentWindow={currentWindow} // electron window instance
+          platform={process.platform} // win32, darwin, linux
+          // menu={menu}
+          theme={
+            {
+              // any theme overrides specific
+              // to your application :)
+            }
+          }
+          title=""
+          onClose={() => currentWindow.close()}
+          onMinimize={() => currentWindow.minimize()}
+          onMaximize={handleMaximize}
+          // when the titlebar is double clicked
+          onDoubleClick={handleMaximize}
+          // hide minimize windows control
+          disableMinimize={false}
+          // hide maximize windows control
+          disableMaximize={false}
+          // is the current window maximized?
+          maximized={maximized}
+        />
+      </div>
+
+      <Comma
+        isPlayerMaximum={isPlayerMaximum}
+        setIsPlayerMaximum={setIsPlayerMaximum}
+      />
     </div>
   );
 }

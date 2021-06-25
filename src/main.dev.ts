@@ -42,32 +42,6 @@ ipcMain.on('selectVideoFile', (event) => {
     });
 });
 
-ipcMain.on('selectTextFile', (event) => {
-  dialog
-    .showOpenDialog({
-      title: '请选择文本文件导入',
-      // 默认打开的路径，比如这里默认打开下载文件夹
-      defaultPath: app.getPath('desktop'),
-      buttonLabel: '导入',
-      // 限制能够选择的文件类型
-      filters: [
-        { name: '文本文件', extensions: ['txt'] },
-        // { name: 'Movies', extensions: ['mkv', 'avi', 'mp4'] },
-        // { name: 'Custom File Type', extensions: ['as'] },
-        // { name: 'All Files', extensions: ['*'] },
-      ],
-      properties: ['openFile', 'multiSelections'],
-      message: '请选择文本文件导入',
-    })
-    .then(({ filePaths }) => {
-      console.log(filePaths);
-      event.reply('textFileSelected', filePaths);
-    })
-    .catch((e) => {
-      console.error('showOpenDialog to selectTextFile error:', e);
-    });
-});
-
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -77,6 +51,50 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+
+ipcMain.on('onAdjustHeight', (event, middleContentHeight) => {
+  if (mainWindow === null) {
+    return;
+  }
+  mainWindow.setBounds({
+    height: middleContentHeight + 80,
+  });
+});
+
+ipcMain.on('showContollButton', (event) => {
+  if (mainWindow === null) {
+    return;
+  }
+  mainWindow.setWindowButtonVisibility(true);
+});
+
+ipcMain.on('hideContollButton', (event) => {
+  if (mainWindow === null) {
+    return;
+  }
+  mainWindow.setWindowButtonVisibility(false);
+});
+
+ipcMain.on('onPlayerMaximumChange', (event, isPlayerMaximum, width, height) => {
+  if (mainWindow === null) {
+    return;
+  }
+  if (isPlayerMaximum) {
+    if (width !== undefined && height !== undefined) {
+      const { width: prevWidth } = mainWindow.getBounds();
+      const nextHeight = (prevWidth * height) / width;
+      mainWindow.setBounds({
+        width: prevWidth,
+        height: parseInt(nextHeight.toString(), 10),
+      });
+      mainWindow.setAspectRatio(width / height);
+    } else {
+      mainWindow.setAspectRatio(16 / 9);
+    }
+  } else {
+    mainWindow.setAspectRatio(0);
+  }
+});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -122,9 +140,11 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     show: false,
     width: 1200,
-    height: 728,
+    height: 745,
     // frame: false,
     // autoHideMenuBar: true,
+    frame: false,
+    // titleBarStyle: 'hidden',
     icon: getAssetPath('icon.png'),
     webPreferences: {
       enableRemoteModule: true,
@@ -133,6 +153,11 @@ const createWindow = async () => {
     },
   });
 
+  mainWindow.setFullScreenable(true);
+  mainWindow.setMaximizable(true);
+  mainWindow.setWindowButtonVisibility(true);
+
+  // mainWindow.setFullScreen(true);
   mainWindow.loadURL(`file://${__dirname}/index.html`);
 
   // @TODO: Use 'ready-to-show' event

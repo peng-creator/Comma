@@ -5,9 +5,9 @@ import { myPlayer } from '../player/player';
 let count = 0;
 
 export const PlayerComponent = ({
-  isFullScreen,
+  isPlayerMaximum,
   togglePause,
-  setIsFullScreen,
+  setIsPlayerMaximum,
   wordsToPlay,
   wordbook,
   onPlayNextFile,
@@ -32,18 +32,24 @@ export const PlayerComponent = ({
   if (wordbook === null) {
     showEmpty = true;
   }
-  const fullScreen = () => {
-    setIsFullScreen(true);
-    myPlayer.resizeSubtitle();
-  };
+
+  const resizeSubtitle = () =>
+    setTimeout(() => {
+      console.log('resizeSubtitle...');
+      // 设定窗口固定比例会影响这里的效果，加个定时器可以解决。
+      myPlayer.resizeSubtitle();
+    });
+
   const exitFullScreen = () => {
-    setIsFullScreen(false);
-    myPlayer.resizeSubtitle();
+    setIsPlayerMaximum(false);
+    resizeSubtitle();
   };
+
   const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-    myPlayer.resizeSubtitle();
+    setIsPlayerMaximum(!isPlayerMaximum);
+    resizeSubtitle();
   };
+
   return (
     <div
       tabIndex={0}
@@ -109,7 +115,7 @@ export const PlayerComponent = ({
       )}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
       <div
-        className={`video-box ${isFullScreen ? 'full-screen' : ''}`}
+        className={`video-box ${isPlayerMaximum ? 'full-screen' : ''}`}
         id="video-box"
         onClick={() => {
           count += 1;

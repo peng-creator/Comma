@@ -321,12 +321,12 @@ export function processVideos$(
       const hour = (minute - minuteRemaining) / 60;
       let timeRemain = '';
       if (hour > 0) {
-        timeRemain += `${hour}小时`;
+        timeRemain += `${hour}`.padStart(2, '0').concat('时');
       }
       if (minuteRemaining > 0) {
-        timeRemain += `${minuteRemaining}分`;
+        timeRemain += `${minuteRemaining}`.padStart(2, '0').concat('分');
       }
-      timeRemain += `${secondsRemaining}秒`;
+      timeRemain += `${secondsRemaining}`.padStart(2, '0').concat('秒');
       console.log('预计剩余时间：');
       return {
         percent: percentNow.toFixed(2),

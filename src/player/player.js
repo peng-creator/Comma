@@ -131,7 +131,7 @@ class MyPlayer {
       playButton = document.createElement('img');
       playButton.src = playSVG;
       playButton.className = playButtonClassName;
-      playButton.style.display = 'none';
+      playButton.style.display = 'block';
       this.container.appendChild(playButton);
     }
     this.playButton = playButton;
@@ -194,7 +194,7 @@ class MyPlayer {
     let prevAss;
     const renderToCanvas = () =>
       requestAnimationFrame(() => {
-        if (player.isDisposed() || player.paused()) {
+        if (player.isDisposed()) {
           return;
         }
         const { videoWidth, videoHeight } = videoEl;
@@ -246,8 +246,13 @@ class MyPlayer {
                 });
                 span.addEventListener('contextmenu', (e) => {
                   e.preventDefault();
-                  this.menu.style.left = `${e.target.offsetLeft}px`;
-                  this.menu.style.bottom = '22px';
+                  let { offsetLeft } = e.target;
+                  let left = offsetLeft;
+                  if (offsetLeft + 100 >= this.subtitleContainer.clientWidth) {
+                    left = this.subtitleContainer.clientWidth - 100;
+                  }
+                  this.menu.style.left = `${left}px`;
+                  this.menu.style.bottom = `${this.subtitleContainer.clientHeight}px`;
                   this.menu.style.height = 'auto';
                   this.rightClickWord = word;
                 });
@@ -273,7 +278,8 @@ class MyPlayer {
         }
         renderToCanvas();
       });
-    player.on('play', () => renderToCanvas());
+    // player.on('play', () => renderToCanvas());
+    renderToCanvas();
   }
 
   load(src, word) {
@@ -312,23 +318,17 @@ class MyPlayer {
   }
 
   _play() {
-    this.player
-      .play()
-      .then(() => {
-        if (!this.shouldPlay) {
-          this.resizeSubtitle();
-          this.pause();
-        }
-      })
-      .catch((e) => {
+    if (this.shouldPlay) {
+      this.hidePlayButton();
+      this.player.play().catch((e) => {
         console.log('play error:', e);
       });
+    }
   }
 
   play(subtitleStrategies) {
     const { player } = this;
     this.subtitleStrategies = subtitleStrategies;
-    this.hidePlayButton();
     return new Promise((resolve, reject) => {
       player.ready(() => {
         this._play();

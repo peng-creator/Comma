@@ -22,36 +22,40 @@ export const VideoImportProgressComponent = ({
     >
       {progress.isLoading && <span>载入视频中...</span>}
       {progress.isLoading === undefined && (
-        <Row>
-          <Col span={5} style={{ textAlign: 'center' }}>
-            导入进度
-          </Col>
-          <Col span={10}>
-            <Progress percent={progress.percent} showInfo={false} />
-          </Col>
-          <Col
-            span={3}
-            style={{ textAlign: 'center', cursor: 'pointer' }}
-            className="del-btn"
-          >
-            <Popconfirm
-              placement="bottom"
-              title="确定要结束当前任务？"
-              onConfirm={onCancel}
-              okText="确认"
-              cancelText="取消"
-            >
-              <div style={{ width: '100%', height: '100%' }}>
-                <CloseCircleOutlined />
-              </div>
-            </Popconfirm>
-          </Col>
-          {progress.timeRemain && (
-            <Col span={6} style={{ textAlign: 'center' }}>
-              {progress.timeRemain}
+        <>
+          <Row>
+            <Col span={5} style={{ textAlign: 'center' }}>
+              导入进度
             </Col>
-          )}
-        </Row>
+            <Col span={16} style={{ padding: '0 5px' }}>
+              <Progress percent={progress.percent} showInfo={false} />
+            </Col>
+            <Col
+              span={3}
+              style={{ textAlign: 'center', cursor: 'pointer' }}
+              className="del-btn"
+            >
+              <Popconfirm
+                placement="bottom"
+                title="确定要结束当前任务？"
+                onConfirm={onCancel}
+                okText="确认"
+                cancelText="取消"
+              >
+                <div style={{ width: '100%', height: '100%' }}>
+                  <CloseCircleOutlined />
+                </div>
+              </Popconfirm>
+            </Col>
+          </Row>
+          <Row>
+            {progress.timeRemain && (
+              <Col span={24} style={{ textAlign: 'center' }}>
+                {progress.timeRemain}
+              </Col>
+            )}
+          </Row>
+        </>
       )}
     </div>
   );
