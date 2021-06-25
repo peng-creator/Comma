@@ -223,6 +223,14 @@ function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
   }, [fileIndexToPlay, filesToPlay]);
 
   useEffect(() => {
+    fileIndexToPlay$.subscribe({
+      next: (index) => {
+        setFileIndexToPlay(index);
+      },
+    });
+  }, []);
+
+  useEffect(() => {
     getStudyRecord()
       .then((studyRecord) => {
         if (studyRecord !== null) {
@@ -255,11 +263,6 @@ function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
     })();
   }, []);
 
-  const changeFileIndexToPlay = (index: number) => {
-    setFileIndexToPlay(index);
-    fileIndexToPlay$.next(index);
-  };
-
   const changeWordToPlay = async ({ wordToPlay, studyRecord }: any) => {
     if (wordToPlay === null || wordToPlay === undefined) {
       return;
@@ -278,7 +281,7 @@ function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
     console.log('word files:', files);
     setFilesToPlay(files);
     filesToPlay$.next(files);
-    changeFileIndexToPlay(0);
+    fileIndexToPlay$.next(0);
   };
 
   const playNextWord = async ({
@@ -436,7 +439,7 @@ function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
   const onPlayPrevFile = () => {
     const nextFileIndex = fileIndexToPlay - 1;
     if (nextFileIndex >= 0) {
-      changeFileIndexToPlay(nextFileIndex);
+      fileIndexToPlay$.next(nextFileIndex);
     } else {
       message.warn('已经是第一个视频了');
     }
@@ -542,7 +545,7 @@ function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
       onPlayNextWord();
       return;
     }
-    changeFileIndexToPlay(nextFileIndex);
+    fileIndexToPlay$.next(nextFileIndex);
   };
 
   const adjustHeight = () => {
@@ -808,7 +811,7 @@ function Comma({ isPlayerMaximum, setIsPlayerMaximum }) {
             setPlaySpeed={setPlaySpeed}
             onPlayPrevWord={onPlayPrevWord}
             onPlayNextWord={onPlayNextWord}
-            onChangeFileIndexToPlay={changeFileIndexToPlay}
+            onChangeFileIndexToPlay={(i: number) => fileIndexToPlay$.next(i)}
             fileIndexToPlay={fileIndexToPlay}
             wordbook={wordbook}
             onToggleRight={() => {
