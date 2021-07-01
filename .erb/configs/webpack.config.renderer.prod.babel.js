@@ -63,7 +63,19 @@ export default merge(baseConfig, {
               publicPath: './',
             },
           },
-          'css-loader',
+          {
+            loader: '@teamsupercell/typings-for-css-modules-loader',
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                localIdentName: '[name]__[local]__[hash:base64:5]',
+              },
+              sourceMap: false,
+              importLoaders: 1,
+            },
+          },
           'sass-loader',
         ],
       },
