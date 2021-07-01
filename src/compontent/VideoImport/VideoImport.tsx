@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { message, Modal, Popconfirm } from 'antd';
 import { ipcRenderer } from 'electron';
 import path from 'path';
@@ -124,17 +124,34 @@ export const importTask = () => {
       });
   });
 };
+type VideoImportComponentProps = {
+  setShowLeftPanel: (show: boolean) => void;
+  showLeftPanel: boolean;
+};
 
-export const VideoImportComponent = () => {
+export const VideoImportComponent = ({
+  setShowLeftPanel,
+  showLeftPanel,
+}: VideoImportComponentProps) => {
   let [totalFileCount] = useBehavior(totalFileCount$, 0);
   let [finishedFileCount] = useBehavior(finishedFileCount$, 0);
+  useEffect(() => {
+    console.log(
+      'totalFileCount in VideoImportComponent effect:',
+      totalFileCount
+    );
+    if (totalFileCount !== 0 && showLeftPanel === false) {
+      console.log('setShowLeftPanel(true) in VideoImportComponent effect');
+      setShowLeftPanel(true);
+    }
+  }, [totalFileCount]);
   if (totalFileCount === 0) {
     return null;
   }
   return (
     <div className={styles.Container}>
       <div>
-        视频导入：已完成 {totalFileCount} 中的 {finishedFileCount} 个
+        视频导入：已完成 {totalFileCount} 个中的 {finishedFileCount} 个
       </div>
       <div>视频转码需要较长时间，请耐心等待</div>
       <Popconfirm

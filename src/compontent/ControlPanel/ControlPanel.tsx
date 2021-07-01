@@ -29,9 +29,9 @@ export type ControlPanelComponentProps = {
   onPlayPrevWord: () => void;
   onPlayNextWord: () => void;
   setShowThumbnils: (showThumbnails: boolean) => void;
-  setShowWordPanel: (showWordPanel: boolean) => void;
+  setShowLeftPanel: (showLeftPanel: boolean) => void;
   showThumbnails: boolean;
-  showWordPanel: boolean;
+  showLeftPanel: boolean;
 };
 
 export const ControlPanelComponent = ({
@@ -40,9 +40,9 @@ export const ControlPanelComponent = ({
   onPlayPrevWord,
   onPlayNextWord,
   setShowThumbnils,
-  setShowWordPanel,
+  setShowLeftPanel,
   showThumbnails,
-  showWordPanel,
+  showLeftPanel,
 }: ControlPanelComponentProps) => {
   const [isPlaying] = useObservable(myPlayer.isPlaying$, false);
   const [currentTime] = useObservable(myPlayer.currentTime$, 0);
@@ -63,15 +63,15 @@ export const ControlPanelComponent = ({
           <div
             className={[
               styles.WordPanel,
-              showWordPanel ? styles.ShowWordPanel : '',
+              showLeftPanel ? styles.ShowWordPanel : '',
             ].join(' ')}
             onClick={() => {
-              setShowWordPanel(!showWordPanel);
+              setShowLeftPanel(!showLeftPanel);
             }}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                setShowWordPanel(!showWordPanel);
+                setShowLeftPanel(!showLeftPanel);
               }
             }}
           >

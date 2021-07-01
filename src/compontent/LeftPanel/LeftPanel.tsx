@@ -9,6 +9,8 @@ type LeftPanelProps = {
   wordPlaying: string;
   wordPlayingLevel: number;
   setWordPlayingLevel: (level: number) => void;
+  setShowLeftPanel: (show: boolean) => void;
+  showLeftPanel: boolean;
 };
 
 export const LeftPanel = ({
@@ -16,25 +18,32 @@ export const LeftPanel = ({
   wordPlaying,
   wordPlayingLevel,
   setWordPlayingLevel,
+  setShowLeftPanel,
+  showLeftPanel,
 }: LeftPanelProps) => {
   // const [paddingTime, setPaddingTime] = useBehavior(paddingTime$, 6000);
 
   return (
     <div className={styles.LeftPanel}>
-      <VideoImportComponent />
-      <div className={styles.Level}>
-        <div>生疏度 - {wordPlaying}</div>
-        <MySlider
-          value={wordPlayingLevel}
-          onChange={(v: number) => {
-            setWordPlayingLevel(v);
-          }}
-          debounce={false}
-          max={1000}
-        />
-      </div>
-      <div className={styles.DictContainer}>
-        {searchWord && (
+      <VideoImportComponent
+        setShowLeftPanel={setShowLeftPanel}
+        showLeftPanel={showLeftPanel}
+      />
+      {wordPlaying && (
+        <div className={styles.Level}>
+          <div>生疏度 - {wordPlaying}</div>
+          <MySlider
+            value={wordPlayingLevel}
+            onChange={(v: number) => {
+              setWordPlayingLevel(v);
+            }}
+            debounce={false}
+            max={1000}
+          />
+        </div>
+      )}
+      {searchWord && (
+        <div className={styles.DictContainer}>
           <iframe
             title="youdao"
             style={{
@@ -45,19 +54,21 @@ export const LeftPanel = ({
             }}
             src={`http://mobile.youdao.com/dict?le=eng&q=${searchWord}`}
           />
-        )}
-      </div>
-      <div className={styles.Level}>
-        <div>剪辑填充</div>
-        <MySlider
-          defaultValue={6}
-          onChange={(v: number) => {
-            myPlayer.timePadding = v * 1000;
-          }}
-          debounce={false}
-          max={20}
-        />
-      </div>
+        </div>
+      )}
+      {wordPlaying && (
+        <div className={styles.Level}>
+          <div>剪辑填充</div>
+          <MySlider
+            defaultValue={6}
+            onChange={(v: number) => {
+              myPlayer.timePadding = v * 1000;
+            }}
+            debounce={false}
+            max={20}
+          />
+        </div>
+      )}
     </div>
   );
 };

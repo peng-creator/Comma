@@ -1,6 +1,6 @@
 import { message } from 'antd';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { switchMap, debounceTime } from 'rxjs/operators';
+import { switchMap, debounceTime, take, filter } from 'rxjs/operators';
 import { StudyRecord } from '../../types/StudyRecord';
 import { WordClips } from '../../types/WordClips';
 import { pick } from '../../util/pick';
@@ -22,11 +22,20 @@ wordToPlay$.subscribe({
   },
 });
 
+let prevWordsToPlay: string[] = [];
 wordsToPlay$.subscribe({
   next: (wordsToPlay) => {
     if (wordsToPlay.length === 0) {
       wordToPlay$.next('');
     }
+    const wordToPlayIsNotEmptyFromEmpty =
+      prevWordsToPlay.length === 0 && wordsToPlay.length > 0;
+    const wordPlayingNotIncluded = !wordsToPlay.includes(wordPlaying);
+    if (wordToPlayIsNotEmptyFromEmpty || wordPlayingNotIncluded) {
+      // 可播放列表从空转变为非空、正在播放的单词从可播放列表中移除时，发起切换播放单词。
+      nextWordToPlayAction$.next('');
+    }
+    prevWordsToPlay = wordsToPlay;
   },
 });
 
@@ -103,9 +112,11 @@ const computeWordToPlay = (
 nextWordToPlayAction$
   .pipe(
     switchMap(() => {
-      return combineLatest([wordsToPlay$, wordClips$, studyRecord$]).pipe(
-        debounceTime(10)
-      );
+      return combineLatest([
+        wordsToPlay$.pipe(filter((words) => words.length > 0)),
+        wordClips$,
+        studyRecord$,
+      ]).pipe(debounceTime(10), take(1));
     })
   )
   .subscribe({

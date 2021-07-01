@@ -42,14 +42,23 @@ export const PlayerComponent = ({
   if (
     wordsToPlay === null ||
     wordsToPlay === undefined ||
-    wordsToPlay.length === 0
+    wordsToPlay.length === 0 ||
+    wordbook === null ||
+    wordbook.words.length === null
   ) {
     showEmpty = true;
   }
+  let emptyShowReason = '';
   if (wordbook === null) {
-    showEmpty = true;
+    emptyShowReason = '请创建单词本';
+  } else if (wordbook.words.length === 0) {
+    emptyShowReason = '您可以在菜单栏中导入单词';
+  } else if (wordbook.words.length > 100) {
+    emptyShowReason = '没有视频可以播放，您可以在菜单栏中导入更多视频';
+  } else {
+    emptyShowReason =
+      '您的单词本中没有剪辑可以播放，请在菜单栏中导入更多单词或视频';
   }
-
   const resizeSubtitle = () =>
     setTimeout(() => {
       console.log('resizeSubtitle...');
@@ -113,13 +122,7 @@ export const PlayerComponent = ({
     >
       {showEmpty && (
         <div className={styles.EmptyContainer}>
-          <Empty
-            description={
-              clipsLoading
-                ? '资源加载中'
-                : '暂无可播放资源，请从菜单栏中导入更多单词或视频'
-            }
-          />
+          <Empty description={clipsLoading ? '资源加载中' : emptyShowReason} />
         </div>
       )}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}

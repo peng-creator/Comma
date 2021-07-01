@@ -1,4 +1,4 @@
-import { map, mapTo, shareReplay, switchMap } from 'rxjs/operators';
+import { map, mapTo, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { promises as fs } from 'fs';
 import rimraf from 'rimraf';
 import { from, merge, Subject } from 'rxjs';
@@ -23,8 +23,14 @@ const clipsToPlayOnWordChange$ = wordToPlay$.pipe(
     let renamePromise = fs.rename(thumbnailPath, thumbnailRemovePath);
     renamePromise
       .then(() => {
-        return new Promise<void>((resolve) => {
-          rimraf(thumbnailRemovePath, () => resolve());
+        return new Promise<void>((resolve, reject) => {
+          rimraf(thumbnailRemovePath, (e) => {
+            if (e === null || e === undefined) {
+              resolve();
+            } else {
+              reject(e);
+            }
+          });
         });
       })
       .catch((e) => console.log(e));
@@ -32,6 +38,9 @@ const clipsToPlayOnWordChange$ = wordToPlay$.pipe(
       .then(() => mkdir(thumbnailPath))
       .catch((e) => console.log(e));
     return from(makeDirPromise).pipe(mapTo(clips));
+  }),
+  tap((clips) => {
+    console.log('clipsToPlayOnWordChange:', clips);
   })
 );
 export const clipsToPlayOnClipChange$ = new Subject<Clip[]>();

@@ -16,6 +16,9 @@ import { nextClipIndexToPlay$ } from '../state/user_input/nextClipIndexToPlay';
 import { wordToPlay$ } from '../state/reactive/wordToPlay';
 import { nextWordToPlayAction$ } from '../state/user_input/nextWordToPlayAction';
 import { Clip } from '../types/WordClips';
+import { studyRecord$ } from '../state/system/studyRecord';
+import { StudyRecord } from '../types/StudyRecord';
+import { saveStudyRecord } from '../database/wordbook';
 
 const s1 = new SubtitleStrategy({
   color: 'rgb(243, 235, 165)',
@@ -39,6 +42,13 @@ let _clipsToPlay: Clip[] = [];
 clipsToPlay$.subscribe({
   next: (clipsToPlay) => {
     _clipsToPlay = clipsToPlay;
+  },
+});
+
+let _studyRecord: StudyRecord = {};
+studyRecord$.subscribe({
+  next: (studyRecord) => {
+    _studyRecord = studyRecord;
   },
 });
 
@@ -85,6 +95,14 @@ export const play$ = clipsToPlay$.pipe(
           }
           return;
         }
+        const wordRecord = _studyRecord[_wordToPlay] || {
+          playTimes: 0,
+          level: 500,
+        };
+        wordRecord.playTimes += 1;
+        _studyRecord[_wordToPlay] = wordRecord;
+        console.log('studyRecord on playTimes change');
+        saveStudyRecord(_studyRecord);
         try {
           await myPlayer.load({ ...clip, file }, _wordToPlay);
           await myPlayer.play([s1, s1, s1]);

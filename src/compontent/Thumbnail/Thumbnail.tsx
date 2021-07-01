@@ -48,11 +48,13 @@ export const Thumbnail = ({
       })
       .then((src: string) => {
         if (!removed) {
+          console.log('setThumbnail src:', src);
           setThumbnail(src);
         }
       })
       .catch(() => {
         if (!removed) {
+          console.log('setThumbnail picSVG:', picSVG);
           setThumbnail(picSVG);
         }
       });

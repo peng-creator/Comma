@@ -31,7 +31,7 @@
   right: 14px;
 }
 
-.WordPanel {
+.LeftPanel {
   position: absolute;
   left: -350px;
   top: 50%;
@@ -42,9 +42,10 @@
   width: 350px;
 
   transition: all 0.15s;
+  z-index: 1;
 }
 
-.WordPanel.Show {
+.LeftPanel.Show {
   left: 14px;
 }
 

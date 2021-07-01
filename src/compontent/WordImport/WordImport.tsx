@@ -50,11 +50,12 @@ export const WordImportComponent = () => {
         newWords.push(w);
       }
     });
+    setWordbook(wordbook?.copy() || null);
+    console.log('partialUpdate(newWords):', newWords);
     partialUpdate(newWords);
     console.log('wordbook:', wordbook);
     saveWordbook(wordbook);
     console.log('select words from wordbook');
-    setWordbook(wordbook?.copy() || null);
     closeModal();
   };
 

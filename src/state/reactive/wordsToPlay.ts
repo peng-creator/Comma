@@ -2,8 +2,8 @@ import { map, shareReplay, tap } from 'rxjs/operators';
 import { wordClips$ } from './wordClips';
 
 export const wordsToPlay$ = wordClips$.pipe(
-  tap((wordsToPlay) => {
-    console.log('tap in wordsToPlay$, wordsToPlay:', wordsToPlay);
+  tap((wordClips) => {
+    console.log('tap in wordsToPlay$, wordClips:', wordClips);
   }),
   map((wordClips) => {
     const nextWordsToPlay = Object.keys(wordClips).filter(

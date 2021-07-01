@@ -16,6 +16,7 @@ import { deleteWord$ } from '../user_input/deleteWordAction';
 import { clipsLoading$ } from '../system/clipLoading$';
 
 export const getWordClip$ = (words: string[]) => {
+  console.log('getWordClip$, words:', words);
   if (words.length === 0) {
     return of({});
   }
@@ -53,7 +54,7 @@ const wordClipsFromDB$ = selectedWordbook$.pipe(
     if (loading$ !== null && wb?.name === wordbookLoading?.name) {
       return loading$;
     }
-    // 同一个单词本只会从磁盘整本读取一次，如果发生更新，只需要读取相应单词后，使用 wordClipsFromCacheUpdate$ 进行更新。
+    // 切换单词本时，只会从磁盘整本读取一次，后面只会返回缓存。如果发生更新，只需要读取相应单词后，使用 wordClipsFromCacheUpdate$ 对缓存进行更新。
     if (wb?.name === wordbookLoaded?.name) {
       return of(_wordClips);
     }
@@ -86,8 +87,14 @@ const wordClipsFromDB$ = selectedWordbook$.pipe(
 export const wordClipsFromCacheUpdate$ = new Subject<WordClips>();
 
 selectedWordbook$.subscribe({
-  next: () => {
-    wordClipsFromCacheUpdate$.next({});
+  next: (wb) => {
+    if (
+      wb === null ||
+      wordbookLoaded === null ||
+      wb.name !== wordbookLoaded.name
+    ) {
+      wordClipsFromCacheUpdate$.next({});
+    }
   },
 });
 
@@ -96,6 +103,7 @@ export const wordClips$ = merge(
   wordClipsFromDB$
 ).pipe(
   tap((wordClips) => {
+    console.log('tap in wordClips$ update, wordClips:', wordClips);
     _wordClips = wordClips;
   }),
   shareReplay(1)
@@ -114,10 +122,17 @@ export const partialUpdate = (
   words: string[],
   wordClipsToSelectFrom?: WordClips
 ) => {
+  console.log(
+    'partialUpdate, words:',
+    words,
+    ', wordClipsToSelectFrom:',
+    wordClipsToSelectFrom
+  );
   if (words.length === 0) {
     return;
   }
   words = [...new Set(words.filter((w) => wordsOfWordbook.has(w)))];
+  console.log('words in wordsOfWordbook:', words);
   if (words.length === 0) {
     return;
   }
@@ -148,6 +163,7 @@ export const partialUpdate = (
   }
   getWordClip$(words).subscribe({
     next: (loadedWordClips) => {
+      console.log('partialUpdate loadedWordClips:', loadedWordClips);
       wordClipsFromCacheUpdate$.next({
         ..._wordClips,
         ...loadedWordClips,

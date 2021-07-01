@@ -1,5 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { StudyRecord } from '../types/StudyRecord';
 import { sleep } from '../util/index.mjs';
 import { mkdir } from '../util/mkdir';
 import { getJSONDB, dbRoot } from './db';
@@ -91,13 +94,23 @@ export async function getStudyRecord() {
   await init();
   const filePath = path.join(dbRoot, 'study_record.json');
   const db = await getJSONDB(filePath);
-  return db.data;
+  if (db.data === null) {
+    return {} as StudyRecord;
+  }
+  return db.data as StudyRecord;
 }
 
-export async function saveStudyRecord(studyRecord) {
-  await init();
-  const filePath = path.join(dbRoot, 'study_record.json');
-  const db = await getJSONDB(filePath);
-  db.data = studyRecord;
-  return db.write().catch(() => {});
+const saveStudyRecord$ = new Subject<StudyRecord>();
+
+saveStudyRecord$.pipe(debounceTime(1000)).subscribe({
+  next: async (studyRecord) => {
+    await init();
+    const filePath = path.join(dbRoot, 'study_record.json');
+    const db = await getJSONDB(filePath);
+    db.data = studyRecord;
+    return db.write().catch(() => {});
+  },
+});
+export function saveStudyRecord(studyRecord: StudyRecord) {
+  saveStudyRecord$.next(studyRecord);
 }

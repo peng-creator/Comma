@@ -55,7 +55,7 @@ class Exec {
       });
       spawnObj.on('exit', (code) => {
         console.log(`exit code : ${code}`);
-        observer.error(code);
+        // observer.error(code);
       });
       spawnObj.on('error', (err) => {
         console.error('启动子进程失败', err);

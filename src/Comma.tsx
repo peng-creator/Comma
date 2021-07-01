@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { message } from 'antd';
+import { Empty, message } from 'antd';
 import styles from './Comma.css';
-import { saveWordbook, Wordbook } from './database/wordbook';
+import { saveStudyRecord, saveWordbook, Wordbook } from './database/wordbook';
 import { WordListComponent } from './compontent/WordList/WordList';
 import { useBehavior, useObservable } from './state';
 import { studyRecord$ } from './state/system/studyRecord';
@@ -50,9 +50,19 @@ export const Comma = ({
   const [clipIndexToPlay] = useObservable(nextClipIndexToPlay$, 0);
   const [showThumbnails, setShowThumbnils] = useState(false);
   const [autoShowThumbnails, setAutoShowThumbnils] = useState(false);
-  const [showWordPanel, setShowWordPanel] = useState(false);
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
   const [searchWord, setSearchWord] = useState(wordToPlay);
-
+  console.log('render component comma log state ====> start:');
+  console.log('studyRecord:', studyRecord);
+  console.log('wordToPlay:', wordToPlay);
+  console.log('wordClips:', wordClips);
+  console.log('clipsToPlay:', clipsToPlay);
+  console.log('clipIndexToPlay:', clipIndexToPlay);
+  console.log('showThumbnails:', showThumbnails);
+  console.log('autoShowThumbnails:', autoShowThumbnails);
+  console.log('showLeftPanel:', showLeftPanel);
+  console.log('searchWord:', searchWord);
+  console.log('render component comma log state ====> end:');
   useEffect(() => {
     setSearchWord(wordToPlay);
   }, [wordToPlay]);
@@ -110,6 +120,12 @@ export const Comma = ({
 
   return (
     <div className={styles.Comma}>
+      {wordbook === null && (
+        <Empty
+          style={{ color: 'white' }}
+          description="您还可以从菜单栏中增加单词本"
+        />
+      )}
       {wordbook !== null && (
         <WordListComponent
           wordbook={wordbook}
@@ -150,9 +166,22 @@ export const Comma = ({
           }}
           onWordLevelChange={(changeLevel: (level: number) => number) => {
             let { level: prevLevel } = wordRecord;
-            const nextLevel = changeLevel(prevLevel);
+            let nextLevel = changeLevel(prevLevel);
+            if (nextLevel < 0) {
+              nextLevel = 0;
+            }
+            if (nextLevel > 1000) {
+              nextLevel = 1000;
+            }
             message.info(`${wordToPlay} 生疏度: ${nextLevel} `, 0.6);
             setWordLevel(nextLevel);
+            wordRecord.level = nextLevel;
+            studyRecord[wordToPlay] = wordRecord;
+            console.log(
+              'studyRecord onWordLevelChange, wordRecord:',
+              wordRecord
+            );
+            saveStudyRecord(studyRecord);
           }}
         />
       )}
@@ -178,8 +207,8 @@ export const Comma = ({
             }}
             setShowThumbnils={setShowThumbnils}
             showThumbnails={showThumbnails}
-            setShowWordPanel={setShowWordPanel}
-            showWordPanel={showWordPanel}
+            setShowLeftPanel={setShowLeftPanel}
+            showLeftPanel={showLeftPanel}
           />
         )}
       </div>
@@ -199,13 +228,24 @@ export const Comma = ({
         </div>
       )}
       <div
-        className={[styles.WordPanel, showWordPanel && styles.Show].join(' ')}
+        className={[styles.LeftPanel, showLeftPanel && styles.Show].join(' ')}
       >
         <LeftPanel
           searchWord={searchWord}
           wordPlaying={wordToPlay}
           wordPlayingLevel={wordRecord?.level || 500}
-          setWordPlayingLevel={setWordLevel}
+          setWordPlayingLevel={(level: number) => {
+            setWordLevel(level);
+            wordRecord.level = level;
+            studyRecord[wordToPlay] = wordRecord;
+            console.log(
+              'studyRecord onWordLevelChange, wordRecord:',
+              wordRecord
+            );
+            saveStudyRecord(studyRecord);
+          }}
+          setShowLeftPanel={setShowLeftPanel}
+          showLeftPanel={showLeftPanel}
         />
       </div>
       <AddWordbookComponent />
