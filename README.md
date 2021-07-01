@@ -1,4 +1,4 @@
-<img src=".erb/img/banner.png" width="100%" />
+<img src=".erb/img/banner.jpg" width="100%" />
 
 Comma 是一款帮助您利用视频资源学习单词的桌面应用。
 
