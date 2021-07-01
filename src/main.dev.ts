@@ -15,7 +15,6 @@ import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import console from 'console';
-import MenuBuilder from './menu';
 
 ipcMain.on('selectVideoFile', (event) => {
   dialog
@@ -52,51 +51,21 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('onAdjustHeight', (event, middleContentHeight) => {
-  if (mainWindow === null) {
-    return;
-  }
-  mainWindow.setBounds({
-    height: middleContentHeight + 80,
-  });
-});
-
 if (process.platform === 'darwin') {
-  ipcMain.on('showContollButton', (event) => {
+  ipcMain.on('showContollButton', () => {
     if (mainWindow === null) {
       return;
     }
     mainWindow.setWindowButtonVisibility(true);
   });
 
-  ipcMain.on('hideContollButton', (event) => {
+  ipcMain.on('hideContollButton', () => {
     if (mainWindow === null) {
       return;
     }
     mainWindow.setWindowButtonVisibility(false);
   });
 }
-
-ipcMain.on('onPlayerMaximumChange', (event, isPlayerMaximum, width, height) => {
-  if (mainWindow === null) {
-    return;
-  }
-  if (isPlayerMaximum) {
-    if (width !== undefined && height !== undefined) {
-      const { width: prevWidth } = mainWindow.getBounds();
-      const nextHeight = (prevWidth * height) / width;
-      mainWindow.setBounds({
-        width: prevWidth,
-        height: parseInt(nextHeight.toString(), 10),
-      });
-      mainWindow.setAspectRatio(width / height);
-    } else {
-      mainWindow.setAspectRatio(16 / 9);
-    }
-  } else {
-    mainWindow.setAspectRatio(0);
-  }
-});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -107,7 +76,7 @@ if (
   process.env.NODE_ENV === 'development' ||
   process.env.DEBUG_PROD === 'true'
 ) {
-  require('electron-debug')();
+  // require('electron-debug')();
 }
 
 const installExtensions = async () => {
@@ -141,12 +110,13 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1200,
-    height: 745,
+    width: 1300,
+    height: 750,
     // frame: false,
     // autoHideMenuBar: true,
     frame: false,
     // titleBarStyle: 'hidden',
+    transparent: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       enableRemoteModule: true,
@@ -182,9 +152,6 @@ const createWindow = async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.on('new-window', (event, url) => {

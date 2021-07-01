@@ -1,16 +1,13 @@
-import { promises as fs } from 'fs';
 import path from 'path';
 
-export async function mkdir(p) {
-  try {
-    return await fs.stat(p);
-  } catch (err) {
-    const parent = path.resolve(p, '..');
-    await mkdir(parent);
-    try {
-      return await fs.mkdir(p);
-    } catch (err) {
-      console.warn('fs.mkdir of ', p, 'error: ', err);
-    }
+export const getConvertOutputPath = (file, aimExt, outDir) => {
+  const basename = path.basename(file);
+  const ext = path.extname(file);
+  if (!outDir) {
+    outDir = path.dirname(file);
   }
-}
+  return `${outDir}/${basename.slice(
+    0,
+    basename.length - ext.length
+  )}.${aimExt}`;
+};

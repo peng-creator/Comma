@@ -3,20 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <title>Comma</title>
-    <style>
-      #back-circles {
-        height: 100%;
-        width: 100%;
-        position: relative;
-      }
-
-      #back-circles > div {
-        width: 300px;
-        height: 300px;
-        border-radius: 50%;
-        position: absolute;
-      }
-    </style>
     <script>
       (() => {
         if (process?.env?.NODE_ENV !== 'development') {
@@ -35,52 +21,6 @@
     </script>
   </head>
   <body>
-    <div id="back-circles">
-      <div
-        style="
-          top: 0;
-          left: 0;
-          background-color: rgba(185, 196, 23, 0.5);
-          box-shadow: 0 0 600px 600px rgba(185, 196, 23, 0.5);
-        "
-      ></div>
-      <div
-        style="
-          top: 2%;
-          right: 3%;
-          background-color: rgba(230, 86, 86, 0.37);
-          box-shadow: 0 0 500px 500px rgba(230, 86, 86, 0.37);
-        "
-      ></div>
-      <div
-        style="
-          bottom: 0;
-          right: 5%;
-          background-color: rgba(141, 92, 231, 0.37);
-          box-shadow: 0 0 200px 200px rgba(141, 92, 231, 0.37);
-        "
-      ></div>
-      <div
-        style="
-          width: 10px;
-          height: 10px;
-          top: 40%;
-          left: 30%;
-          background-color: rgba(236, 92, 205, 0.3);
-          box-shadow: 0 0 600px 600px rgba(236, 92, 205, 0.3);
-        "
-      ></div>
-      <div
-        style="
-          width: 10px;
-          height: 10px;
-          bottom: -10%;
-          left: 45%;
-          background-color: rgba(20, 30, 170, 0.37);
-          box-shadow: 0 0 400px 400px rgba(20, 30, 170, 0.37);
-        "
-      ></div>
-    </div>
     <div id="root"></div>
     <script>
       const scripts = [];

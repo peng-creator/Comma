@@ -3,7 +3,9 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import jschardet from 'jschardet';
 // import pathToFfmpeg from 'ffmpeg-static';
-import { assContentToCutProject } from '../util/index.mjs';
+import { from, lastValueFrom, Observable } from 'rxjs';
+import { catchError, mapTo } from 'rxjs/operators';
+import { assContentToCutProject, millisecondsToTime } from '../util/index.mjs';
 
 const pathToFfmpeg = path.resolve(__dirname, '../assets/ffmpeg');
 console.log('pathToFfmpeg:', pathToFfmpeg);
@@ -20,7 +22,7 @@ class Exec {
   }
 
   run() {
-    return new Promise((resolve) => {
+    return new Observable((observer) => {
       console.log(`command: ${this.command} ${this.args.join(' ')}`);
       const spawnObj = child_process.spawn(this.command, this.args);
       const { stderr, stdout } = spawnObj;
@@ -43,17 +45,25 @@ class Exec {
       spawnObj.on('close', (code) => {
         // console.log(`close code : ${code}`);
         if (out) {
-          resolve(out.toString());
+          // resolve(out.toString());
+          observer.next(out.toString());
         } else if (error) {
-          resolve(error.toString());
+          // resolve(error.toString());
+          observer.next(error.toString());
         }
+        observer.complete();
       });
-      // spawnObj.on('exit', (code) => {
-      //   console.log(`exit code : ${code}`);
-      // });
+      spawnObj.on('exit', (code) => {
+        console.log(`exit code : ${code}`);
+        observer.error(code);
+      });
       spawnObj.on('error', (err) => {
         console.error('启动子进程失败', err);
+        observer.complete();
       });
+      return () => {
+        spawnObj.kill();
+      };
     });
   }
 }
@@ -134,21 +144,72 @@ export function cutVideo(
     length
   );
   // const getClipPromise = exec(`${pathToFfmpeg} -ss ${start} -i "${source}" -to ${length}  -vcodec ${vcodec} -crf ${crf} -preset ${preset}  ${output} -y`);
-  const getClipPromise = new Exec(pathToFfmpeg)
-    .addArg('-ss')
-    .addArg(start)
-    .addArg('-i')
-    .addArg(source)
-    .addArg('-to')
-    .addArg(length)
-    .addArg('-vcodec')
-    .addArg(vcodec)
-    .addArg('-crf')
-    .addArg(crf)
-    .addArg('-preset')
-    .addArg(preset)
-    .addArg(output)
-    .addArg('-y')
-    .run();
+  const getClipPromise = lastValueFrom(
+    new Exec(pathToFfmpeg)
+      .addArg('-ss')
+      .addArg(start)
+      .addArg('-i')
+      .addArg(source)
+      .addArg('-to')
+      .addArg(length)
+      .addArg('-vcodec')
+      .addArg(vcodec)
+      .addArg('-crf')
+      .addArg(crf)
+      .addArg('-preset')
+      .addArg(preset)
+      .addArg(output)
+      .addArg('-y')
+      .run()
+  );
   return Promise.all([getSubtitlePromise, getClipPromise]);
+}
+
+export function convertToMp4(
+  source,
+  output,
+  vcodec = 'h264',
+  crf = 28,
+  preset = 'ultrafast'
+) {
+  return from(fs.stat(output)).pipe(
+    catchError(() =>
+      new Exec(pathToFfmpeg)
+        .addArg('-i')
+        .addArg(source)
+        .addArg('-vcodec')
+        .addArg(vcodec)
+        .addArg('-crf')
+        .addArg(crf)
+        .addArg('-preset')
+        .addArg(preset)
+        .addArg(output)
+        .addArg('-y')
+        .run()
+    ),
+    mapTo(source)
+  );
+}
+
+export async function getThumbnail(source, output, time = 0) {
+  try {
+    await fs.stat(output);
+    return output;
+  } catch (err) {
+    console.log('没有缩略图，准备生成。');
+  }
+  await lastValueFrom(
+    new Exec(pathToFfmpeg)
+      .addArg('-ss')
+      .addArg(millisecondsToTime(time))
+      .addArg('-i')
+      .addArg(source)
+      .addArg('-vframes')
+      .addArg(2)
+      .addArg(output)
+      .addArg('-y')
+      .run()
+  );
+
+  return output;
 }

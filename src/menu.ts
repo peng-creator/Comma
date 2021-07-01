@@ -1,11 +1,60 @@
 import {
   app,
   Menu,
-  // shell,
   BrowserWindow,
   MenuItemConstructorOptions,
+  // app,
+  remote,
+  // shell,
+  // BrowserWindow,
+  // MenuItemConstructorOptions,
 } from 'electron';
+import { importTask } from './compontent/VideoImport/VideoImport';
+import { Wordbook } from './database/wordbook';
+import { newWordbookAction$ } from './state/user_input/newWordbookAction';
+import { selectedWordbook$ } from './state/user_input/selectedWordbook';
+import { wordImportAction$ } from './state/user_input/wordImportAction';
 
+const buildWordbookMenu = (
+  wordbooks: Wordbook[],
+  selectedWordbook: Wordbook | null
+) => {
+  type checkbox = 'checkbox';
+  const wordbookSubMenu = wordbooks.map((wb) => {
+    return {
+      label: wb.name,
+      type: 'checkbox' as checkbox,
+      checked: wb.name === selectedWordbook?.name,
+      click: () => {
+        selectedWordbook$.next(wb);
+      },
+    };
+  });
+  const subMenuWordbook: MenuItemConstructorOptions = {
+    label: '单词本',
+    submenu: [
+      {
+        label: '新增单词本',
+        click: () => {
+          newWordbookAction$.next('');
+        },
+      },
+      {
+        label: selectedWordbook?.name || '请选择单词本',
+        submenu: wordbookSubMenu,
+      },
+      {
+        label: '导入单词',
+        click: () => {
+          wordImportAction$.next('');
+        },
+      },
+    ],
+  };
+  return subMenuWordbook;
+};
+
+// const { Menu } = remote;
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
   submenu?: DarwinMenuItemConstructorOptions[] | Menu;
@@ -18,7 +67,7 @@ export default class MenuBuilder {
     this.mainWindow = mainWindow;
   }
 
-  buildMenu(): Menu {
+  buildMenu(wordbooks: Wordbook[], selectedWordbook: Wordbook | null): Menu {
     if (
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
@@ -28,11 +77,11 @@ export default class MenuBuilder {
 
     const template =
       process.platform === 'darwin'
-        ? this.buildDarwinTemplate()
-        : this.buildDefaultTemplate();
+        ? this.buildDarwinTemplate(wordbooks, selectedWordbook)
+        : this.buildDefaultTemplate(wordbooks, selectedWordbook);
 
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
+    const menu = remote.Menu.buildFromTemplate(template);
+    remote.Menu.setApplicationMenu(menu);
 
     return menu;
   }
@@ -41,7 +90,7 @@ export default class MenuBuilder {
     this.mainWindow.webContents.on('context-menu', (_, props) => {
       const { x, y } = props;
 
-      Menu.buildFromTemplate([
+      remote.Menu.buildFromTemplate([
         {
           label: 'Inspect element',
           click: () => {
@@ -52,12 +101,15 @@ export default class MenuBuilder {
     });
   }
 
-  buildDarwinTemplate(): MenuItemConstructorOptions[] {
+  buildDarwinTemplate(
+    wordbooks: Wordbook[],
+    selectedWordbook: Wordbook | null
+  ): MenuItemConstructorOptions[] {
     const subMenuAbout: DarwinMenuItemConstructorOptions = {
-      label: 'Electron',
+      label: 'Comma',
       submenu: [
         {
-          label: 'About Comma',
+          label: '关于 Comma',
           selector: 'orderFrontStandardAboutPanel:',
         },
         // { type: 'separator' },
@@ -76,7 +128,7 @@ export default class MenuBuilder {
         // { label: 'Show All', selector: 'unhideAllApplications:' },
         { type: 'separator' },
         {
-          label: 'Quit',
+          label: '退出',
           accelerator: 'Command+Q',
           click: () => {
             app.quit();
@@ -85,40 +137,40 @@ export default class MenuBuilder {
       ],
     };
     const subMenuEdit: DarwinMenuItemConstructorOptions = {
-      label: 'Edit',
+      label: '编辑',
       submenu: [
-        { label: 'Undo', accelerator: 'Command+Z', selector: 'undo:' },
-        { label: 'Redo', accelerator: 'Shift+Command+Z', selector: 'redo:' },
+        { label: '撤销', accelerator: 'Command+Z', selector: 'undo:' },
+        { label: '重做', accelerator: 'Shift+Command+Z', selector: 'redo:' },
         { type: 'separator' },
-        { label: 'Cut', accelerator: 'Command+X', selector: 'cut:' },
-        { label: 'Copy', accelerator: 'Command+C', selector: 'copy:' },
-        { label: 'Paste', accelerator: 'Command+V', selector: 'paste:' },
+        { label: '剪切', accelerator: 'Command+X', selector: 'cut:' },
+        { label: '复制', accelerator: 'Command+C', selector: 'copy:' },
+        { label: '粘贴', accelerator: 'Command+V', selector: 'paste:' },
         {
-          label: 'Select All',
+          label: '全选',
           accelerator: 'Command+A',
           selector: 'selectAll:',
         },
       ],
     };
     const subMenuViewDev: MenuItemConstructorOptions = {
-      label: 'View',
+      label: '视图',
       submenu: [
         {
-          label: 'Reload',
+          label: '重新加载',
           accelerator: 'Command+R',
           click: () => {
             this.mainWindow.webContents.reload();
           },
         },
         {
-          label: 'Toggle Full Screen',
+          label: '全屏切换',
           accelerator: 'Ctrl+Command+F',
           click: () => {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
           },
         },
         {
-          label: 'Toggle Developer Tools',
+          label: '开发者工具',
           accelerator: 'Alt+Command+I',
           click: () => {
             this.mainWindow.webContents.toggleDevTools();
@@ -127,10 +179,10 @@ export default class MenuBuilder {
       ],
     };
     const subMenuViewProd: MenuItemConstructorOptions = {
-      label: 'View',
+      label: '视图',
       submenu: [
         {
-          label: 'Toggle Full Screen',
+          label: '全屏切换',
           accelerator: 'Ctrl+Command+F',
           click: () => {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
@@ -139,61 +191,64 @@ export default class MenuBuilder {
       ],
     };
     const subMenuWindow: DarwinMenuItemConstructorOptions = {
-      label: 'Window',
+      label: '窗口',
       submenu: [
         {
-          label: 'Minimize',
+          label: '缩小',
           accelerator: 'Command+M',
           selector: 'performMiniaturize:',
         },
-        { label: 'Close', accelerator: 'Command+W', selector: 'performClose:' },
+        { label: '关闭', accelerator: 'Command+W', selector: 'performClose:' },
         { type: 'separator' },
-        { label: 'Bring All to Front', selector: 'arrangeInFront:' },
+        { label: '全部窗口', selector: 'arrangeInFront:' },
       ],
     };
-    // const subMenuHelp: MenuItemConstructorOptions = {
-    //   label: 'Help',
-    //   submenu: [
-    //     {
-    //       label: 'Learn More',
-    //       click() {
-    //         shell.openExternal('https://electronjs.org');
-    //       },
-    //     },
-    //     {
-    //       label: 'Documentation',
-    //       click() {
-    //         shell.openExternal(
-    //           'https://github.com/electron/electron/tree/master/docs#readme'
-    //         );
-    //       },
-    //     },
-    //     {
-    //       label: 'Community Discussions',
-    //       click() {
-    //         shell.openExternal('https://www.electronjs.org/community');
-    //       },
-    //     },
-    //     {
-    //       label: 'Search Issues',
-    //       click() {
-    //         shell.openExternal('https://github.com/electron/electron/issues');
-    //       },
-    //     },
-    //   ],
-    // };
+    const subMenuHelp: MenuItemConstructorOptions = {
+      label: '帮助',
+      submenu: [
+        {
+          label: 'Comma',
+          click() {
+            remote.shell.openExternal(
+              'https://peng-creator.github.io/comma-web/comma/'
+            );
+          },
+        },
+      ],
+    };
 
+    const subMenuVideo: MenuItemConstructorOptions = {
+      label: '视频',
+      submenu: [
+        {
+          label: '导入视频',
+          click: () => {
+            importTask();
+          },
+        },
+      ],
+    };
     const subMenuView =
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
         ? subMenuViewDev
         : subMenuViewProd;
 
-    // return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
-    return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow];
+    return [
+      subMenuAbout,
+      subMenuVideo,
+      buildWordbookMenu(wordbooks, selectedWordbook),
+      subMenuEdit,
+      subMenuView,
+      subMenuWindow,
+      subMenuHelp,
+    ];
   }
 
-  buildDefaultTemplate() {
+  buildDefaultTemplate(
+    wordbooks: Wordbook[],
+    selectedWordbook: Wordbook | null
+  ) {
     const templateDefault = [
       {
         label: '&File',
@@ -211,6 +266,18 @@ export default class MenuBuilder {
           },
         ],
       },
+      {
+        label: '视频',
+        submenu: [
+          {
+            label: '导入视频',
+            click: () => {
+              importTask();
+            },
+          },
+        ],
+      },
+      buildWordbookMenu(wordbooks, selectedWordbook),
       {
         label: '&View',
         submenu:
@@ -253,37 +320,19 @@ export default class MenuBuilder {
                 },
               ],
       },
-      // {
-      //   label: 'Help',
-      //   submenu: [
-      //     {
-      //       label: 'Learn More',
-      //       click() {
-      //         shell.openExternal('https://electronjs.org');
-      //       },
-      //     },
-      //     {
-      //       label: 'Documentation',
-      //       click() {
-      //         shell.openExternal(
-      //           'https://github.com/electron/electron/tree/master/docs#readme'
-      //         );
-      //       },
-      //     },
-      //     {
-      //       label: 'Community Discussions',
-      //       click() {
-      //         shell.openExternal('https://www.electronjs.org/community');
-      //       },
-      //     },
-      //     {
-      //       label: 'Search Issues',
-      //       click() {
-      //         shell.openExternal('https://github.com/electron/electron/issues');
-      //       },
-      //     },
-      //   ],
-      // },
+      {
+        label: '帮助',
+        submenu: [
+          {
+            label: 'Comma',
+            click() {
+              remote.shell.openExternal(
+                'https://peng-creator.github.io/comma-web/comma/'
+              );
+            },
+          },
+        ],
+      },
     ];
 
     return templateDefault;

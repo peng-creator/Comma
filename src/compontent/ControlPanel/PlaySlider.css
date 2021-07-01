@@ -1,0 +1,44 @@
+.Slider {
+  height: 10px;
+  border-radius: 5px;
+
+  position: relative;
+  background: rgb(189, 151, 240, 0.38);
+}
+
+.Range {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0;
+  background: rgb(169, 118, 236);
+  transform: translateY(-50%);
+  height: 100%;
+
+  cursor: pointer;
+}
+
+.RangeDragger {
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  border: 2px solid rgb(169, 118, 236);
+
+  position: absolute;
+  top: -10px;
+  left: 0;
+  /* transform: translateY(-50%); */
+  cursor: pointer;
+}
+
+.Indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+
+  width: 2px;
+  height: 15px;
+  background: rgb(175, 8, 8);
+}

@@ -1,0 +1,34 @@
+import { useEffect, useState } from 'react';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+
+export const useObservable = <T, S extends Observable<T>>(
+  source: S,
+  initailValue: T
+): [T, S, (source: S) => void] => {
+  const [_source, setSource] = useState(source);
+  const [value, setValue] = useState<T>(initailValue);
+  useEffect(() => {
+    const subscription = source.subscribe({
+      next: (value) => {
+        setValue(value);
+      },
+    });
+    return () => subscription.unsubscribe();
+  }, [_source]);
+  return [value, _source, setSource];
+};
+
+export const useSubject = <T, S extends Subject<T>>(
+  subject: S,
+  initailValue: T
+): [T, (value: T) => void, S, (source: S) => void] => {
+  const [value, _subject, setSource] = useObservable(subject, initailValue);
+  return [value, (value: T) => _subject.next(value), _subject, setSource];
+};
+
+export const useBehavior = <T>(
+  behaviorSubject: BehaviorSubject<T>,
+  initailValue: T
+) => {
+  return useSubject(behaviorSubject, initailValue);
+};

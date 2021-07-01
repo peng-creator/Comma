@@ -1,16 +1,18 @@
 import { promises as fs } from 'fs';
 import jschardet from 'jschardet';
+import { BehaviorSubject } from 'rxjs';
 import { assContentToCutProject } from '../util/index.mjs';
 import playSVG from '../../assets/play.svg';
+// let html = require('nanohtml');
 
 export class SubtitleStrategy {
   constructor({
     font = '1em serif',
-    color = 'black',
+    color = 'rgb(243, 235, 165)',
     emphasisFont = 'bold 1.2em "Fira Sans", serif',
     emphasisColor = 'rgb(128, 31, 115)',
     show = true,
-    background = 'yellow',
+    background = 'rgb(169, 118, 236)',
   } = {}) {
     this.font = font;
     this.color = color;
@@ -45,7 +47,19 @@ class MyPlayer {
     this.domReady = false;
     this.playSpeed = 1;
     this.playButton = null;
+    this.timePadding = 6000;
+    this.start = 0;
+    this.end = 0;
+    this.start$ = new BehaviorSubject(0);
+    this.end$ = new BehaviorSubject(0);
     this.rightClickWord = '';
+    this.audioWaveContainer = document.createElement('div');
+    document.body.appendChild(this.audioWaveContainer);
+    this.volume = 1;
+    this.isPlaying$ = new BehaviorSubject(false);
+    this.currentTime$ = new BehaviorSubject(0); // 播放到第几秒
+    this.duration$ = new BehaviorSubject(0); // 总共时长多少秒
+    this.willEndResolve = () => {};
     this.addWordsToWordBook = () => {};
     this.menu = document.createElement('div');
     this.menu.className = 'word-right-click-menu';
@@ -68,6 +82,10 @@ class MyPlayer {
     window.addEventListener('resize', () => {
       this.resizeSubtitle();
     });
+  }
+
+  getAudioWaveContainer() {
+    return this.audioWaveContainer;
   }
 
   onAddWordsToWordBook(callback) {
@@ -115,11 +133,10 @@ class MyPlayer {
       subtitleContainer.className = subtitleContainerClassName;
       subtitleContainer.addEventListener('click', (e) => {
         e.stopPropagation();
-        console.log('click');
+        this.menu.style.height = '0px';
       });
       subtitleContainer.addEventListener('mouseup', (e) => {
         e.stopPropagation();
-        console.log('mouseup');
       });
       this.container.appendChild(subtitleContainer);
     }
@@ -135,6 +152,13 @@ class MyPlayer {
       this.container.appendChild(playButton);
     }
     this.playButton = playButton;
+  }
+
+  setVolume(volume) {
+    console.log('setVolume:', volume);
+    volume /= 100;
+    this.volume = volume;
+    this.player.volume(volume);
   }
 
   clear() {
@@ -168,6 +192,7 @@ class MyPlayer {
     this.shouldPlay = true;
     this._play();
     this.hidePlayButton();
+    this.isPlaying$.next(true);
   }
 
   pause() {
@@ -177,6 +202,7 @@ class MyPlayer {
     this.player.pause();
     this.playButton.style.display = 'block';
     this.shouldPlay = false;
+    this.isPlaying$.next(false);
   }
 
   initPlayer() {
@@ -190,12 +216,24 @@ class MyPlayer {
     const canvasContext = canvasEl.getContext('2d');
     // eslint-disable-next-line no-undef
     const player = videojs(videoEl, options);
+    console.log('assign player');
     this.player = player;
+    console.log('set volum:', this.volume);
+    player.volume(this.volume);
     let prevAss;
     const renderToCanvas = () =>
       requestAnimationFrame(() => {
         if (player.isDisposed()) {
           return;
+        }
+        const duration = player.duration();
+        this.duration$.next(duration);
+        const current = player.currentTime();
+        this.currentTime$.next(current);
+        if (current >= this.end) {
+          this.willEndResolve();
+          this.subtitleContainer.innerHTML = '';
+          // return;
         }
         const { videoWidth, videoHeight } = videoEl;
         if (videoWidth === 0 || videoHeight === 0) {
@@ -245,14 +283,19 @@ class MyPlayer {
                   }
                 });
                 span.addEventListener('contextmenu', (e) => {
+                  if (word.length === 0) {
+                    return;
+                  }
                   e.preventDefault();
-                  let { offsetLeft } = e.target;
-                  let left = offsetLeft;
-                  if (offsetLeft + 100 >= this.subtitleContainer.clientWidth) {
+                  const { clientX, clientY } = e;
+                  let left = clientX;
+                  let top = clientY - 30;
+                  if (clientX + 100 >= this.subtitleContainer.clientWidth) {
                     left = this.subtitleContainer.clientWidth - 100;
                   }
                   this.menu.style.left = `${left}px`;
-                  this.menu.style.bottom = `${this.subtitleContainer.clientHeight}px`;
+                  // this.menu.style.bottom = `${this.subtitleContainer.clientHeight}px`;
+                  this.menu.style.top = `${top}px`;
                   this.menu.style.height = 'auto';
                   this.rightClickWord = word;
                 });
@@ -282,7 +325,13 @@ class MyPlayer {
     renderToCanvas();
   }
 
-  load(src, word) {
+  load({ file, cutStart, cutEnd }, word) {
+    console.log(
+      'load: file, cutStart, cutLength, cutEnd',
+      file,
+      cutStart,
+      cutEnd
+    );
     if (!this.domReady) {
       this.attach();
     }
@@ -293,11 +342,28 @@ class MyPlayer {
     this.initPlayer();
     this.word = word;
     player = this.player;
-    player.src({ type: 'video/mp4', src });
+    player.src({ type: 'video/mp4', src: file });
     this.isDirty = true;
-    return fs.readFile(`${src}.ass`).then((res) => {
+    return fs.readFile(`${file}.ass`).then((res) => {
       const { encoding } = jschardet.detect(res);
       this.ass = new Ass(res.toString(encoding)).parse();
+      this.start = cutStart / 1000;
+      this.end = cutEnd / 1000;
+      for (const { start } of this.ass) {
+        if (cutStart - start <= this.timePadding) {
+          this.start = start / 1000;
+          break;
+        }
+      }
+      for (const { end } of this.ass) {
+        if (end - cutEnd >= this.timePadding) {
+          this.end = end / 1000;
+          break;
+        }
+      }
+      this.start$.next(this.start);
+      this.end$.next(this.end);
+      console.log('this.start, this.end : ', this.start, this.end);
     });
   }
 
@@ -330,7 +396,9 @@ class MyPlayer {
     const { player } = this;
     this.subtitleStrategies = subtitleStrategies;
     return new Promise((resolve, reject) => {
+      this.willEndResolve = () => resolve();
       player.ready(() => {
+        player.currentTime(this.start);
         this._play();
         player.playbackRate(this.playSpeed);
       });
