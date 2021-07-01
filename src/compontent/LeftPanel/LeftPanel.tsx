@@ -39,6 +39,7 @@ export const LeftPanel = ({
             }}
             debounce={false}
             max={1000}
+            min={1}
           />
         </div>
       )}
