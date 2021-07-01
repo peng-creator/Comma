@@ -103,19 +103,19 @@ export default function App() {
       console.log('onMove, set maxmized false');
       setMaximized(false);
     };
-    currentWindow.on('resize', onResize);
+    // currentWindow.on('resize', onResize);
     currentWindow.on('maximize', onMaximized);
     currentWindow.on('unmaximize', onRestore);
     currentWindow.on('enter-full-screen', onFullScreen);
     currentWindow.on('leave-full-screen', onLeaveFullScreen);
-    currentWindow.on('move', onMove);
+    // currentWindow.on('move', onMove);
     return () => {
       currentWindow.removeListener('maximize', onMaximized);
       currentWindow.removeListener('unmaximize', onRestore);
       currentWindow.removeListener('enter-full-screen', onFullScreen);
       currentWindow.removeListener('leave-full-screen', onLeaveFullScreen);
-      currentWindow.removeListener('resize', onResize);
-      currentWindow.removeListener('move', onMove);
+      // currentWindow.removeListener('resize', onResize);
+      // currentWindow.removeListener('move', onMove);
     };
   }, []);
 
@@ -125,45 +125,15 @@ export default function App() {
     if (maximized) {
       console.log('currentWindow.unmaximize()');
       currentWindow.unmaximize();
+      setMaximized(false);
+      currentWindow.setAspectRatio(16 / 9);
     } else {
       console.log('currentWindow.maximize()');
       currentWindow.setAspectRatio(0);
       currentWindow.maximize();
+      setMaximized(true);
     }
   };
-
-  useEffect(() => {
-    if (maximized) {
-      currentWindow.setAspectRatio(0);
-      return;
-    }
-    if (!isPlayerMaximum) {
-      currentWindow.setMinimumSize(1300, 750);
-      currentWindow.setAspectRatio(1300 / 750);
-      currentWindow.setBounds({
-        width: 1300,
-        height: 750,
-      });
-    } else {
-      const width = myPlayer.video?.videoWidth;
-      const height = myPlayer.video?.videoHeight;
-      if (width !== undefined && height !== undefined) {
-        currentWindow.setMinimumSize(
-          parseInt((width / 3).toString(), 10),
-          parseInt((height / 3).toString(), 10)
-        );
-        const { width: prevWidth } = currentWindow.getBounds();
-        const nextHeight = (prevWidth * height) / width;
-        currentWindow.setBounds({
-          width: prevWidth,
-          height: parseInt(nextHeight.toString(), 10),
-        });
-        currentWindow.setAspectRatio(width / height);
-      } else {
-        currentWindow.setAspectRatio(16 / 9);
-      }
-    }
-  }, [maximized, isPlayerMaximum]);
 
   useEffect(() => {
     const subscription = menu$.subscribe({
@@ -173,7 +143,7 @@ export default function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
+  console.log('menu:', menu);
   return (
     <div
       className={styles.AppWrapper}
@@ -193,7 +163,7 @@ export default function App() {
           // iconSrc={icon} // app icon
           currentWindow={currentWindow} // electron window instance
           platform={process.platform} // win32, darwin, linux
-          menu={menu?.items || []}
+          menu={menu}
           theme={
             {
               // any theme overrides specific

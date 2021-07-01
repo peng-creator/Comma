@@ -67,23 +67,20 @@ export default class MenuBuilder {
     this.mainWindow = mainWindow;
   }
 
-  buildMenu(wordbooks: Wordbook[], selectedWordbook: Wordbook | null): Menu {
+  buildMenu(wordbooks: Wordbook[], selectedWordbook: Wordbook | null) {
     if (
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
     ) {
       this.setupDevelopmentEnvironment();
     }
-
-    const template =
-      process.platform === 'darwin'
-        ? this.buildDarwinTemplate(wordbooks, selectedWordbook)
-        : this.buildDefaultTemplate(wordbooks, selectedWordbook);
-
-    const menu = remote.Menu.buildFromTemplate(template);
-    remote.Menu.setApplicationMenu(menu);
-
-    return menu;
+    if (process.platform === 'darwin') {
+      let template = this.buildDarwinTemplate(wordbooks, selectedWordbook);
+      const menu = remote.Menu.buildFromTemplate(template);
+      remote.Menu.setApplicationMenu(menu);
+      return menu.items;
+    }
+    return this.buildDefaultTemplate(wordbooks, selectedWordbook);
   }
 
   setupDevelopmentEnvironment(): void {
@@ -251,14 +248,14 @@ export default class MenuBuilder {
   ) {
     const templateDefault = [
       {
-        label: '&File',
+        label: 'Comma',
         submenu: [
+          // {
+          //   label: '&Open',
+          //   accelerator: 'Ctrl+O',
+          // },
           {
-            label: '&Open',
-            accelerator: 'Ctrl+O',
-          },
-          {
-            label: '&Close',
+            label: '退出',
             accelerator: 'Ctrl+W',
             click: () => {
               this.mainWindow.close();
@@ -279,20 +276,20 @@ export default class MenuBuilder {
       },
       buildWordbookMenu(wordbooks, selectedWordbook),
       {
-        label: '&View',
+        label: '视图',
         submenu:
           process.env.NODE_ENV === 'development' ||
           process.env.DEBUG_PROD === 'true'
             ? [
                 {
-                  label: '&Reload',
+                  label: '重新加载',
                   accelerator: 'Ctrl+R',
                   click: () => {
                     this.mainWindow.webContents.reload();
                   },
                 },
                 {
-                  label: 'Toggle &Full Screen',
+                  label: '全屏切换',
                   accelerator: 'F11',
                   click: () => {
                     this.mainWindow.setFullScreen(
@@ -301,7 +298,7 @@ export default class MenuBuilder {
                   },
                 },
                 {
-                  label: 'Toggle &Developer Tools',
+                  label: '开发者工具',
                   accelerator: 'Alt+Ctrl+I',
                   click: () => {
                     this.mainWindow.webContents.toggleDevTools();
@@ -310,7 +307,7 @@ export default class MenuBuilder {
               ]
             : [
                 {
-                  label: 'Toggle &Full Screen',
+                  label: '全屏切换',
                   accelerator: 'F11',
                   click: () => {
                     this.mainWindow.setFullScreen(

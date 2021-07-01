@@ -125,13 +125,13 @@ body {
 
 .titlebar-wrapper {
   width: 100%;
-}
-
-.titlebar-wrapper.titlebar-player-maximum {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 9999;
+}
+
+.titlebar-wrapper.titlebar-player-maximum {
   display: none;
 }
 

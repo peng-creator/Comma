@@ -112,10 +112,7 @@ const createWindow = async () => {
     show: false,
     width: 1300,
     height: 750,
-    // frame: false,
-    // autoHideMenuBar: true,
     frame: false,
-    // titleBarStyle: 'hidden',
     transparent: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
@@ -127,6 +124,8 @@ const createWindow = async () => {
 
   mainWindow.setFullScreenable(true);
   mainWindow.setMaximizable(true);
+  mainWindow.setMinimumSize(1300, 750);
+  mainWindow.setAspectRatio(16 / 9);
 
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(true);
