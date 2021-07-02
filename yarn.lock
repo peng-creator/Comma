@@ -1936,11 +1936,6 @@
   resolved "https://registry.nlark.com/@types/estree/download/@types/estree-0.0.47.tgz?cache=0&sync_timestamp=1622611944045&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Festree%2Fdownload%2F%40types%2Festree-0.0.47.tgz#d7a51db20f0650efec24cd04994f523d93172ed4"
   integrity sha1-16Udsg8GUO/sJM0EmU9SPZMXLtQ=
 
-"@types/ffprobe@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@types/ffprobe/-/ffprobe-1.1.1.tgz#1bb211147bdf0f666a0fbb3466149be9f8f03f01"
-  integrity sha512-OxouWlc43bkUyOQZpXJKouJolrsuz2mlg09xlEbKPcHz3LcXPeWuHzd9oi1X/WFI5KeNcOGm9P0s+Ovl/lQPRg==
-
 "@types/fs-extra@^9.0.11":
   version "9.0.11"
   resolved "https://registry.nlark.com/@types/fs-extra/download/@types/fs-extra-9.0.11.tgz#8cc99e103499eab9f347dbc6ca4e99fb8d2c2b87"
@@ -2301,6 +2296,20 @@
     mux.js "5.11.0"
     video.js "^6 || ^7"
 
+"@videojs/http-streaming@2.9.1":
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/@videojs/http-streaming/-/http-streaming-2.9.1.tgz#16b59efe24a832b89b5bd6a6c52f0d80ad7996a2"
+  integrity sha512-QAtlrBBILOflrei1KE0GcSDDWiP888ZOySck6zWlQNYi/pXOm6QXTJHzOMIKiRQOndyJIZRTfLHedeUdUIDNLA==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@videojs/vhs-utils" "^3.0.2"
+    aes-decrypter "3.1.2"
+    global "^4.4.0"
+    m3u8-parser "4.7.0"
+    mpd-parser "0.17.0"
+    mux.js "5.11.1"
+    video.js "^6 || ^7"
+
 "@videojs/vhs-utils@^3.0.0", "@videojs/vhs-utils@^3.0.2":
   version "3.0.2"
   resolved "https://registry.nlark.com/@videojs/vhs-utils/download/@videojs/vhs-utils-3.0.2.tgz#0203418ecaaff29bc33c69b6ad707787347b7614"
@@ -2472,7 +2481,7 @@
   resolved "https://registry.npm.taobao.org/@yarnpkg/lockfile/download/@yarnpkg/lockfile-1.1.0.tgz#e77a97fbd345b76d83245edcd17d393b1b41fb31"
   integrity sha1-53qX+9NFt22DJF7c0X05OxtB+zE=
 
-JSONStream@^1.0.4, JSONStream@^1.3.5:
+JSONStream@^1.0.4:
   version "1.3.5"
   resolved "https://registry.npm.taobao.org/JSONStream/download/JSONStream-1.3.5.tgz#3208c1f08d3a4d99261ab64f92302bc15e111ca0"
   integrity sha1-MgjB8I06TZkmGrZPkjArwV4RHKA=
@@ -3717,7 +3726,7 @@ bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
-bl@^4.0.3, bl@^4.1.0:
+bl@^4.1.0:
   version "4.1.0"
   resolved "https://registry.nlark.com/bl/download/bl-4.1.0.tgz#451535264182bec2fbbc83a62ab98cf11d9f7b3a"
   integrity sha1-RRU1JkGCvsL7vIOmKrmM8R2fezo=
@@ -5202,13 +5211,6 @@ defer-to-connect@^2.0.0:
   resolved "https://registry.npm.taobao.org/defer-to-connect/download/defer-to-connect-2.0.1.tgz?cache=0&sync_timestamp=1614211480566&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fdefer-to-connect%2Fdownload%2Fdefer-to-connect-2.0.1.tgz#8016bdb4143e4632b77a3449c6236277de520587"
   integrity sha1-gBa9tBQ+RjK3ejRJxiNid95SBYc=
 
-deferential@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/deferential/-/deferential-1.0.0.tgz#f481c95e2b61a121c8aab9d6b41f78e04544097d"
-  integrity sha1-9IHJXithoSHIqrnWtB944EVECX0=
-  dependencies:
-    native-promise-only "^0.8.1"
-
 define-properties@^1.1.3:
   version "1.1.3"
   resolved "https://registry.nlark.com/define-properties/download/define-properties-1.1.3.tgz#cf88da6cbee26fe6db7094f61d870cbd84cee9f1"
@@ -6516,15 +6518,6 @@ ffprobe-static@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/ffprobe-static/-/ffprobe-static-3.0.0.tgz#479689c8a237987beca5627968f3d87429bf569d"
   integrity sha512-LZ1Sj4RHS95t/ReZtRbCmMEWDDl7cfIMwmhNgCZcdtOgRlAHaGGOupoc166Q9AV+T7lXnUvu5HYczcsn69c6fw==
-
-ffprobe@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/ffprobe/-/ffprobe-1.1.2.tgz#34123e8d751b15bd089b987f0a67468b3745be8c"
-  integrity sha512-a+oTbhyeM7Z8PRy+mpzmVUAnATZT7z4BO94HSKeqHupdmjiKZ1djzcZkyoyXA21zCOCG7oVRrsBMmvvtmzoz4g==
-  dependencies:
-    JSONStream "^1.3.5"
-    bl "^4.0.3"
-    deferential "^1.0.0"
 
 figures@^1.3.5:
   version "1.7.0"
@@ -9689,6 +9682,16 @@ mpd-parser@0.16.0:
     global "^4.4.0"
     xmldom "^0.5.0"
 
+mpd-parser@0.17.0:
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/mpd-parser/-/mpd-parser-0.17.0.tgz#d7f3002edcb706f98993ef75846a713d056d3332"
+  integrity sha512-oKS5G0jCcHHJ3sHYlcLeM9Xcbuixl08eAx7QW0Th7ChlZiI0YvLtGaHE/L0aKUBJFNvtkeksIr8XgJgSBBsS4g==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@videojs/vhs-utils" "^3.0.2"
+    global "^4.4.0"
+    xmldom "^0.5.0"
+
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.npm.taobao.org/ms/download/ms-2.0.0.tgz?cache=0&sync_timestamp=1607433905701&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fms%2Fdownload%2Fms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
@@ -9731,6 +9734,13 @@ mux.js@5.11.0:
   version "5.11.0"
   resolved "https://registry.npm.taobao.org/mux.js/download/mux.js-5.11.0.tgz#3c2c1fbd9d30720af2a1b12c1f2a2840c63100f6"
   integrity sha1-PCwfvZ0wcgryobEsHyooQMYxAPY=
+  dependencies:
+    "@babel/runtime" "^7.11.2"
+
+mux.js@5.11.1:
+  version "5.11.1"
+  resolved "https://registry.yarnpkg.com/mux.js/-/mux.js-5.11.1.tgz#531192c2c5ee5e9abb6243ba58e2c1ef916b35eb"
+  integrity sha512-U/JKEU4GZfk2BpEQpPfmH81nF79UKK2a1QOb6PF9viPspJpexGt11YzR/nTKNWdfjWG0DGjcSU+zb2F52Z/q8w==
   dependencies:
     "@babel/runtime" "^7.11.2"
 
@@ -9803,11 +9813,6 @@ nanotiming@^7.2.0:
   dependencies:
     nanoassert "^1.1.0"
     nanoscheduler "^1.0.2"
-
-native-promise-only@^0.8.1:
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/native-promise-only/-/native-promise-only-0.8.1.tgz#20a318c30cb45f71fe7adfbf7b21c99c1472ef11"
-  integrity sha1-IKMYwwy0X3H+et+/eyHJnBRy7xE=
 
 native-url@^0.2.6:
   version "0.2.6"
@@ -13993,16 +13998,21 @@ verror@1.10.0, verror@^1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-"video.js@^6 || ^7", video.js@^7.11.8:
-  version "7.12.3"
-  resolved "https://registry.nlark.com/video.js/download/video.js-7.12.3.tgz#089de94742b147caf0bda6014ba6f071a9755053"
-  integrity sha1-CJ3pR0KxR8rwvaYBS6bwcal1UFM=
+"video.js@^6 || ^7", video.js@^7.13.3:
+  version "7.13.3"
+  resolved "https://registry.yarnpkg.com/video.js/-/video.js-7.13.3.tgz#5efab7bd56267406307f64d110662b2ccb3d7530"
+  integrity sha512-rIGPFRh3v0HqSdfj+/iByKRDBgLVqILK/4i/hW15DfjvgCGhwbw53bRBoJXy496hwh/XYeOAqckc87L2FN375g==
   dependencies:
-    "@babel/runtime" "^7.9.2"
-    "@videojs/http-streaming" "2.8.2"
+    "@babel/runtime" "^7.12.5"
+    "@videojs/http-streaming" "2.9.1"
+    "@videojs/vhs-utils" "^3.0.2"
     "@videojs/xhr" "2.5.1"
+    aes-decrypter "3.1.2"
     global "^4.4.0"
     keycode "^2.2.0"
+    m3u8-parser "4.7.0"
+    mpd-parser "0.17.0"
+    mux.js "5.11.1"
     safe-json-parse "4.0.0"
     videojs-font "3.2.0"
     videojs-vtt.js "^0.15.3"

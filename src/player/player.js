@@ -1,9 +1,9 @@
 import { promises as fs } from 'fs';
 import jschardet from 'jschardet';
 import { BehaviorSubject } from 'rxjs';
+// import videojs from 'video.js';
 import { assContentToCutProject } from '../util/index.mjs';
 import playSVG from '../../assets/play.svg';
-// let html = require('nanohtml');
 
 export class SubtitleStrategy {
   constructor({
@@ -117,12 +117,12 @@ class MyPlayer {
 
     this.container.appendChild(this.menu);
 
-    let canvasInContainer = this.container.querySelector('canvas');
-    if (canvasInContainer === null) {
-      canvasInContainer = document.createElement('canvas');
-      this.container.appendChild(canvasInContainer);
-    }
-    this.canvas = canvasInContainer;
+    // let canvasInContainer = this.container.querySelector('canvas');
+    // if (canvasInContainer === null) {
+    //   canvasInContainer = document.createElement('canvas');
+    //   this.container.appendChild(canvasInContainer);
+    // }
+    // this.canvas = canvasInContainer;
 
     const subtitleContainerClassName = 'subtitle-container';
     let subtitleContainer = this.container.querySelector(
@@ -209,11 +209,28 @@ class MyPlayer {
     if (!this.domReady) {
       return;
     }
-    this.video = document.createElement('video');
-    const options = {};
+    this.video =
+      this.container.querySelector('video') || document.createElement('video');
+    const options = {
+      controls: false,
+      loadingSpinner: false,
+      // controlBar: {
+      //   playToggle: false,
+      //   captionsButton: false,
+      //   chaptersButton: false,
+      //   subtitlesButton: false,
+      //   remainingTimeDisplay: false,
+      //   progressControl: {
+      //     seekBar: true,
+      //   },
+      //   fullscreenToggle: false,
+      //   playbackRateMenuButton: false,
+      // },
+    };
     const videoEl = this.video;
-    const canvasEl = this.canvas;
-    const canvasContext = canvasEl.getContext('2d');
+    this.container.appendChild(this.video);
+    // const canvasEl = this.canvas;
+    // const canvasContext = canvasEl.getContext('2d');
     // eslint-disable-next-line no-undef
     const player = videojs(videoEl, options);
     console.log('assign player');
@@ -240,14 +257,14 @@ class MyPlayer {
           return renderToCanvas();
         }
         this.resizeSubtitle();
-        canvasEl.width = videoWidth;
-        canvasEl.height = videoHeight;
-        canvasContext.drawImage(videoEl, 0, 0, videoWidth, videoHeight);
-        canvasContext.font = 'bold 80px serif';
-        canvasContext.fillStyle = 'rgb(216, 44, 102)';
-        canvasContext.strokeStyle = 'rgb(243, 235, 165)';
-        canvasContext.strokeText(this.word, 30, 100);
-        canvasContext.fillText(this.word, 30, 100);
+        // canvasEl.width = videoWidth;
+        // canvasEl.height = videoHeight;
+        // canvasContext.drawImage(videoEl, 0, 0, videoWidth, videoHeight);
+        // canvasContext.font = 'bold 80px serif';
+        // canvasContext.fillStyle = 'rgb(216, 44, 102)';
+        // canvasContext.strokeStyle = 'rgb(243, 235, 165)';
+        // canvasContext.strokeText(this.word, 30, 100);
+        // canvasContext.fillText(this.word, 30, 100);
         const currentTime = player.currentTime() * 1000;
         const ass =
           this.ass.find(({ start, end }) => {
@@ -321,7 +338,6 @@ class MyPlayer {
         }
         renderToCanvas();
       });
-    // player.on('play', () => renderToCanvas());
     renderToCanvas();
   }
 
