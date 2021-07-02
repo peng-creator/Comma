@@ -211,21 +211,11 @@ class MyPlayer {
     }
     this.video =
       this.container.querySelector('video') || document.createElement('video');
+    this.video.style.width = '100%';
+    this.video.style.height = 'auto';
     const options = {
       controls: false,
       loadingSpinner: false,
-      // controlBar: {
-      //   playToggle: false,
-      //   captionsButton: false,
-      //   chaptersButton: false,
-      //   subtitlesButton: false,
-      //   remainingTimeDisplay: false,
-      //   progressControl: {
-      //     seekBar: true,
-      //   },
-      //   fullscreenToggle: false,
-      //   playbackRateMenuButton: false,
-      // },
     };
     const videoEl = this.video;
     this.container.appendChild(this.video);

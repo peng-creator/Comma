@@ -105,6 +105,7 @@ body {
   position: absolute;
   bottom: 0;
   left: 0;
+  z-index: 1;
   text-align: center;
   box-sizing: content-box;
   user-select: none;
@@ -114,6 +115,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
+  z-index: 1;
   transform: translate(-50%, -50%);
 
   width: 10%;

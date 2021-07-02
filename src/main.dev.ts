@@ -15,6 +15,7 @@ import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import console from 'console';
+import { MIN_HEIGHT, MIN_WIDTH } from './contant/windowSize';
 
 ipcMain.on('selectVideoFile', (event) => {
   dialog
@@ -117,7 +118,7 @@ const createWindow = async () => {
 
   mainWindow.setFullScreenable(true);
   mainWindow.setMaximizable(true);
-  mainWindow.setMinimumSize(1300, 750);
+  mainWindow.setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
   mainWindow.setAspectRatio(16 / 9);
 
   if (process.platform === 'darwin') {

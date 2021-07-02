@@ -2282,20 +2282,6 @@
   resolved "https://registry.nlark.com/@typicode/eslint-config/download/@typicode/eslint-config-0.1.2.tgz#77642c97a985ce03785ffa95d0c9aa61abe8b75c"
   integrity sha1-d2Qsl6mFzgN4X/qV0MmqYavot1w=
 
-"@videojs/http-streaming@2.8.2":
-  version "2.8.2"
-  resolved "https://registry.nlark.com/@videojs/http-streaming/download/@videojs/http-streaming-2.8.2.tgz?cache=0&sync_timestamp=1623430508444&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40videojs%2Fhttp-streaming%2Fdownload%2F%40videojs%2Fhttp-streaming-2.8.2.tgz#0b152bcbc6dd0b49e921514577ad82e23acdd448"
-  integrity sha1-CxUry8bdC0npIVFFd62C4jrN1Eg=
-  dependencies:
-    "@babel/runtime" "^7.12.5"
-    "@videojs/vhs-utils" "^3.0.2"
-    aes-decrypter "3.1.2"
-    global "^4.4.0"
-    m3u8-parser "4.7.0"
-    mpd-parser "0.16.0"
-    mux.js "5.11.0"
-    video.js "^6 || ^7"
-
 "@videojs/http-streaming@2.9.1":
   version "2.9.1"
   resolved "https://registry.yarnpkg.com/@videojs/http-streaming/-/http-streaming-2.9.1.tgz#16b59efe24a832b89b5bd6a6c52f0d80ad7996a2"
@@ -9672,16 +9658,6 @@ moo@^0.5.0:
   resolved "https://registry.npm.taobao.org/moo/download/moo-0.5.1.tgz#7aae7f384b9b09f620b6abf6f74ebbcd1b65dbc4"
   integrity sha1-eq5/OEubCfYgtqv29067zRtl28Q=
 
-mpd-parser@0.16.0:
-  version "0.16.0"
-  resolved "https://registry.nlark.com/mpd-parser/download/mpd-parser-0.16.0.tgz#e015e3a46e4dac2f931f909db4552141721f11b5"
-  integrity sha1-4BXjpG5NrC+TH5CdtFUhQXIfEbU=
-  dependencies:
-    "@babel/runtime" "^7.12.5"
-    "@videojs/vhs-utils" "^3.0.0"
-    global "^4.4.0"
-    xmldom "^0.5.0"
-
 mpd-parser@0.17.0:
   version "0.17.0"
   resolved "https://registry.yarnpkg.com/mpd-parser/-/mpd-parser-0.17.0.tgz#d7f3002edcb706f98993ef75846a713d056d3332"
@@ -9729,13 +9705,6 @@ mute-stream@0.0.5:
   version "0.0.5"
   resolved "https://registry.npm.taobao.org/mute-stream/download/mute-stream-0.0.5.tgz#8fbfabb0a98a253d3184331f9e8deb7372fac6c0"
   integrity sha1-j7+rsKmKJT0xhDMfno3rc3L6xsA=
-
-mux.js@5.11.0:
-  version "5.11.0"
-  resolved "https://registry.npm.taobao.org/mux.js/download/mux.js-5.11.0.tgz#3c2c1fbd9d30720af2a1b12c1f2a2840c63100f6"
-  integrity sha1-PCwfvZ0wcgryobEsHyooQMYxAPY=
-  dependencies:
-    "@babel/runtime" "^7.11.2"
 
 mux.js@5.11.1:
   version "5.11.1"

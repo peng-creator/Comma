@@ -6,13 +6,11 @@ import { ipcRenderer, remote } from 'electron';
 import TitleBar from 'frameless-titlebar';
 import { Menu } from 'electron/main';
 import styles from './App.css';
-import { myPlayer } from './player/player';
 import { menu$ } from './state/system/menu';
 import { Comma } from './Comma';
 
 const currentWindow = remote.getCurrentWindow();
 const mousemove$ = fromEvent(document, 'mousemove').pipe(share());
-
 export default function App() {
   const [isPlayerMaximum, setIsPlayerMaximum] = useState(false);
   const [maximized, setMaximized] = useState(currentWindow.isMaximized());
@@ -22,18 +20,6 @@ export default function App() {
   );
   const [menu, setMenu] = useState<Menu | null>(null);
   const [hideControlPanel, setHideControlPanel] = useState(false);
-
-  useEffect(() => {
-    if (maximized) {
-      return;
-    }
-    ipcRenderer.send(
-      'onPlayerMaximumChange',
-      isPlayerMaximum,
-      myPlayer.video?.videoWidth,
-      myPlayer.video?.videoHeight
-    );
-  }, [isPlayerMaximum]);
 
   useEffect(() => {
     setShowTitleBar(!isPlayerMaximum);
@@ -95,15 +81,6 @@ export default function App() {
       }
       setIsFullScreen(false);
     };
-    const onResize = () => {
-      console.log('onResize, set maxmized false');
-      setMaximized(false);
-    };
-    const onMove = () => {
-      console.log('onMove, set maxmized false');
-      setMaximized(false);
-    };
-    // currentWindow.on('resize', onResize);
     currentWindow.on('maximize', onMaximized);
     currentWindow.on('unmaximize', onRestore);
     currentWindow.on('enter-full-screen', onFullScreen);
@@ -114,8 +91,6 @@ export default function App() {
       currentWindow.removeListener('unmaximize', onRestore);
       currentWindow.removeListener('enter-full-screen', onFullScreen);
       currentWindow.removeListener('leave-full-screen', onLeaveFullScreen);
-      // currentWindow.removeListener('resize', onResize);
-      // currentWindow.removeListener('move', onMove);
     };
   }, []);
 
