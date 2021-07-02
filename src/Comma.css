@@ -57,3 +57,14 @@
 .HideControlPanel {
   opacity: 0;
 }
+
+.WordToPlay {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgb(236, 72, 113);
+  -webkit-text-stroke: 1px goldenrod;
+  z-index: 2;
+  font-size: 80px;
+}

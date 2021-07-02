@@ -120,6 +120,7 @@ export const Comma = ({
 
   return (
     <div className={styles.Comma}>
+      <div className={styles.WordToPlay}>{wordToPlay}</div>
       {wordbook === null && (
         <Empty
           style={{ color: 'white' }}
