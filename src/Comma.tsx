@@ -123,7 +123,7 @@ export const Comma = ({
       {wordbook === null && (
         <Empty
           style={{ color: 'white' }}
-          description="您还可以从菜单栏中增加单词本"
+          description="您可以从菜单栏中增加单词本"
         />
       )}
       {wordbook !== null && (

@@ -276,48 +276,6 @@ export default class MenuBuilder {
       },
       buildWordbookMenu(wordbooks, selectedWordbook),
       {
-        label: '视图',
-        submenu:
-          process.env.NODE_ENV === 'development' ||
-          process.env.DEBUG_PROD === 'true'
-            ? [
-                {
-                  label: '重新加载',
-                  accelerator: 'Ctrl+R',
-                  click: () => {
-                    this.mainWindow.webContents.reload();
-                  },
-                },
-                {
-                  label: '全屏切换',
-                  accelerator: 'F11',
-                  click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen()
-                    );
-                  },
-                },
-                {
-                  label: '开发者工具',
-                  accelerator: 'Alt+Ctrl+I',
-                  click: () => {
-                    this.mainWindow.webContents.toggleDevTools();
-                  },
-                },
-              ]
-            : [
-                {
-                  label: '全屏切换',
-                  accelerator: 'F11',
-                  click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen()
-                    );
-                  },
-                },
-              ],
-      },
-      {
         label: '帮助',
         submenu: [
           {
@@ -331,7 +289,31 @@ export default class MenuBuilder {
         ],
       },
     ];
-
+    let isDebug =
+      process.env.NODE_ENV === 'development' ||
+      process.env.DEBUG_PROD === 'true';
+    const viewSubMenu = {
+      label: '视图',
+      submenu: [
+        {
+          label: '重新加载',
+          accelerator: 'Ctrl+R',
+          click: () => {
+            this.mainWindow.webContents.reload();
+          },
+        },
+        {
+          label: '开发者工具',
+          accelerator: 'Alt+Ctrl+I',
+          click: () => {
+            this.mainWindow.webContents.toggleDevTools();
+          },
+        },
+      ],
+    };
+    if (isDebug) {
+      templateDefault.push(viewSubMenu);
+    }
     return templateDefault;
   }
 }

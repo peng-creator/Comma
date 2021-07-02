@@ -16,6 +16,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/ffmpeg-static": "^3.0.0",
+    "@types/ffprobe": "^1.1.1",
     "@types/md5": "^2.3.0",
     "@types/rimraf": "^3.0.0"
   }

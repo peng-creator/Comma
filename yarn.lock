@@ -1936,6 +1936,11 @@
   resolved "https://registry.nlark.com/@types/estree/download/@types/estree-0.0.47.tgz?cache=0&sync_timestamp=1622611944045&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Festree%2Fdownload%2F%40types%2Festree-0.0.47.tgz#d7a51db20f0650efec24cd04994f523d93172ed4"
   integrity sha1-16Udsg8GUO/sJM0EmU9SPZMXLtQ=
 
+"@types/ffprobe@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@types/ffprobe/-/ffprobe-1.1.1.tgz#1bb211147bdf0f666a0fbb3466149be9f8f03f01"
+  integrity sha512-OxouWlc43bkUyOQZpXJKouJolrsuz2mlg09xlEbKPcHz3LcXPeWuHzd9oi1X/WFI5KeNcOGm9P0s+Ovl/lQPRg==
+
 "@types/fs-extra@^9.0.11":
   version "9.0.11"
   resolved "https://registry.nlark.com/@types/fs-extra/download/@types/fs-extra-9.0.11.tgz#8cc99e103499eab9f347dbc6ca4e99fb8d2c2b87"
@@ -2467,7 +2472,7 @@
   resolved "https://registry.npm.taobao.org/@yarnpkg/lockfile/download/@yarnpkg/lockfile-1.1.0.tgz#e77a97fbd345b76d83245edcd17d393b1b41fb31"
   integrity sha1-53qX+9NFt22DJF7c0X05OxtB+zE=
 
-JSONStream@^1.0.4:
+JSONStream@^1.0.4, JSONStream@^1.3.5:
   version "1.3.5"
   resolved "https://registry.npm.taobao.org/JSONStream/download/JSONStream-1.3.5.tgz#3208c1f08d3a4d99261ab64f92302bc15e111ca0"
   integrity sha1-MgjB8I06TZkmGrZPkjArwV4RHKA=
@@ -3712,7 +3717,7 @@ bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
-bl@^4.1.0:
+bl@^4.0.3, bl@^4.1.0:
   version "4.1.0"
   resolved "https://registry.nlark.com/bl/download/bl-4.1.0.tgz#451535264182bec2fbbc83a62ab98cf11d9f7b3a"
   integrity sha1-RRU1JkGCvsL7vIOmKrmM8R2fezo=
@@ -5197,6 +5202,13 @@ defer-to-connect@^2.0.0:
   resolved "https://registry.npm.taobao.org/defer-to-connect/download/defer-to-connect-2.0.1.tgz?cache=0&sync_timestamp=1614211480566&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fdefer-to-connect%2Fdownload%2Fdefer-to-connect-2.0.1.tgz#8016bdb4143e4632b77a3449c6236277de520587"
   integrity sha1-gBa9tBQ+RjK3ejRJxiNid95SBYc=
 
+deferential@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/deferential/-/deferential-1.0.0.tgz#f481c95e2b61a121c8aab9d6b41f78e04544097d"
+  integrity sha1-9IHJXithoSHIqrnWtB944EVECX0=
+  dependencies:
+    native-promise-only "^0.8.1"
+
 define-properties@^1.1.3:
   version "1.1.3"
   resolved "https://registry.nlark.com/define-properties/download/define-properties-1.1.3.tgz#cf88da6cbee26fe6db7094f61d870cbd84cee9f1"
@@ -6499,6 +6511,20 @@ ffmpeg-static@^4.3.0:
     env-paths "^2.2.0"
     https-proxy-agent "^5.0.0"
     progress "^2.0.3"
+
+ffprobe-static@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/ffprobe-static/-/ffprobe-static-3.0.0.tgz#479689c8a237987beca5627968f3d87429bf569d"
+  integrity sha512-LZ1Sj4RHS95t/ReZtRbCmMEWDDl7cfIMwmhNgCZcdtOgRlAHaGGOupoc166Q9AV+T7lXnUvu5HYczcsn69c6fw==
+
+ffprobe@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/ffprobe/-/ffprobe-1.1.2.tgz#34123e8d751b15bd089b987f0a67468b3745be8c"
+  integrity sha512-a+oTbhyeM7Z8PRy+mpzmVUAnATZT7z4BO94HSKeqHupdmjiKZ1djzcZkyoyXA21zCOCG7oVRrsBMmvvtmzoz4g==
+  dependencies:
+    JSONStream "^1.3.5"
+    bl "^4.0.3"
+    deferential "^1.0.0"
 
 figures@^1.3.5:
   version "1.7.0"
@@ -9777,6 +9803,11 @@ nanotiming@^7.2.0:
   dependencies:
     nanoassert "^1.1.0"
     nanoscheduler "^1.0.2"
+
+native-promise-only@^0.8.1:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/native-promise-only/-/native-promise-only-0.8.1.tgz#20a318c30cb45f71fe7adfbf7b21c99c1472ef11"
+  integrity sha1-IKMYwwy0X3H+et+/eyHJnBRy7xE=
 
 native-url@^0.2.6:
   version "0.2.6"

@@ -2,12 +2,14 @@ import child_process from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import jschardet from 'jschardet';
+import cpFile from 'cp-file';
 // import pathToFfmpeg from 'ffmpeg-static';
 import { from, lastValueFrom, Observable } from 'rxjs';
-import { catchError, mapTo } from 'rxjs/operators';
+import { catchError, mapTo, switchMap, map } from 'rxjs/operators';
 import { assContentToCutProject, millisecondsToTime } from '../util/index.mjs';
 
 const pathToFfmpeg = path.resolve(__dirname, '../assets/ffmpeg');
+const pathToFfprobe = path.resolve(__dirname, '../assets/ffprobe');
 console.log('pathToFfmpeg:', pathToFfmpeg);
 
 class Exec {
@@ -165,6 +167,61 @@ export function cutVideo(
   return Promise.all([getSubtitlePromise, getClipPromise]);
 }
 
+function skipConvert(source) {
+  return new Exec(pathToFfprobe)
+    .addArg('-show_format')
+    .addArg('-show_streams')
+    .addArg('-print_format')
+    .addArg('json')
+    .addArg(source)
+    .run()
+    .pipe(
+      map((info) => {
+        if (typeof info === 'string') {
+          try {
+            const { format, streams } = JSON.parse(info);
+            const isMp4 = format?.format_name.includes('mp4') || false;
+            if (!isMp4) {
+              return false;
+            }
+            const len = streams.length;
+            if (len !== 2) {
+              return false;
+            }
+            const [s0] = streams;
+            let videoIndex = 0;
+            let audioIndex = 1;
+            if (s0.codec_type !== 'video') {
+              videoIndex = 1;
+              audioIndex = 0;
+            }
+            let videoStream = streams[videoIndex];
+            let audioStream = streams[audioIndex];
+            try {
+              const isRightVideo =
+                videoStream.codec_name.toLowerCase() === 'h264' &&
+                videoStream.codec_tag_string.toLowerCase() === 'avc1';
+              if (!isRightVideo) {
+                return false;
+              }
+              const isRightAudio =
+                audioStream.codec_name.toLowerCase() === 'aac';
+              if (!isRightAudio) {
+                return false;
+              }
+              return true;
+            } catch (e) {
+              return false;
+            }
+          } catch (e) {
+            return false;
+          }
+        }
+        return false;
+      })
+    );
+}
+
 export function convertToMp4(
   source,
   output,
@@ -172,21 +229,30 @@ export function convertToMp4(
   crf = 28,
   preset = 'ultrafast'
 ) {
-  return from(fs.stat(output)).pipe(
-    catchError(() =>
-      new Exec(pathToFfmpeg)
-        .addArg('-i')
-        .addArg(source)
-        .addArg('-vcodec')
-        .addArg(vcodec)
-        .addArg('-crf')
-        .addArg(crf)
-        .addArg('-preset')
-        .addArg(preset)
-        .addArg(output)
-        .addArg('-y')
-        .run()
-    ),
+  return skipConvert(source).pipe(
+    switchMap((shouldSkip) => {
+      console.log('should skip?:', shouldSkip);
+      if (!shouldSkip) {
+        return from(fs.stat(output)).pipe(
+          catchError(() =>
+            new Exec(pathToFfmpeg)
+              .addArg('-i')
+              .addArg(source)
+              .addArg('-vcodec')
+              .addArg(vcodec)
+              .addArg('-crf')
+              .addArg(crf)
+              .addArg('-preset')
+              .addArg(preset)
+              .addArg(output)
+              .addArg('-y')
+              .run()
+          ),
+        );
+      } else {
+        return from(cpFile(source, output));
+      }
+    }),
     mapTo(source)
   );
 }

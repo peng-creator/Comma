@@ -19,19 +19,12 @@ import console from 'console';
 ipcMain.on('selectVideoFile', (event) => {
   dialog
     .showOpenDialog({
-      title: '请选择视频文件或文件夹',
+      title: '请选择视频文件所在文件夹',
       // 默认打开的路径，比如这里默认打开下载文件夹
       defaultPath: app.getPath('desktop'),
       buttonLabel: '导入',
-      // 限制能够选择的文件类型
-      filters: [
-        { name: '视频文件', extensions: ['mkv', 'mp4'] },
-        // { name: 'Movies', extensions: ['mkv', 'avi', ] },
-        // { name: 'Custom File Type', extensions: ['as'] },
-        // { name: 'All Files', extensions: ['*'] },
-      ],
-      properties: ['openFile', 'openDirectory', 'multiSelections'],
-      message: '请选择视频文件或文件夹',
+      properties: ['openDirectory', 'multiSelections'],
+      message: '请选择视频文件所在文件夹',
     })
     .then(({ filePaths }) => {
       event.reply('videoFileSelected', filePaths);

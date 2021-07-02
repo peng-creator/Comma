@@ -1,5 +1,4 @@
 import { promises as fs } from 'fs';
-import { message } from 'antd';
 import { of, EMPTY, from } from 'rxjs';
 import {
   combineLatestWith,
@@ -83,7 +82,7 @@ export const play$ = clipsToPlay$.pipe(
         } catch (err) {
           // 文件不存在。
           console.log('fs stat error:', err);
-          message.error(`文件不存在：${file}`);
+          // message.error(`文件不存在：${file}`);
           if (index + 1 < _clipsToPlay.length) {
             console.log(
               'next Clip Index To Play in playClips.ts line 65:',

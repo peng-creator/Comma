@@ -4,6 +4,9 @@ logs
 */video_output
 */db
 */ffmpeg
+*/ffprobe
+*/ffmpeg.exe
+*/ffprobe.exe
 video_output
 db
 # Runtime data

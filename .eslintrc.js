@@ -27,6 +27,7 @@ module.exports = {
     'no-restricted-properties': 'off',
     'react-hooks/exhaustive-deps': 'off',
     'prefer-const': 'off',
+    'prettier/prettier': ['error', { endOfLine: 'auto' }],
   },
   parserOptions: {
     ecmaVersion: 2020,

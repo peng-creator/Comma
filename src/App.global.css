@@ -4,28 +4,25 @@
  */
 @import '~antd/dist/antd.css';
 
-html::-webkit-scrollbar {
-  width: 10px;
+/* 设置滚动条的样式 */
+::-webkit-scrollbar {
+  width: 12px;
 }
-
-html::-webkit-scrollbar-track {
-  background: rgb(179, 177, 177);
+/* 滚动槽 */
+::-webkit-scrollbar-track {
+  box-shadow: inset006pxrgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: inset006pxrgba(0, 0, 0, 0.3);
   border-radius: 10px;
 }
-
-html::-webkit-scrollbar-thumb {
-  background: rgb(136, 136, 136);
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
   border-radius: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  box-shadow: inset006pxrgba(0, 0, 0, 0.5);
+  -webkit-box-shadow: inset006pxrgba(0, 0, 0, 0.5);
 }
-
-html::-webkit-scrollbar-thumb:hover {
-  background: rgb(100, 100, 100);
-  border-radius: 10px;
-}
-
-html::-webkit-scrollbar-thumb:active {
-  background: rgb(68, 68, 68);
-  border-radius: 10px;
+::-webkit-scrollbar-thumb:window-inactive {
+  background: rgba(255, 0, 0, 0.4);
 }
 
 * {
@@ -43,7 +40,7 @@ body {
   position: relative;
   color: white;
   height: 100vh;
-  background: rgba(0, 0, 0, 0);
+  background: rgb(0, 0, 0);
   font-family: sans-serif;
   overflow: hidden;
   display: flex;

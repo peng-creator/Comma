@@ -246,8 +246,8 @@ class MyPlayer {
         canvasContext.font = 'bold 80px serif';
         canvasContext.fillStyle = 'rgb(216, 44, 102)';
         canvasContext.strokeStyle = 'rgb(243, 235, 165)';
-        canvasContext.strokeText(this.word, 30, 80);
-        canvasContext.fillText(this.word, 30, 80);
+        canvasContext.strokeText(this.word, 30, 100);
+        canvasContext.fillText(this.word, 30, 100);
         const currentTime = player.currentTime() * 1000;
         const ass =
           this.ass.find(({ start, end }) => {
