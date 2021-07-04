@@ -22,7 +22,7 @@ export const debounceWindow = (dueTime) => {
   let lastEmitDate = Date.now();
   return debounce(() => {
     const now = Date.now();
-    const timePassed = now - lastEmitDatce;
+    const timePassed = now - lastEmitDate;
     if (timePassed >= dueTime) {
       lastEmitDate = now;
       return of(true);
@@ -49,7 +49,9 @@ export function processVideos$(outDir, sourcePathList, concurrent = 2) {
       const videoOutputPath = getConvertOutputPath(file, 'mp4', outDir);
       const assSourcePath = getConvertOutputPath(file, 'ass');
       const assOutPath = `${videoOutputPath}.ass`;
-      cpFile(assSourcePath, assOutPath);
+      cpFile(assSourcePath, assOutPath).catch(() => {
+        message.warn('字幕文件缺失：', assSourcePath);
+      });
       return from(convertToMp4(file, videoOutputPath)); // source stream
     }, concurrent)
   );

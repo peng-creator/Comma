@@ -1,10 +1,16 @@
-import { parse } from 'ass-compiler';
+import { parse } from './parser/index.mjs';
 
 export function assContentToCutProject(assText) {
   const localAssText = assText.replace(/Dialogue:/gi, '\nDialogue:');
-  const parsedASS = parse(localAssText);
+  console.log('try to parse:');
+  let parsedASS = parse(localAssText);
+  if (parsedASS === null) {
+    return [];
+  }
+  console.log('parsedAss:', parsedASS);
   try {
     const { dialogue } = parsedASS.events;
+    console.log('dialogue:', dialogue);
     const result = dialogue.map(({ End, Start, Text }, i) => {
       const { parsed } = Text;
       const subtitles = parsed

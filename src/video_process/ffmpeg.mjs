@@ -179,40 +179,29 @@ function skipConvert(source) {
       map((info) => {
         if (typeof info === 'string') {
           try {
-            const { format, streams } = JSON.parse(info);
-            const isMp4 = format?.format_name.includes('mp4') || false;
-            if (!isMp4) {
-              return false;
+            const { streams } = JSON.parse(info);
+            let videoCodecSupport = false;
+            let audioCodecSupport = false;
+            if (streams) {
+              streams.forEach((value) => {
+                // mp4, webm, ogg
+                if (
+                  value.codec_type === 'video' &&
+                  (value.codec_name === 'h264' ||
+                    value.codec_name === 'vp8' ||
+                    value.codec_name === 'theora')
+                ) {
+                  videoCodecSupport = true;
+                }
+                if (
+                  value.codec_type === 'audio' &&
+                  (value.codec_name === 'aac' || value.codec_name === 'vorbis')
+                ) {
+                  audioCodecSupport = true;
+                }
+              });
             }
-            const len = streams.length;
-            if (len !== 2) {
-              return false;
-            }
-            const [s0] = streams;
-            let videoIndex = 0;
-            let audioIndex = 1;
-            if (s0.codec_type !== 'video') {
-              videoIndex = 1;
-              audioIndex = 0;
-            }
-            let videoStream = streams[videoIndex];
-            let audioStream = streams[audioIndex];
-            try {
-              const isRightVideo =
-                videoStream.codec_name.toLowerCase() === 'h264' &&
-                videoStream.codec_tag_string.toLowerCase() === 'avc1';
-              if (!isRightVideo) {
-                return false;
-              }
-              const isRightAudio =
-                audioStream.codec_name.toLowerCase() === 'aac';
-              if (!isRightAudio) {
-                return false;
-              }
-              return true;
-            } catch (e) {
-              return false;
-            }
+            return videoCodecSupport && audioCodecSupport;
           } catch (e) {
             return false;
           }
@@ -247,11 +236,10 @@ export function convertToMp4(
               .addArg(output)
               .addArg('-y')
               .run()
-          ),
+          )
         );
-      } else {
-        return from(cpFile(source, output));
       }
+      return from(cpFile(source, output));
     }),
     mapTo(source)
   );
