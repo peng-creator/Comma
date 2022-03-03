@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 
-const dir = '/Users/peng/Downloads/bug_test';
+const dir = '/Users/peng/Downloads/cutsource';
 async function main() {
   const innerFiles = await fs.readdir(dir);
   const subtitleFiles = innerFiles.filter((file) => file.endsWith('.ass'));

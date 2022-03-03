@@ -74,7 +74,7 @@ export const play$ = clipsToPlay$.pipe(
     return from(
       (async () => {
         let { file } = clip;
-        file = getVideoFileAbsolutePath(file);
+        // file = getVideoFileAbsolutePath(file);
         try {
           console.log('try to figure out if file exists: ', file);
           const stat = await fs.stat(file);

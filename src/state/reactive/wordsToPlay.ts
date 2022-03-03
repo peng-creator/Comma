@@ -1,16 +1,8 @@
 import { map, shareReplay, tap } from 'rxjs/operators';
-import { wordClips$ } from './wordClips';
+import { selectedWordbook$ } from '../user_input/selectedWordbook';
 
-export const wordsToPlay$ = wordClips$.pipe(
-  tap((wordClips) => {
-    console.log('tap in wordsToPlay$, wordClips:', wordClips);
-  }),
-  map((wordClips) => {
-    const nextWordsToPlay = Object.keys(wordClips).filter(
-      (word) => wordClips[word].length > 0
-    );
-    console.log('nextWordsToPlay:', nextWordsToPlay);
-    return nextWordsToPlay;
-  }),
-  shareReplay(1)
+export const wordsToPlay$ = selectedWordbook$.pipe(
+  map((wordbook) => {
+    return wordbook?.words || [];
+  })
 );

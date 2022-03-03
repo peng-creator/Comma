@@ -28,6 +28,7 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'off',
     'prefer-const': 'off',
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
+    'react/self-closing-comp': 'off',
   },
   parserOptions: {
     ecmaVersion: 2020,

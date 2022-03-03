@@ -7,7 +7,12 @@ export function getVideoFiles$(sourcePathList) {
     (async () => {
       const files = [...sourcePathList];
       for (const file of files) {
-        const stat = await fs.stat(file);
+        let stat = null;
+        try {
+          stat = await fs.stat(file);
+        } catch (err) {
+          continue;
+        }
         if (stat.isDirectory()) {
           const innerFiles = await fs.readdir(file);
           for (const innerFile of innerFiles) {

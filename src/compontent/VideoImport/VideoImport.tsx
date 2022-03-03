@@ -72,7 +72,7 @@ export const importTask = () => {
     }
     console.log('selected files:', files);
     const { videoFile$, fileClipPersistent$ } = processVideos$(
-      path.join(dbRoot, 'video_output'),
+      path.join(dbRoot, 'video_output', path.basename(files[0])),
       files
     );
     fileClipPersistentSubscription = (

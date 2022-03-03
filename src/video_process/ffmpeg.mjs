@@ -6,11 +6,16 @@ import cpFile from 'cp-file';
 // import pathToFfmpeg from 'ffmpeg-static';
 import { from, lastValueFrom, Observable } from 'rxjs';
 import { catchError, mapTo, switchMap, map } from 'rxjs/operators';
-import { assContentToCutProject, millisecondsToTime } from '../util/index.mjs';
+import {
+  assContentToCutProject,
+  millisecondsToTime,
+  srtContentToCutProject,
+} from '../util/index.mjs';
 
 const pathToFfmpeg = path.resolve(__dirname, '../assets/ffmpeg');
 const pathToFfprobe = path.resolve(__dirname, '../assets/ffprobe');
 console.log('pathToFfmpeg:', pathToFfmpeg);
+console.log('pathToFfmpeg __dirname:', __dirname);
 
 class Exec {
   constructor(command) {
@@ -70,14 +75,30 @@ class Exec {
   }
 }
 
+const SUPPORTED_SUBTITLE_SUFFIX = ['srt', 'ass'];
+
 const getSubtitleFilePathFromSourcePath = (source) => {
   const basename = path.basename(source);
   const basenameLength = basename.length;
   const extname = path.extname(source);
-  return path.join(
-    path.dirname(source),
-    `${basename.slice(0, basenameLength - extname.length)}.ass`
+  const pathListPromises = SUPPORTED_SUBTITLE_SUFFIX.map((suffix) =>
+    path.join(
+      path.dirname(source),
+      `${basename.slice(0, basenameLength - extname.length)}.${suffix}`
+    )
+  ).map((subtitleFilePath) =>
+    fs
+      .stat(subtitleFilePath)
+      .then(() => subtitleFilePath)
+      .catch(() => '')
   );
+  return Promise.all(pathListPromises).then((pathList) => {
+    const subtitleFilePath = pathList.find((path) => path !== '');
+    if (subtitleFilePath === undefined) {
+      throw new Error('该视频文件没有对应的字幕文件！');
+    }
+    return subtitleFilePath;
+  });
 };
 
 function sliceSubtitle(source, index, output, start, length) {
@@ -101,22 +122,25 @@ function sliceSubtitle(source, index, output, start, length) {
 }
 
 async function getEnglishSubtitle(source) {
-  const subtitleFilePath = getSubtitleFilePathFromSourcePath(source);
-  console.log(`subtitle file: ${subtitleFilePath}`);
-  try {
-    const stat = await fs.stat(subtitleFilePath);
-    console.log('stat: ', stat);
-  } catch (err) {
-    throw new Error(`视频文件没有字幕: ${source}`);
-  }
+  const subtitleFilePath = await getSubtitleFilePathFromSourcePath(source);
   const txt = await fs.readFile(subtitleFilePath);
   const { encoding } = jschardet.detect(txt);
-  return txt.toString(encoding);
+  return {
+    content: txt.toString(encoding),
+    subtitleFilePath,
+  };
 }
 
 export async function getWordsWithTimeSection(source) {
-  const content = await getEnglishSubtitle(source);
-  return assContentToCutProject(content);
+  const { content, subtitleFilePath } = await getEnglishSubtitle(source);
+  if (subtitleFilePath.endsWith('ass')) {
+    return assContentToCutProject(content);
+  }
+  if (subtitleFilePath.toLowerCase().endsWith('srt')) {
+    console.log('找到srt字幕文件');
+    return srtContentToCutProject(content);
+  }
+  throw new Error('没有字幕文件');
 }
 /**
  *

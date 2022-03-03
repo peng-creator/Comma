@@ -1,8 +1,6 @@
 import { join } from 'path';
-import { remote } from 'electron';
+import { app } from '@electron/remote';
 import { mkdir } from './util/mkdir';
-
-const { app } = remote;
 
 export const dbRoot = join(app.getPath('userData'), 'comma_data');
 export const thumbnailPath = join(

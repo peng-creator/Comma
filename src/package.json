@@ -1,7 +1,7 @@
 {
   "name": "comma",
   "productName": "Comma",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A cross-platform desktop video player for language learning based on Electron, FFmpeg, VideoJS and AntDesign",
   "main": "./main.prod.js",
   "author": {
@@ -13,7 +13,9 @@
     "postinstall": "yarn electron-rebuild"
   },
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "install": "^0.13.0"
+  },
   "devDependencies": {
     "@types/ffmpeg-static": "^3.0.0",
     "@types/ffprobe": "^1.1.1",

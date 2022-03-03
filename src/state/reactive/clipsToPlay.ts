@@ -1,24 +1,26 @@
-import { map, mapTo, shareReplay, switchMap, tap } from 'rxjs/operators';
+import {
+  map,
+  mapTo,
+  mergeMap,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { promises as fs } from 'fs';
 import rimraf from 'rimraf';
 import { from, merge, Subject } from 'rxjs';
-import { Clip, WordClips } from '../../types/WordClips';
+import { Clip } from '../../types/WordClips';
 import { wordToPlay$ } from './wordToPlay';
-import { wordClips$ } from './wordClips';
 import { thumbnailPath, thumbnailRemovePath } from '../../constant';
 import { mkdir } from '../../util/mkdir';
-
-let localWordClips: WordClips = {};
-
-wordClips$.subscribe({
-  next: (wordClips) => {
-    localWordClips = wordClips;
-  },
-});
+import { miniSearch, searchClip } from '../../database/search';
 
 const clipsToPlayOnWordChange$ = wordToPlay$.pipe(
-  map((word) => localWordClips[word] || []),
+  mergeMap((word) => {
+    return from(searchClip(word));
+  }),
   switchMap((clips) => {
+    console.log('miniSearch search result:', clips);
     console.log('rename path of thumbnail..');
     let renamePromise = fs.rename(thumbnailPath, thumbnailRemovePath);
     renamePromise

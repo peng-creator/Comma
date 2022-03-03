@@ -1,34 +1,18 @@
 .WordListWrapper {
-  position: absolute;
-  right: 10px;
-  z-index: 4;
-  top: calc((100% - 600px) / 2 - 40px);
-  width: 46px;
-  height: 30px;
   overflow: hidden;
-
-  transition: width 50ms;
   outline: none;
-
   background-color: #fff;
   border-radius: 25px;
   border: none;
+  border-radius: 15px;
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
 }
 .SearchWrapper {
-  width: 80px;
+  width: calc(100% + 1px);
   overflow: hidden;
   position: relative;
-  left: -33px;
-}
-.SearchWrapper.Expanded {
-  width: calc(100% + 1px);
-  position: relative;
-  left: 0px;
-}
-.WordListWrapper.Expanded {
-  width: 330px;
-  height: 650px;
-  border-radius: 15px;
 }
 
 .AutoSizerWrapper {

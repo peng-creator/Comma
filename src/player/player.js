@@ -2,7 +2,8 @@ import { promises as fs } from 'fs';
 import jschardet from 'jschardet';
 import { BehaviorSubject } from 'rxjs';
 // import videojs from 'video.js';
-import { assContentToCutProject } from '../util/index.mjs';
+import highlightWords from 'highlight-words';
+import { Ass } from '../util/ass.mjs';
 import playSVG from '../../assets/play.svg';
 
 export class SubtitleStrategy {
@@ -24,19 +25,7 @@ export class SubtitleStrategy {
   }
 }
 
-class Ass {
-  constructor(source) {
-    this.source = source;
-  }
-
-  parse() {
-    return assContentToCutProject(this.source).sort(
-      (a, b) => a.start - b.start
-    );
-  }
-}
-
-class MyPlayer {
+export class MyPlayer {
   constructor(containerId) {
     this.containerId = containerId;
     this.container = null;
@@ -48,14 +37,16 @@ class MyPlayer {
     this.playSpeed = 1;
     this.playButton = null;
     this.timePadding = 6000;
-    this.start = 0;
-    this.end = 0;
-    this.start$ = new BehaviorSubject(0);
-    this.end$ = new BehaviorSubject(0);
+    // 片段
+    this.clips = [];
+    this.clipLoop = true; // 片段循环
+    this.playByClip = true; // 按片段播放。
+    this.currClipIndex = 0; // 当前播放的片段
+    this.currClip = undefined;
+
     this.rightClickWord = '';
-    this.audioWaveContainer = document.createElement('div');
-    document.body.appendChild(this.audioWaveContainer);
     this.volume = 1;
+    this.isPlaying = false;
     this.isPlaying$ = new BehaviorSubject(false);
     this.currentTime$ = new BehaviorSubject(0); // 播放到第几秒
     this.duration$ = new BehaviorSubject(0); // 总共时长多少秒
@@ -84,8 +75,29 @@ class MyPlayer {
     });
   }
 
-  getAudioWaveContainer() {
-    return this.audioWaveContainer;
+  setPlayByClip(playByClip) {
+    this.playByClip = playByClip;
+  }
+
+  setCurrClipIndex(index) {
+    this.currClipIndex = index;
+    this.currClip = this.clips[index];
+  }
+
+  setClipLoop(loop) {
+    this.clipLoop = loop;
+  }
+
+  setClips(clips) {
+    this.clips = clips;
+  }
+
+  setSubtitle(subtitles) {
+    this.ass = subtitles;
+  }
+
+  setCurrentTime(time) {
+    this.player.currentTime(time / 1000);
   }
 
   onAddWordsToWordBook(callback) {
@@ -116,13 +128,6 @@ class MyPlayer {
     this.domReady = true;
 
     this.container.appendChild(this.menu);
-
-    // let canvasInContainer = this.container.querySelector('canvas');
-    // if (canvasInContainer === null) {
-    //   canvasInContainer = document.createElement('canvas');
-    //   this.container.appendChild(canvasInContainer);
-    // }
-    // this.canvas = canvasInContainer;
 
     const subtitleContainerClassName = 'subtitle-container';
     let subtitleContainer = this.container.querySelector(
@@ -190,8 +195,9 @@ class MyPlayer {
       return;
     }
     this.shouldPlay = true;
-    this._play();
+    this.play();
     this.hidePlayButton();
+    this.isPlaying = true;
     this.isPlaying$.next(true);
   }
 
@@ -202,10 +208,11 @@ class MyPlayer {
     this.player.pause();
     this.playButton.style.display = 'block';
     this.shouldPlay = false;
+    this.isPlaying = false;
     this.isPlaying$.next(false);
   }
 
-  initPlayer() {
+  initPlayer(clips = []) {
     if (!this.domReady) {
       return;
     }
@@ -219,48 +226,77 @@ class MyPlayer {
     };
     const videoEl = this.video;
     this.container.appendChild(this.video);
-    // const canvasEl = this.canvas;
-    // const canvasContext = canvasEl.getContext('2d');
     // eslint-disable-next-line no-undef
     const player = videojs(videoEl, options);
     console.log('assign player');
     this.player = player;
     console.log('set volum:', this.volume);
     player.volume(this.volume);
+    this.setClips(clips);
     let prevAss;
-    const renderToCanvas = () =>
+    if (this.playByClip && this.currClip !== undefined) {
+      this.setCurrentTime(this.currClip.start);
+    }
+    const subtitleRenderInterval = () =>
       requestAnimationFrame(() => {
         if (player.isDisposed()) {
           return;
+        }
+        if (player.paused()) {
+          return subtitleRenderInterval();
         }
         const duration = player.duration();
         this.duration$.next(duration);
         const current = player.currentTime();
         this.currentTime$.next(current);
-        if (current >= this.end) {
-          this.willEndResolve();
-          this.subtitleContainer.innerHTML = '';
-          // return;
+        console.log(
+          'currentTime:',
+          current,
+          'clips:',
+          this.clips,
+          'currClipIndex:',
+          this.currClipIndex,
+          'currentClip',
+          this.currClip,
+          ' this.clipLoop:',
+          this.clipLoop
+        );
+        if (
+          this.playByClip === false &&
+          this.clipLoop === true &&
+          current * 1000 >= this.currClip.end
+        ) {
+          this.setCurrentTime(this.currClip.start);
+        } else if (
+          this.playByClip === true &&
+          this.currClip !== undefined &&
+          current * 1000 >= this.currClip.end
+        ) {
+          if (this.clipLoop) {
+            this.setCurrentTime(this.currClip.start);
+          } else {
+            this.currClipIndex += 1;
+            this.currClip = this.clips[this.currClipIndex];
+            this.setCurrentTime(this.currClip.start);
+          }
         }
+
         const { videoWidth, videoHeight } = videoEl;
         if (videoWidth === 0 || videoHeight === 0) {
-          return renderToCanvas();
+          return subtitleRenderInterval();
         }
         this.resizeSubtitle();
-        // canvasEl.width = videoWidth;
-        // canvasEl.height = videoHeight;
-        // canvasContext.drawImage(videoEl, 0, 0, videoWidth, videoHeight);
-        // canvasContext.font = 'bold 80px serif';
-        // canvasContext.fillStyle = 'rgb(216, 44, 102)';
-        // canvasContext.strokeStyle = 'rgb(243, 235, 165)';
-        // canvasContext.strokeText(this.word, 30, 100);
-        // canvasContext.fillText(this.word, 30, 100);
         const currentTime = player.currentTime() * 1000;
         const ass =
           this.ass.find(({ start, end }) => {
             // console.log("start, end, currentTime:", start, end, currentTime);
             return start <= currentTime && end >= currentTime;
           }) || prevAss;
+        console.log('current subtitle is:', ass);
+        if (this.playByClip === false && this.clipLoop === false) {
+          this.currClipIndex = this.ass.indexOf(ass);
+          this.currClip = ass;
+        }
         if (ass !== prevAss) {
           this.subtitleContainer.innerHTML = '';
           prevAss = ass;
@@ -279,8 +315,7 @@ class MyPlayer {
               p.style.font = subtitleStrategy.font;
               p.style.background = subtitleStrategy.background;
               p.style.margin = '0';
-              const words = subtitle.split(' ');
-              words.forEach((w) => {
+              subtitle.split(' ').forEach((w) => {
                 const span = document.createElement('span');
                 span.style.cursor = 'pointer';
                 let word = w.replace(/[^a-zA-Z'-]+/g, '');
@@ -307,37 +342,20 @@ class MyPlayer {
                   this.rightClickWord = word;
                 });
                 span.innerHTML = `${w} `;
-                // const isTransform = false;
-                const emphasized =
-                  w
-                    .split(/[^a-zA-Z'-]+/)
-                    .map((s) => s.toLowerCase())
-                    .flat()
-                    .filter((s) => s.length > 1)
-                    .filter((w) => w === this.word).length > 0;
-                if (emphasized) {
-                  span.style.color = subtitleStrategy.emphasisColor;
-                  span.style.font = subtitleStrategy.emphasisFont;
-                  span.style.margin = '0 5px';
-                }
                 p.appendChild(span);
               });
               this.subtitleContainer.appendChild(p);
             }
           }
+        } else if (!ass || ass.end <= currentTime) {
+          this.subtitleContainer.innerHTML = '';
         }
-        renderToCanvas();
+        subtitleRenderInterval();
       });
-    renderToCanvas();
+    subtitleRenderInterval();
   }
 
-  load({ file, cutStart, cutEnd }, word) {
-    console.log(
-      'load: file, cutStart, cutLength, cutEnd',
-      file,
-      cutStart,
-      cutEnd
-    );
+  load(file) {
     if (!this.domReady) {
       this.attach();
     }
@@ -346,30 +364,11 @@ class MyPlayer {
       player.dispose();
     }
     this.initPlayer();
-    this.word = word;
     player = this.player;
     player.src({ type: 'video/mp4', src: file });
     this.isDirty = true;
-    return fs.readFile(`${file}.ass`).then((res) => {
-      const { encoding } = jschardet.detect(res);
-      this.ass = new Ass(res.toString(encoding)).parse();
-      this.start = cutStart / 1000;
-      this.end = cutEnd / 1000;
-      for (const { start } of this.ass) {
-        if (cutStart - start <= this.timePadding) {
-          this.start = start / 1000;
-          break;
-        }
-      }
-      for (const { end } of this.ass) {
-        if (end - cutEnd >= this.timePadding) {
-          this.end = end / 1000;
-          break;
-        }
-      }
-      this.start$.next(this.start);
-      this.end$.next(this.end);
-      console.log('this.start, this.end : ', this.start, this.end);
+    return Ass.loadByVideoSrc(file).then((ass) => {
+      this.ass = ass;
     });
   }
 
@@ -389,13 +388,21 @@ class MyPlayer {
     }
   }
 
-  _play() {
+  play() {
     if (this.shouldPlay) {
       this.hidePlayButton();
       this.player.play().catch((e) => {
         console.log('play error:', e);
       });
     }
+  }
+}
+export class CommaPlayer extends MyPlayer {
+  constructor(containerId) {
+    super(containerId);
+    this.word = '';
+    this.start$ = new BehaviorSubject(0);
+    this.end$ = new BehaviorSubject(0);
   }
 
   play(subtitleStrategies) {
@@ -405,13 +412,172 @@ class MyPlayer {
       this.willEndResolve = () => resolve();
       player.ready(() => {
         player.currentTime(this.start);
-        this._play();
+        super.play();
         player.playbackRate(this.playSpeed);
       });
       player.on('ended', () => resolve());
       player.on('dispose', () => reject(new Error('source changed!')));
     });
   }
+
+  initPlayer() {
+    if (!this.domReady) {
+      return;
+    }
+    this.video =
+      this.container.querySelector('video') || document.createElement('video');
+    this.video.style.width = '100%';
+    this.video.style.height = 'auto';
+    const options = {
+      controls: false,
+      loadingSpinner: false,
+    };
+    const videoEl = this.video;
+    this.container.appendChild(this.video);
+    // const canvasEl = this.canvas;
+    // const canvasContext = canvasEl.getContext('2d');
+    // eslint-disable-next-line no-undef
+    const player = videojs(videoEl, options);
+    console.log('assign player');
+    this.player = player;
+    console.log('set volum:', this.volume);
+    player.volume(this.volume);
+    let prevAss;
+    const subtitleRenderInterval = () =>
+      requestAnimationFrame(() => {
+        if (player.isDisposed()) {
+          return;
+        }
+        const duration = player.duration();
+        this.duration$.next(duration);
+        const current = player.currentTime();
+        this.currentTime$.next(current);
+        if (current >= this.end) {
+          this.willEndResolve();
+          this.subtitleContainer.innerHTML = '';
+          // return;
+        }
+        const { videoWidth, videoHeight } = videoEl;
+        if (videoWidth === 0 || videoHeight === 0) {
+          return subtitleRenderInterval();
+        }
+        this.resizeSubtitle();
+        const currentTime = player.currentTime() * 1000;
+        const ass =
+          this.ass.find(({ start, end }) => {
+            // console.log("start, end, currentTime:", start, end, currentTime);
+            return start <= currentTime && end >= currentTime;
+          }) || prevAss;
+        if (ass !== prevAss) {
+          this.subtitleContainer.innerHTML = '';
+          prevAss = ass;
+          if (ass !== undefined) {
+            const subtitles = ass.subtitles || [];
+            for (let i = 0; i < subtitles.length; i += 1) {
+              // console.log('i ===>', i);
+              const subtitle = subtitles[i];
+              const subtitleStrategy =
+                this.subtitleStrategies[i] || this.defaultSubtitleStrategy;
+              const p = document.createElement('p');
+              if (subtitleStrategy.show === false) {
+                continue;
+              }
+              p.style.color = subtitleStrategy.color;
+              p.style.font = subtitleStrategy.font;
+              p.style.background = subtitleStrategy.background;
+              p.style.margin = '0';
+              const chunks = highlightWords({
+                text: subtitle,
+                query: `/(\\s${this.word.split(' ').join('\\s|\\s')}\\s)/`,
+              });
+              chunks.forEach(({ text, match }) => {
+                text.split(' ').forEach((w) => {
+                  const span = document.createElement('span');
+                  span.style.cursor = 'pointer';
+                  let word = w.replace(/[^a-zA-Z'-]+/g, '');
+                  span.addEventListener('click', () => {
+                    if (word.length > 0) {
+                      this.searchWord(word);
+                    }
+                  });
+                  span.addEventListener('contextmenu', (e) => {
+                    if (word.length === 0) {
+                      return;
+                    }
+                    e.preventDefault();
+                    const { clientX, clientY } = e;
+                    let left = clientX;
+                    let top = clientY - 30;
+                    if (clientX + 100 >= this.subtitleContainer.clientWidth) {
+                      left = this.subtitleContainer.clientWidth - 100;
+                    }
+                    this.menu.style.left = `${left}px`;
+                    // this.menu.style.bottom = `${this.subtitleContainer.clientHeight}px`;
+                    this.menu.style.top = `${top}px`;
+                    this.menu.style.height = 'auto';
+                    this.rightClickWord = word;
+                  });
+                  span.innerHTML = `${w} `;
+                  if (match) {
+                    span.style.color = subtitleStrategy.emphasisColor;
+                    span.style.font = subtitleStrategy.emphasisFont;
+                    span.style.margin = '0 5px';
+                  }
+                  // const isTransform = false;
+                  p.appendChild(span);
+                });
+              });
+              this.subtitleContainer.appendChild(p);
+            }
+          }
+        }
+        subtitleRenderInterval();
+      });
+    subtitleRenderInterval();
+  }
+
+  load({ file, start: cutStart, end: cutEnd }, word) {
+    console.log(
+      'load: file, cutStart, cutLength, cutEnd',
+      file,
+      cutStart,
+      cutEnd
+    );
+    if (!this.domReady) {
+      this.attach();
+    }
+    let { player } = this;
+    if (this.isDirty && !player.isDisposed()) {
+      player.dispose();
+    }
+    this.initPlayer();
+    this.word = word;
+    player = this.player;
+    player.src({ type: 'video/mp4', src: file });
+    this.isDirty = true;
+    return Ass.loadByVideoSrc(file).then((ass) => {
+      this.ass = ass;
+      this.start = cutStart / 1000;
+      this.end = cutEnd / 1000;
+      for (const { start } of this.ass) {
+        if (cutStart - start <= this.timePadding) {
+          this.start = start / 1000;
+          break;
+        }
+      }
+      for (const { end } of this.ass) {
+        if (end - cutEnd >= this.timePadding) {
+          break;
+        }
+        if (end - cutEnd >= 0) {
+          this.end = end / 1000;
+        }
+      }
+      this.start$.next(this.start);
+      this.end$.next(this.end);
+      console.log('this.start, this.end : ', this.start, this.end);
+    });
+  }
 }
 
-export const myPlayer = new MyPlayer('video-box');
+export const myPlayer = new CommaPlayer('video-box');

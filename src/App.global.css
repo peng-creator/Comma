@@ -17,13 +17,13 @@
 /* 滚动条滑块 */
 ::-webkit-scrollbar-thumb {
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.2);
   box-shadow: inset006pxrgba(0, 0, 0, 0.5);
   -webkit-box-shadow: inset006pxrgba(0, 0, 0, 0.5);
 }
-::-webkit-scrollbar-thumb:window-inactive {
+/* ::-webkit-scrollbar-thumb:window-inactive {
   background: rgba(255, 0, 0, 0.4);
-}
+} */
 
 * {
   margin: 0;
@@ -40,7 +40,7 @@ body {
   position: relative;
   color: white;
   height: 100vh;
-  background: rgba(214, 207, 207, 0);
+  background: rgba(40, 40, 40);
   font-family: sans-serif;
   overflow: hidden;
   display: flex;
@@ -140,4 +140,67 @@ body {
 
 .titlebar-wrapper.fullscreen {
   display: none !important;
+}
+
+.ant-layout-sider {
+  width: 240px !important;
+  max-width: 240px !important;
+  min-width: 240px !important;
+}
+
+.ant-layout-header {
+  padding: 0 12px;
+}
+
+.add-new-episode {
+  display: none;
+}
+
+.ant-menu-item-active>*:nth-child(1) .add-new-episode {
+  display: inline-block;
+}
+.ant-menu-submenu-active>*:nth-child(1) .add-new-episode {
+  display: inline-block;
+}
+
+.word-explain .ant-collapse-content {
+  background: none;
+  font-size: 20px;
+  color: rgb(100, 100, 100) !important;
+}
+.word-explain .ant-collapse-item {
+  border-bottom: none;
+}
+.word-explain .ant-collapse-header {
+  font-size: 20px;
+  color: rgb(100, 100, 100) !important;
+}
+.scrollbarHidden {
+}
+.scrollbarHidden::-webkit-scrollbar {
+  display: none;
+}
+
+.readingPagination .ant-pagination-item-link {
+  background: none;
+  border: none;
+  color: #fff;
+}
+.readingPagination .ant-pagination-simple-pager {
+  color: #fff;
+  font-size: 20px;
+  position: relative;
+  top: -4px;
+}
+
+.readingPagination .ant-pagination-simple-pager>input {
+  color: #fff;
+  background: none;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.readingPagination .ant-pagination-slash {
+  margin: 0 3px;
 }

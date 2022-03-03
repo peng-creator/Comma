@@ -36,13 +36,6 @@ export const WordListComponent = ({
   const [shine, setShine] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>(1);
   const [desc, setDesc] = useState<Desc>(-1);
-  const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    window.addEventListener('click', () => {
-      setExpanded(false);
-    });
-  }, []);
 
   const { words } = wordbook;
   // console.log('render words of wordbook in WordListComponent:', words);
@@ -139,7 +132,6 @@ export const WordListComponent = ({
                 } else {
                   myPlayer.unpause();
                   onChangeWordToPlay(word);
-                  setExpanded(false);
                 }
               }}
             >
@@ -179,36 +171,9 @@ export const WordListComponent = ({
     }
   };
   return (
-    <div
-      className={[styles.WordListWrapper, expanded ? styles.Expanded : ''].join(
-        ' '
-      )}
-      tabIndex={0}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (expanded === false) {
-          setExpanded(true);
-        }
-      }}
-      onKeyPress={(e) => {
-        if (e.key === ' ') {
-          setExpanded(true);
-        }
-      }}
-      onFocus={() => {
-        setExpanded(true);
-      }}
-      onBlur={() => {
-        setExpanded(false);
-      }}
-    >
+    <div className={styles.WordListWrapper}>
       <div className={styles.WordList}>
-        <div
-          className={[
-            styles.SearchWrapper,
-            expanded ? styles.Expanded : '',
-          ].join(' ')}
-        >
+        <div className={styles.SearchWrapper}>
           <Search
             placeholder={`在 ${wordbook.name} 中搜索单词`}
             onSearch={onSearch}
@@ -218,7 +183,6 @@ export const WordListComponent = ({
             }}
             onFocus={(e) => {
               e.stopPropagation();
-              setExpanded(true);
             }}
             onBlur={(e) => {
               e.stopPropagation();

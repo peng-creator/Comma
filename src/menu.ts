@@ -1,15 +1,5 @@
-import {
-  app,
-  Menu,
-  BrowserWindow,
-  MenuItemConstructorOptions,
-  // app,
-  remote,
-  // shell,
-  // BrowserWindow,
-  // MenuItemConstructorOptions,
-} from 'electron';
-import { importTask } from './compontent/VideoImport/VideoImport';
+import { app, Menu, BrowserWindow, MenuItemConstructorOptions } from 'electron';
+import * as remote from '@electron/remote';
 import { Wordbook } from './database/wordbook';
 import { newWordbookAction$ } from './state/user_input/newWordbookAction';
 import { selectedWordbook$ } from './state/user_input/selectedWordbook';
@@ -214,17 +204,6 @@ export default class MenuBuilder {
       ],
     };
 
-    const subMenuVideo: MenuItemConstructorOptions = {
-      label: '视频',
-      submenu: [
-        {
-          label: '导入视频',
-          click: () => {
-            importTask();
-          },
-        },
-      ],
-    };
     const subMenuView =
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
@@ -233,7 +212,6 @@ export default class MenuBuilder {
 
     return [
       subMenuAbout,
-      subMenuVideo,
       buildWordbookMenu(wordbooks, selectedWordbook),
       subMenuEdit,
       subMenuView,
@@ -259,17 +237,6 @@ export default class MenuBuilder {
             accelerator: 'Ctrl+W',
             click: () => {
               this.mainWindow.close();
-            },
-          },
-        ],
-      },
-      {
-        label: '视频',
-        submenu: [
-          {
-            label: '导入视频',
-            click: () => {
-              importTask();
             },
           },
         ],

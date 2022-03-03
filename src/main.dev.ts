@@ -15,7 +15,10 @@ import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import console from 'console';
+import { initialize, enable } from '@electron/remote/main';
 import { MIN_HEIGHT, MIN_WIDTH } from './contant/windowSize';
+
+initialize();
 
 ipcMain.on('selectVideoFile', (event) => {
   dialog
@@ -87,6 +90,8 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
+  // globalShortcut.register('L', () => {});
+
   if (
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
@@ -110,12 +115,11 @@ const createWindow = async () => {
     transparent: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
-      enableRemoteModule: true,
       nodeIntegration: true,
       contextIsolation: false,
     },
   });
-
+  enable(mainWindow.webContents);
   mainWindow.setFullScreenable(true);
   mainWindow.setMaximizable(true);
   mainWindow.setMinimumSize(MIN_WIDTH, MIN_HEIGHT);

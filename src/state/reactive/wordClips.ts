@@ -10,33 +10,8 @@ import {
 import { from, merge, Observable, of, Subject } from 'rxjs';
 import { Wordbook } from '../../database/wordbook';
 import { WordClips } from '../../types/WordClips';
-import { getWordVideos } from '../../database/db';
 import { selectedWordbook$ } from '../user_input/selectedWordbook';
 import { deleteWord$ } from '../user_input/deleteWordAction';
-import { clipsLoading$ } from '../system/clipLoading$';
-
-export const getWordClip$ = (words: string[]) => {
-  console.log('getWordClip$, words:', words);
-  if (words.length === 0) {
-    return of({});
-  }
-  return from(words).pipe(
-    mergeMap((word: string) => {
-      console.log('getWordVideos(word):', word);
-      return from(
-        getWordVideos(word).then((clips) => ({ word, clips: clips || [] }))
-      );
-    }, 10),
-    reduce((acc, { word, clips }) => {
-      acc[word] = clips;
-      return acc;
-    }, {} as WordClips),
-    shareReplay(1)
-  );
-};
-
-let wordbookLoading: Wordbook | null = null;
-let loading$: null | Observable<WordClips> = null;
 
 let wordbookLoaded: Wordbook | null = null;
 let _wordClips: WordClips = {};
@@ -47,41 +22,6 @@ deleteWord$
     })
   )
   .subscribe();
-
-const wordClipsFromDB$ = selectedWordbook$.pipe(
-  filter((wb) => wb !== null && wb !== undefined),
-  switchMap((wb) => {
-    if (loading$ !== null && wb?.name === wordbookLoading?.name) {
-      return loading$;
-    }
-    // 切换单词本时，只会从磁盘整本读取一次，后面只会返回缓存。如果发生更新，只需要读取相应单词后，使用 wordClipsFromCacheUpdate$ 对缓存进行更新。
-    if (wb?.name === wordbookLoaded?.name) {
-      return of(_wordClips);
-    }
-    wordbookLoading = wb;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    loading$ = getWordClip$(wb!.words);
-    console.log('clipsLoading$.next(true);');
-    console.log('clipsLoading$.next loading$:', loading$);
-    clipsLoading$.next(true);
-    loading$
-      .pipe(
-        finalize(() => {
-          console.log('clipsLoading$.next(false);');
-          clipsLoading$.next(false);
-        })
-      )
-      .subscribe();
-    return loading$;
-  }),
-  tap((wordClips) => {
-    console.log('wordClipsFromDB wordClips:', wordClips);
-    wordbookLoaded = wordbookLoading || wordbookLoaded;
-    wordbookLoading = null;
-    loading$ = null;
-    _wordClips = wordClips;
-  })
-);
 
 // 单词的删除、增加 都需要计算出最新的 wordClips ，然后推送到这个流中。
 export const wordClipsFromCacheUpdate$ = new Subject<WordClips>();
@@ -97,17 +37,6 @@ selectedWordbook$.subscribe({
     }
   },
 });
-
-export const wordClips$ = merge(
-  wordClipsFromCacheUpdate$,
-  wordClipsFromDB$
-).pipe(
-  tap((wordClips) => {
-    console.log('tap in wordClips$ update, wordClips:', wordClips);
-    _wordClips = wordClips;
-  }),
-  shareReplay(1)
-);
 
 let wordsOfWordbook: Set<string> = new Set();
 selectedWordbook$.subscribe({
@@ -159,15 +88,5 @@ export const partialUpdate = (
     wordClipsFromCacheUpdate$.next({
       ..._wordClips,
     });
-    return;
   }
-  getWordClip$(words).subscribe({
-    next: (loadedWordClips) => {
-      console.log('partialUpdate loadedWordClips:', loadedWordClips);
-      wordClipsFromCacheUpdate$.next({
-        ..._wordClips,
-        ...loadedWordClips,
-      });
-    },
-  });
 };

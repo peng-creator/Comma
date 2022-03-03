@@ -2,15 +2,27 @@ import React, { useState, useEffect } from 'react';
 import './App.global.css';
 import { fromEvent } from 'rxjs';
 import { debounceTime, share } from 'rxjs/operators';
-import { ipcRenderer, remote } from 'electron';
+import { ipcRenderer } from 'electron';
+import { getCurrentWindow } from '@electron/remote';
 import TitleBar from 'frameless-titlebar';
 import { Menu } from 'electron/main';
+import { Route, Routes } from 'react-router-dom';
 import styles from './App.css';
 import { menu$ } from './state/system/menu';
-import { Comma } from './Comma';
+import { Word } from './pages/word/Word';
+import { Home } from './pages/home/Home';
+import { EpisodePage } from './pages/episode/Episode';
+import { PlayVideo } from './pages/playVideo/PlayVideo';
+import { Reading } from './pages/reading/Reading';
+import { Article } from './pages/article/Article';
+import { globalKeyDownAction$ } from './state/user_input/globalKeyDownAction';
+import { AddWordbookComponent } from './compontent/AddWordbook/AddWordbook';
+import { WordImportComponent } from './compontent/WordImport/WordImport';
+import { VocabularyTest } from './pages/vocabularyTest/VocabularyTest';
 
-const currentWindow = remote.getCurrentWindow();
+const currentWindow = getCurrentWindow();
 const mousemove$ = fromEvent(document, 'mousemove').pipe(share());
+
 export default function App() {
   const [isPlayerMaximum, setIsPlayerMaximum] = useState(false);
   const [maximized, setMaximized] = useState(currentWindow.isMaximized());
@@ -118,12 +130,16 @@ export default function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  console.log('menu:', menu);
   return (
     <div
       className={styles.AppWrapper}
       style={{
         cursor: hideControlPanel ? 'none' : 'auto',
+      }}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        console.log('[globalKeyDownAction], key:', e.key);
+        globalKeyDownAction$.next(e.key);
       }}
     >
       <div
@@ -159,13 +175,27 @@ export default function App() {
           maximized={maximized}
         />
       </div>
-      <div className={styles.App}>
-        <Comma
-          isPlayerMaximum={isPlayerMaximum}
-          setIsPlayerMaximum={setIsPlayerMaximum}
-          hideControlPanel={hideControlPanel}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="word"
+          element={
+            <div className={styles.App}>
+              <Word
+                isPlayerMaximum={isPlayerMaximum}
+                setIsPlayerMaximum={setIsPlayerMaximum}
+                hideControlPanel={hideControlPanel}
+              />
+            </div>
+          }
         />
-      </div>
+        <Route path="episode" element={<EpisodePage />} />
+        <Route path="video" element={<PlayVideo />} />
+        <Route path="reading" element={<Reading />} />
+        <Route path="vocabularytest" element={<VocabularyTest />} />
+      </Routes>
+      <AddWordbookComponent />
+      <WordImportComponent />
     </div>
   );
 }

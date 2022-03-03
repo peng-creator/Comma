@@ -1,4 +1,5 @@
 import path from 'path';
+import { promises as fs } from 'fs';
 import { from, of, timer } from 'rxjs';
 import cpFile from 'cp-file';
 import {
@@ -48,7 +49,7 @@ export function processVideos$(outDir, sourcePathList, concurrent = 2) {
     mergeMap((file) => {
       const videoOutputPath = getConvertOutputPath(file, 'mp4', outDir);
       const assSourcePath = getConvertOutputPath(file, 'ass');
-      const assOutPath = `${videoOutputPath}.ass`;
+      const assOutPath = `${videoOutputPath.slice(0, -4)}.ass`;
       cpFile(assSourcePath, assOutPath).catch(() => {
         message.warn('字幕文件缺失：', assSourcePath);
       });
@@ -64,76 +65,20 @@ export function processVideos$(outDir, sourcePathList, concurrent = 2) {
           return from(
             getWordsWithTimeSection(file)
               .then((wordsWithTimeSectionList) => {
-                // 计算剪辑计划
-                return Promise.all(
-                  wordsWithTimeSectionList.map(
-                    async ({ start, end, words }) => {
-                      return {
-                        file,
-                        cutStart: start,
-                        cutEnd: end,
-                        words,
-                      };
-                    }
-                  )
+                console.log(
+                  'output path: ',
+                  getConvertOutputPath(file, 'json', outDir)
+                );
+                return fs.writeFile(
+                  getConvertOutputPath(file, 'json', outDir),
+                  JSON.stringify(wordsWithTimeSectionList, null, 2)
                 );
               })
-              .then((cutInfoList) => {
-                // 处理剪辑计划数组，过滤 undefined，即无需剪辑的片段。
-                return cutInfoList.filter((info) => info !== undefined);
-              })
               .catch((e) => {
-                console.log('getWordsWithTimeSection error:', e);
-                message.warn(e.message);
-                return [];
+                console.log('save subtitle json failed: ', e);
               })
-          ).pipe(
-            mergeMap((cutInfoList) => {
-              return from(cutInfoList);
-            }),
-            mergeMap(({ file, cutStart, cutEnd, words }) => {
-              return from(
-                words.map((word) => {
-                  return {
-                    file: path
-                      .basename(file)
-                      .replace(path.extname(file), '.mp4'),
-                    cutStart,
-                    cutEnd,
-                    word,
-                  };
-                })
-              );
-            }),
-            reduce((acc, { word, file, cutStart, cutEnd }) => {
-              const clip = {
-                file,
-                cutStart,
-                cutEnd,
-              };
-              if (acc[word] === undefined) {
-                acc[word] = [];
-              }
-              acc[word].push(clip);
-              return acc;
-            }, {}),
-            tap((wordToClips) => {
-              console.log('wordToClips:', wordToClips);
-              const words = Object.keys(wordToClips);
-              const semaphore = new Semaphore(10);
-              for (const word of words) {
-                semaphore
-                  .acquire()
-                  .then(() => addWordVideos(word, wordToClips[word]))
-                  .finally(() => semaphore.release())
-                  .catch((e) => console.error('add word videos failed', e));
-              }
-            })
           );
-        }, 1),
-        catchError((e) => {
-          console.log('mergeMap getWordsWithTimeSection error:', e);
-        })
+        }, 1)
       );
     })
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { myPlayer } from '../../player/player';
 import { MySlider } from '../MySlider';
 import { VideoImportComponent } from '../VideoImport/VideoImport';
+import { Dict } from './Dict';
 import styles from './LeftPanel.css';
 
 type LeftPanelProps = {
@@ -45,16 +46,7 @@ export const LeftPanel = ({
       )}
       {searchWord && (
         <div className={styles.DictContainer}>
-          <iframe
-            title="youdao"
-            style={{
-              width: '100%',
-              border: 'none',
-              background: '#fff',
-              height: '100%',
-            }}
-            src={`http://mobile.youdao.com/dict?le=eng&q=${searchWord}`}
-          />
+          <Dict searchWord={searchWord}></Dict>
         </div>
       )}
       {wordPlaying && (

@@ -7,7 +7,6 @@ import { pick } from '../../util/pick';
 import { studyRecord$ } from '../system/studyRecord';
 import { nextWordToPlayAction$ } from '../user_input/nextWordToPlayAction';
 import { prevWordToPlayAction$ } from '../user_input/prevWordToPlayAction';
-import { wordClips$ } from './wordClips';
 import { wordsToPlay$ } from './wordsToPlay';
 
 export const wordToPlay$ = new BehaviorSubject('');
@@ -72,7 +71,6 @@ const takeFromRight = (): string => {
 
 const computeWordToPlay = (
   wordsToPlay: string[],
-  wordClips: WordClips,
   studyRecord: StudyRecord
 ): string => {
   console.log('切换单词计算中。。。');
@@ -87,14 +85,6 @@ const computeWordToPlay = (
       playTimes: 0,
       level: 500,
     };
-    let wordCount = 0;
-    if (wordClips !== null && wordClips[word] !== undefined) {
-      wordCount = wordClips[word].length;
-      return (
-        (Math.log2(wordCount + 1) * (Math.pow(70 / 69, level) + 1)) /
-        (playTimes + 1)
-      );
-    }
     const weight = (Math.pow(70 / 69, level) + 1) / (playTimes + 1);
     if (Number.isNaN(weight)) {
       return 1;
@@ -114,13 +104,12 @@ nextWordToPlayAction$
     switchMap(() => {
       return combineLatest([
         wordsToPlay$.pipe(filter((words) => words.length > 0)),
-        wordClips$,
         studyRecord$,
       ]).pipe(debounceTime(10), take(1));
     })
   )
   .subscribe({
-    next: ([wordsToPlay, wordToClips, studyRecord]) => {
+    next: ([wordsToPlay, studyRecord]) => {
       if (wordsToPlay.length === 0) {
         // message.warn('没有可播放的单词');
         return;
@@ -129,7 +118,7 @@ nextWordToPlayAction$
       if (nextWord === '') {
         console.log('wordPlaying:', wordPlaying);
         let selectPool = wordsToPlay.filter((word) => word !== wordPlaying);
-        nextWord = computeWordToPlay(selectPool, wordToClips, studyRecord);
+        nextWord = computeWordToPlay(selectPool, studyRecord);
       }
       console.log('playWordHistoryStackLeft:', playWordHistoryStackLeft);
       console.log('playWordHistoryStackRight:', playWordHistoryStackRight);
