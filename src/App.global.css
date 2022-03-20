@@ -215,3 +215,7 @@ body {
   margin-right: 10px;
   transition: 1s all;
 }
+
+.ant-switch-checked {
+  background-color: #a976ec;
+}

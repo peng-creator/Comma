@@ -1,3 +1,5 @@
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/no-nesting */
 import {
   CloseOutlined,
   LeftOutlined,
@@ -51,6 +53,9 @@ export const VideoPlayer = (
 
   const [subtitleToPlay, setSubtitleToPlay] = useState<Subtitle | null>(null); // 从外部定位的字幕
 
+  const [controlPanelScale, setControlPanelScale] = useState(1);
+  const [controlPanelLeft, setControlPanelLeft] = useState(0);
+
   const updateSubtitles = (videoPath: string, subtitles: any[]) => {
     if (!videoPath) {
       return;
@@ -81,23 +86,30 @@ export const VideoPlayer = (
     setPlayer(player);
     console.log('initPlayer, loadSrt:');
 
-    fs.readFile(`${videoPath.slice(0, -4)}.json`).then((res) => {
-      return JSON.parse(res.toString());
-    }).catch(() => {
-      return Promise.all([fs.readFile(`${videoPath.slice(0, -4)}.srt`).then(srtBuf => srtBuf.toString()).then((srtContent) => {
-        return srtContentToCutProject(srtContent);
-      }).catch((e) => {
-        console.log('srtContentToCutProject(srtContent) error:', e);
-        return [];
-      }),
-      Ass.loadByVideoSrc(videoPath)
-        .catch((e) => {
-          console.log('Ass.loadByVideoSrc(', videoPath, ') error:', e);
-          return []
-        })])    .then(([srtRes, assRes]) => {
+    fs.readFile(`${videoPath.slice(0, -4)}.json`)
+      .then((res) => {
+        return JSON.parse(res.toString());
+      })
+      .catch(() => {
+        return Promise.all([
+          fs
+            .readFile(`${videoPath.slice(0, -4)}.srt`)
+            .then((srtBuf) => srtBuf.toString())
+            .then((srtContent) => {
+              return srtContentToCutProject(srtContent);
+            })
+            .catch((e) => {
+              console.log('srtContentToCutProject(srtContent) error:', e);
+              return [];
+            }),
+          Ass.loadByVideoSrc(videoPath).catch((e) => {
+            console.log('Ass.loadByVideoSrc(', videoPath, ') error:', e);
+            return [];
+          }),
+        ]).then(([srtRes, assRes]) => {
           return [...srtRes, ...assRes];
-        })  
-    })
+        });
+      })
       .then((subtitles) => {
         console.log('load srt or ass to subtitles:', subtitles);
         const validSubtitles = subtitles
@@ -109,6 +121,11 @@ export const VideoPlayer = (
         setSubtitles(validSubtitles, videoPath);
         player.setSubtitle(validSubtitles);
         player.setClips(validSubtitles);
+        if (validSubtitles.length > 0) {
+          player.setCurrentTime(validSubtitles[0].start);
+          player.setCurrClipIndex(0);
+          player.togglePause();
+        }
       });
     return player;
   };
@@ -208,13 +225,34 @@ export const VideoPlayer = (
         'setCurrentSubtitleIndex player.currClipIndex:',
         player.currClipIndex
       );
-      setCurrentSubtitleIndex(player.currClipIndex);
+      if (player.currClipIndex !== currentSubtitleIndex) {
+        setCurrentSubtitleIndex(player.currClipIndex);
+        setScrollToIndex(player.currClipIndex);
+        shine();
+      }
       const video = document.querySelector(
         '#video-player video'
       ) as HTMLDivElement;
       const videoPlayer = document.querySelector(
         '#video-player'
       ) as HTMLDivElement;
+      if (videoContainerRef.current !== null) {
+        // 设置控制条大小
+        let _controlPanelScale = videoContainerRef.current.clientWidth / 850;
+        if (_controlPanelScale > 1) {
+          _controlPanelScale = 1;
+          setControlPanelLeft(0);
+        } else {
+          setControlPanelLeft(
+            -(850 - videoContainerRef.current.clientWidth) / 2
+          );
+        }
+        console.log(
+          'setControlPanelScale _controlPanelScale:',
+          _controlPanelScale
+        );
+        setControlPanelScale(_controlPanelScale);
+      }
       if (videoContainerRef.current !== null && video !== null) {
         console.log('调整播放器宽高。。');
         const wrapperHeight = videoContainerRef.current.offsetHeight;
@@ -247,7 +285,7 @@ export const VideoPlayer = (
       }
     }, 16);
     return () => clearInterval(interval);
-  }, [player, videoContainerRef]);
+  }, [player, videoContainerRef, currentSubtitleIndex]);
 
   const renderItem = ({ index, key, style }: any) => {
     const subtitle = subtitles[index];
@@ -437,7 +475,10 @@ export const VideoPlayer = (
                       onClick={() => {
                         const currentSubtitle = subtitles[index];
                         const nextSubtitle = subtitles[index + 1];
-
+                        let nextPlaySubtitleIndex = currentSubtitleIndex;
+                        if (index < nextPlaySubtitleIndex) {
+                          nextPlaySubtitleIndex -= 1;
+                        }
                         const maxLength = Math.max(
                           currentSubtitle.subtitles.length,
                           nextSubtitle.subtitles.length
@@ -462,6 +503,10 @@ export const VideoPlayer = (
                         const nextScrollToIndex = nextSubtitles.findIndex(
                           ({ id: _id }) => _id === id
                         );
+                        player?.setCurrentTime(
+                          subtitles[nextPlaySubtitleIndex].start
+                        );
+                        player?.setCurrClipIndex(nextPlaySubtitleIndex);
                         setScrollToIndex(nextScrollToIndex);
                         shine();
                       }}
@@ -504,25 +549,6 @@ export const VideoPlayer = (
       </VanillaCard>
     );
   };
-  const [controlPanelScale, setControlPanelScale] = useState(1);
-  const [controlPanelLeft, setControlPanelLeft] = useState(0);
-  useEffect(() => {
-    const onResize = () => {
-      if (videoContainerRef.current === null) {
-        return;
-      }
-      let _controlPanelScale = videoContainerRef.current.clientWidth / 850;
-      if (controlPanelScale > 1) {
-        _controlPanelScale = 1;
-        setControlPanelLeft(0);
-      } else {
-        setControlPanelLeft(-(850 - videoContainerRef.current.clientWidth) / 2);
-      }
-      setControlPanelScale(_controlPanelScale);
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('reisze', onResize);
-  }, [videoContainerRef.current]);
 
   return (
     <div
@@ -580,16 +606,44 @@ export const VideoPlayer = (
             player.togglePause();
           }}
         ></div>
-        
       </div>
-      <div>
-      {player && <ControlPanelComponent
-        style={{transform: `scale(${controlPanelScale})`, position: 'relative', left: `${controlPanelLeft}px`}}
+      <div
+        style={{
+          ...(controlPanelScale === 1
+            ? { display: 'flex', justifyContent: 'center' }
+            : {}),
+        }}
+      >
+        {player && (
+          <ControlPanelComponent
+            style={{
+              transform: `scale(${controlPanelScale})`,
+              position: 'relative',
+              left: `${controlPanelLeft}px`,
+            }}
             onPlayNextFile={() => {
-              throw new Error('Function not implemented.');
+              const maxIndex = subtitles.length - 1;
+              let nextIndex = currentSubtitleIndex + 1;
+              if (nextIndex > maxIndex) {
+                nextIndex = maxIndex;
+              }
+              let nextSub = subtitles[nextIndex];
+              player?.setCurrentTime(nextSub.start);
+              player?.setCurrClipIndex(nextIndex);
+              setScrollToIndex(nextIndex);
+              shine();
             }}
             onPlayPrevFile={() => {
-              throw new Error('Function not implemented.');
+              const minIndex = 0;
+              let nextIndex = currentSubtitleIndex - 1;
+              if (nextIndex < minIndex) {
+                nextIndex = minIndex;
+              }
+              let nextSub = subtitles[nextIndex];
+              player?.setCurrentTime(nextSub.start);
+              player?.setCurrClipIndex(nextIndex);
+              setScrollToIndex(nextIndex);
+              shine();
             }}
             player={player}
             onSubtitleMoveBack={() => {
@@ -620,7 +674,8 @@ export const VideoPlayer = (
               setScrollToIndex(currentSubtitleIndex);
               shine();
             }}
-          ></ControlPanelComponent>}
+          ></ControlPanelComponent>
+        )}
       </div>
       <div
         style={{
