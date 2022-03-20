@@ -16,7 +16,7 @@ export const Home = () => {
       }}
     >
       <div>
-        <Row>
+        {/* <Row>
           <Col>
             <Link style={{ display: 'block' }} to="/episode">
               <VanillaCard style={{ color: 'white' }}>
@@ -31,19 +31,40 @@ export const Home = () => {
               </VanillaCard>
             </Link>
           </Col>
-        </Row>
+          <Col>
+            <Link style={{ display: 'block' }} to="/cards">
+              <VanillaCard style={{ color: 'white' }}>
+                <div>卡片</div>
+              </VanillaCard>
+            </Link>
+          </Col>
+        </Row> */}
         <Row>
           <Col>
+            <Link style={{ display: 'block' }} to="/learning">
+              <VanillaCard style={{ color: 'white' }}>
+                <div>学习</div>
+              </VanillaCard>
+            </Link>
+          </Col>
+          {/* <Col>
             <Link style={{ display: 'block' }} to="/reading">
               <VanillaCard style={{ color: 'white' }}>
                 <div>阅读模式</div>
               </VanillaCard>
             </Link>
-          </Col>
+          </Col> */}
           <Col>
             <Link style={{ display: 'block' }} to="/vocabularytest">
               <VanillaCard style={{ color: 'white' }}>
                 <div>词汇量测试</div>
+              </VanillaCard>
+            </Link>
+          </Col>
+          <Col>
+            <Link style={{ display: 'block' }} to="/settings">
+              <VanillaCard style={{ color: 'white' }}>
+                <div>设置</div>
               </VanillaCard>
             </Link>
           </Col>

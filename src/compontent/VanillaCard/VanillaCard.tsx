@@ -31,6 +31,7 @@ export const VanillaCard = ({
         height: '150px',
         cursor: 'pointer',
         overflow: 'hidden',
+        ...style,
       }}
       ref={divRef}
       data-tilt-glare
@@ -38,7 +39,7 @@ export const VanillaCard = ({
       data-tilt-reverse="true"
       data-tilt-scale="0.9"
     >
-      <div style={{ transform: 'translateZ(20px)', ...style }}>{children}</div>
+      <div style={{ transform: 'translateZ(20px)' }}>{children}</div>
     </div>
   );
 };

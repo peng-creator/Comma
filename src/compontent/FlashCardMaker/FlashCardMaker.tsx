@@ -10,16 +10,26 @@ import {
   Row,
   Select,
 } from 'antd';
-import { EditFilled, SaveOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditFilled,
+  PlayCircleOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
 import PATH from 'path';
 import { promises as fs } from 'fs';
 import { v5 as uuidv5 } from 'uuid';
+import { Subject } from 'rxjs';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 import { FlashCard } from '../../types/FlashCard';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { dbRoot } from '../../constant';
 import { mkdir } from '../../util/mkdir';
 import { stringFolder } from '../../util/string_util';
+import { playSubtitle$ } from '../../state/user_input/playClipAction';
+import { millisecondsToTime } from '../../util/time_util.mjs';
+import { Subtitle } from '../../types/Subtitle';
+import { LazyInput } from '../LazyInput/LazyInput';
 
 const { Option } = Select;
 
@@ -31,7 +41,7 @@ const newFlashCard = (keyword: string): FlashCard => {
     id: uuidv5(keyword + Date.now(), MY_NAMESPACE),
     front: {
       word: keyword,
-      clips: [],
+      subtitles: [],
       sentences: [],
     },
     back: '',
@@ -59,12 +69,14 @@ const cardIndexMapPromise = fs
   });
 
 const saveCard = async (cardToSave: FlashCard, cardIndexMap: CardIndexMap) => {
-  if (cardToSave.clean) {
-    throw new Error('无法保存空白卡片!');
-  }
-  if (!cardToSave.hasChanged) {
-    return;
-  }
+  // if (cardToSave.clean) {
+  //   throw new Error('无法保存空白卡片!');
+  // }
+  // if (!cardToSave.hasChanged) {
+  //   return;
+  // }
+  cardToSave.clean = false;
+  cardToSave.hasChanged = false;
   const keyword = cardToSave.front.word;
   const collectionId = uuidv5(keyword, CARD_COLLECTION_NAMESPACE);
   cardIndexMap[collectionId] = keyword;
@@ -91,6 +103,8 @@ const saveCard = async (cardToSave: FlashCard, cardIndexMap: CardIndexMap) => {
       console.log('保存卡片失败:', e);
     });
 };
+
+export const addSubtitle$ = new Subject<Subtitle>();
 
 const Component = () => {
   const [flashCards, setFlashCards] = useState<FlashCard[]>([]); // 卡片集，一个卡片集存储关键词相同的卡片。
@@ -177,19 +191,47 @@ const Component = () => {
             );
           })
           .then((bufs) => {
-            return bufs.map((buf) => JSON.parse(buf.toString()) as FlashCard);
+            return bufs
+              .map((buf) => {
+                try {
+                  const flashCard = JSON.parse(buf.toString()) as FlashCard;
+                  flashCard.front.subtitles = flashCard.front.subtitles || [];
+                  return flashCard;
+                } catch (err) {
+                  return null;
+                }
+              })
+              .filter((f) => {
+                return f !== null;
+              });
           })
           .catch((e) => {
             return [];
           });
         console.log('loadedFlashCards:', loadedFlashCards);
-        nextFlashCards = loadedFlashCards || [];
+        nextFlashCards = (loadedFlashCards as FlashCard[]) || [];
         // 在卡片集后面加入新的卡片。
         addNewFlashCardToCollection();
       },
     });
     return () => sp.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const sp = addSubtitle$.subscribe({
+      next(subtitle: Subtitle) {
+        if (currentCard === null) {
+          message.warn('没有打开的卡片');
+          return;
+        }
+        currentCard.front.subtitles.push(subtitle);
+        currentCard.clean = false;
+        currentCard.hasChanged = true;
+        setFlashCards([...flashCards]);
+      },
+    });
+    return () => sp.unsubscribe();
+  }, [currentCard]);
 
   const cardCollectionSelector = (
     <Select
@@ -233,11 +275,12 @@ const Component = () => {
         flexDirection: 'column',
         width: '100%',
         height: '100%',
+        overflow: 'hidden',
       }}
     >
       <div style={{ marginTop: '10px', marginBottom: '10px' }}>
         <Row>
-          <Col span={3}>
+          <Col span={4}>
             {currentCard !== null && (
               <Button
                 type="ghost"
@@ -245,6 +288,16 @@ const Component = () => {
                 onClick={() => {
                   saveCard(currentCard, cardIndexMapCache)
                     .then(() => setFlashCards([...flashCards]))
+                    .then(() => {
+                      const lastCard = flashCards[flashCards.length - 1];
+                      if (lastCard.clean === false) {
+                        const nextFlashCards = [
+                          ...flashCards,
+                          newFlashCard(lastCard.front.word),
+                        ];
+                        setFlashCards(nextFlashCards);
+                      }
+                    })
                     .catch((e) => message.error(e.message));
                 }}
               >
@@ -252,7 +305,7 @@ const Component = () => {
               </Button>
             )}
           </Col>
-          <Col span={10}>{cardCollectionSelector}</Col>
+          <Col span={20}>{cardCollectionSelector}</Col>
         </Row>
       </div>
       <div
@@ -303,7 +356,7 @@ const Component = () => {
       </div>
       {currentCard !== null && (
         <div
-          style={{ height: '100%' }}
+          style={{ height: '100%', width: '100%' }}
           onDrop={(e) => {
             const explain = e.dataTransfer.getData('explain');
             if (explain) {
@@ -326,32 +379,145 @@ const Component = () => {
             e.preventDefault();
           }}
         >
-          <div style={{ height: '50%', backgroundColor: 'rgb(72, 72, 72)' }}>
+          <div
+            style={{
+              height: '50%',
+              backgroundColor: 'rgb(72, 72, 72)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '14px',
+              width: '100%',
+              overflowY: 'auto',
+            }}
+          >
             <div>正面</div>
-            <div>{currentCard.front.word}</div>
-            {currentCard.front.sentences.length === 0 && (
-              <div>您可以从右侧文章中拖拽句子到这里进行摘抄。</div>
-            )}
-            {currentCard.front.sentences.map((sentence, index) => {
-              return (
-                <div
-                  key={sentence.content + index}
-                  style={{ margin: '10px 10px', cursor: 'pointer' }}
-                  tabIndex={0}
-                  onClick={() => {
-                    console.log('open sentence in flashCard:', sentence);
-                    openSentence$.next(sentence);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key.toLowerCase() === 'enter') {
+            <div style={{ flex: 1, width: '100%' }}>
+              {currentCard.front.sentences.length === 0 &&
+                currentCard.front.subtitles.length === 0 && (
+                  <>
+                    <div>您可以从文章中拖拽句子到这里进行摘抄。</div>
+                    <div>或者在字幕列表里将字幕加入卡片。</div>
+                  </>
+                )}
+              {currentCard.front.sentences.map((sentence, index) => {
+                return (
+                  <div
+                    key={sentence.content + index}
+                    style={{ margin: '10px 10px', cursor: 'pointer' }}
+                    tabIndex={0}
+                    onClick={() => {
+                      console.log('open sentence in flashCard:', sentence);
                       openSentence$.next(sentence);
-                    }
-                  }}
-                >
-                  {sentence.content}
-                </div>
-              );
-            })}
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key.toLowerCase() === 'enter') {
+                        openSentence$.next(sentence);
+                      }
+                    }}
+                  >
+                    {sentence.content}
+                  </div>
+                );
+              })}
+              {currentCard.front.subtitles.map((subtitle, index) => {
+                const { subtitles, start, end, file } = subtitle;
+                const deleteSubtitle = () => {
+                  const updatedSubtitles = currentCard.front.subtitles.filter(
+                    (sub) => subtitle !== sub
+                  );
+                  const nextCard: FlashCard = {
+                    ...currentCard,
+                    hasChanged: true,
+                  };
+                  nextCard.front.subtitles = updatedSubtitles;
+                  const currentCardIndex = flashCards.findIndex(
+                    (f) => f === currentCard
+                  );
+                  const nextCards = [
+                    ...flashCards.slice(0, currentCardIndex),
+                    nextCard,
+                    ...flashCards.slice(currentCardIndex + 1),
+                  ];
+                  setFlashCards(nextCards);
+                  setCurrentCard(nextCard);
+                };
+                return (
+                  <div
+                    key={index}
+                    style={{ padding: '0 10px', cursor: 'pointer' }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div style={{ margin: '0 14px' }}>-{index}.</div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          flexGrow: 1,
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div
+                          tabIndex={0}
+                          onClick={() => {
+                            playSubtitle$.next(subtitle);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key.toLowerCase() === 'enter') {
+                              playSubtitle$.next(subtitle);
+                            }
+                          }}
+                        >
+                          <PlayCircleOutlined></PlayCircleOutlined>
+                        </div>
+
+                        <div>
+                          <div style={{ padding: '0 14px' }}>
+                            {PATH.basename(file).replaceAll(/[^\w]/g, ' ')}
+                          </div>
+                          <div style={{ display: 'flex', textAlign: 'center' }}>
+                            <LazyInput
+                              value={start}
+                              onChange={(value) => {}}
+                              displayValueTo={(value) =>
+                                millisecondsToTime(value)
+                              }
+                            ></LazyInput>
+                            <div>至</div>
+                            <LazyInput
+                              value={end}
+                              onChange={(value) => {}}
+                              displayValueTo={(value) =>
+                                millisecondsToTime(value)
+                              }
+                            ></LazyInput>
+                          </div>
+                        </div>
+                        <div
+                          tabIndex={0}
+                          onClick={() => {
+                            deleteSubtitle();
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key.toLowerCase() === 'enter') {
+                              deleteSubtitle();
+                            }
+                          }}
+                        >
+                          <DeleteOutlined></DeleteOutlined>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <div
             style={{

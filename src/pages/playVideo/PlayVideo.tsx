@@ -4,10 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AutoSizer } from 'react-virtualized';
 import VList from 'react-virtualized/dist/commonjs/List';
+import { promises as fs } from 'fs';
+import { Subject } from 'rxjs';
 import { MyPlayer } from '../../player/player';
 import { useBehavior } from '../../state';
 import { playVideo$ } from '../../state/user_input/playVideoAction';
 import { Ass } from '../../util/ass.mjs';
+import {
+  DictAndCardMaker,
+  tapWord$,
+} from '../../blocks/DictAndCardMaker/DictAndCardMaker';
 
 export const PlayVideo = () => {
   const [videoPath, setVideoPath] = useBehavior(playVideo$, '');
@@ -33,62 +39,15 @@ export const PlayVideo = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (!player || !bySentence || !subtitles) {
-  //     return;
-  //   }
-  //   let currentSubtitle: any;
-  //   let currentIndex = 0;
-  //   let sp = player.currentTime$.subscribe({
-  //     next: (currentTime: number) => {
-  //       currentTime *= 1000;
-  //       if (
-  //         currentSubtitle &&
-  //         currentSubtitle.start <= currentTime &&
-  //         currentSubtitle.end >= currentTime
-  //       ) {
-  //         return;
-  //       }
-  //       // 前片段播放完毕。
-  //       let prevSubtitle = currentSubtitle;
-  //       currentSubtitle = subtitles.find(({ start, end }) => {
-  //         return start <= currentTime && end >= currentTime;
-  //       });
-  //       if (currentSubtitle !== undefined) {
-  //         currentIndex = subtitles.indexOf(currentSubtitle);
-  //       }
-  //       if (currentSubtitle === undefined) {
-  //         if (prevSubtitle === undefined) {
-  //           // 默认情况，选中第一个片段
-  //           [currentSubtitle] = subtitles;
-  //         } else {
-  //           // 说明当前片段结束，但影片播放到两个片段之间。
-  //           let prevIndex = subtitles.indexOf(prevSubtitle); // 查找 prevIndex，找不到则说明被删除了。
-  //           console.log(
-  //             '片段切换：prevIndex:',
-  //             prevIndex,
-  //             ' currentIndex:',
-  //             currentIndex
-  //           );
-  //           if (!prevIndex) {
-  //             currentSubtitle = subtitles[currentIndex];
-  //           } else {
-  //             currentIndex += 1;
-  //             currentSubtitle = subtitles[currentIndex];
-  //           }
-  //         }
-  //       }
-  //       setCurrentSubtitle(currentSubtitle);
-  //       if (prevSubtitle !== currentSubtitle && currentSubtitle !== undefined) {
-  //         // 片段切换
-  //         console.log('片段切换：', currentSubtitle);
-  //         player.setCurrentTime(currentSubtitle.start);
-  //       }
-  //     },
-  //   });
-  //   return () => sp.unsubscribe();
-  //   // player.duration$.subscribe();
-  // }, [player, bySentence, subtitles]);
+  useEffect(() => {
+    if (!videoPath) {
+      return;
+    }
+    if (subtitles.length === 0) {
+      return;
+    }
+    Ass.saveByVideoSrc(videoPath, subtitles);
+  }, [subtitles, videoPath]);
 
   useEffect(() => {
     if (videoPath === '') {
@@ -96,10 +55,15 @@ export const PlayVideo = () => {
     }
     const player = new MyPlayer('video-player');
     player.load(videoPath);
+    player.onSearchWord((word: string) => {
+      tapWord$.next(word);
+    });
     setPlayer(player);
     Ass.loadByVideoSrc(videoPath)
       .then((subtitles) => {
-        const validSubtitles = subtitles.filter((s) => s.subtitles.length > 0);
+        const validSubtitles = subtitles.filter(
+          (s: any) => s.subtitles.length > 0
+        );
         setSubtitles(validSubtitles);
         player.setClips(validSubtitles);
       })
@@ -230,7 +194,7 @@ export const PlayVideo = () => {
         height: 'calc(100% - 22px)',
       }}
     >
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, display: 'flex' }}>
         <Button
           type="primary"
           shape="circle"
@@ -240,18 +204,45 @@ export const PlayVideo = () => {
             navigate('/episode');
           }}
         />
+        <div style={{ flexGrow: 1, minWidth: '400px', width: '40%' }}>
+          <DictAndCardMaker isDragging={false}></DictAndCardMaker>
+        </div>
         <div
-          id="video-player"
-          tabIndex={0}
-          onClick={() => {
-            if (player === null) {
-              return;
-            }
-            player.togglePause();
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            flexGrow: 1,
           }}
-        ></div>
+        >
+          <div
+            style={{
+              position: 'relative',
+            }}
+          >
+            <div
+              id="video-player"
+              tabIndex={0}
+              onKeyDown={() => {}}
+              onClick={() => {
+                if (player === null) {
+                  return;
+                }
+                player.togglePause();
+              }}
+            ></div>
+          </div>
+        </div>
       </div>
-      <div style={{ width: '400px', backgroundColor: 'green', height: '100%' }}>
+      <div
+        style={{
+          minWidth: '400px',
+          maxWidth: '600px',
+          width: '30%',
+          backgroundColor: 'green',
+          height: '100%',
+        }}
+      >
         <div>
           <div>字幕整体调节: </div>
           <div style={{ textAlign: 'center' }}>

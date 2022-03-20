@@ -14,14 +14,12 @@ import { Home } from './pages/home/Home';
 import { EpisodePage } from './pages/episode/Episode';
 import { PlayVideo } from './pages/playVideo/PlayVideo';
 import { Reading } from './pages/reading/Reading';
-import { Article } from './pages/article/Article';
-import { globalKeyDownAction$ } from './state/user_input/globalKeyDownAction';
 import { AddWordbookComponent } from './compontent/AddWordbook/AddWordbook';
 import { WordImportComponent } from './compontent/WordImport/WordImport';
 import { VocabularyTest } from './pages/vocabularyTest/VocabularyTest';
+import { Learning } from './pages/learning/Learning';
 
 const currentWindow = getCurrentWindow();
-const mousemove$ = fromEvent(document, 'mousemove').pipe(share());
 
 export default function App() {
   const [isPlayerMaximum, setIsPlayerMaximum] = useState(false);
@@ -42,33 +40,33 @@ export default function App() {
     }
   }, [isPlayerMaximum]);
 
-  useEffect(() => {
-    const subscription = mousemove$.subscribe({
-      next: () => {
-        ipcRenderer.send('showContollButton');
-        setShowTitleBar(true);
-        setHideControlPanel(false);
-      },
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  // useEffect(() => {
+  //   const subscription = mousemove$.subscribe({
+  //     next: () => {
+  //       ipcRenderer.send('showContollButton');
+  //       setShowTitleBar(true);
+  //       setHideControlPanel(false);
+  //     },
+  //   });
+  //   return () => {
+  //     subscription.unsubscribe();
+  //   };
+  // }, []);
 
-  useEffect(() => {
-    const subscription = mousemove$.pipe(debounceTime(3000)).subscribe({
-      next: () => {
-        if (isPlayerMaximum) {
-          ipcRenderer.send('hideContollButton');
-          setShowTitleBar(false);
-        }
-        setHideControlPanel(true);
-      },
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [isPlayerMaximum]);
+  // useEffect(() => {
+  //   const subscription = mousemove$.pipe(debounceTime(3000)).subscribe({
+  //     next: () => {
+  //       if (isPlayerMaximum) {
+  //         ipcRenderer.send('hideContollButton');
+  //         setShowTitleBar(false);
+  //       }
+  //       setHideControlPanel(true);
+  //     },
+  //   });
+  //   return () => {
+  //     subscription.unsubscribe();
+  //   };
+  // }, [isPlayerMaximum]);
   // add window listeners for currentWindow
   useEffect(() => {
     const onMaximized = () => {
@@ -131,17 +129,7 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
   return (
-    <div
-      className={styles.AppWrapper}
-      style={{
-        cursor: hideControlPanel ? 'none' : 'auto',
-      }}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        console.log('[globalKeyDownAction], key:', e.key);
-        globalKeyDownAction$.next(e.key);
-      }}
-    >
+    <div className={styles.AppWrapper}>
       <div
         className={[
           'titlebar-wrapper',
@@ -176,7 +164,7 @@ export default function App() {
         />
       </div>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* <Route path="/" element={<Home />} /> */}
         <Route
           path="word"
           element={
@@ -193,6 +181,7 @@ export default function App() {
         <Route path="video" element={<PlayVideo />} />
         <Route path="reading" element={<Reading />} />
         <Route path="vocabularytest" element={<VocabularyTest />} />
+        <Route path="/" element={<Learning />} />
       </Routes>
       <AddWordbookComponent />
       <WordImportComponent />

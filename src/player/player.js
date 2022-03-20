@@ -3,6 +3,7 @@ import jschardet from 'jschardet';
 import { BehaviorSubject } from 'rxjs';
 // import videojs from 'video.js';
 import highlightWords from 'highlight-words';
+import { map } from 'rxjs/operators';
 import { Ass } from '../util/ass.mjs';
 import playSVG from '../../assets/play.svg';
 
@@ -43,13 +44,14 @@ export class MyPlayer {
     this.playByClip = true; // 按片段播放。
     this.currClipIndex = 0; // 当前播放的片段
     this.currClip = undefined;
-
     this.rightClickWord = '';
     this.volume = 1;
     this.isPlaying = false;
     this.isPlaying$ = new BehaviorSubject(false);
     this.currentTime$ = new BehaviorSubject(0); // 播放到第几秒
     this.duration$ = new BehaviorSubject(0); // 总共时长多少秒
+    this.start$ = new BehaviorSubject(0); // 进度条起始位置
+    this.end$ = this.duration$; // 进度条结束位置
     this.willEndResolve = () => {};
     this.addWordsToWordBook = () => {};
     this.menu = document.createElement('div');
@@ -80,6 +82,7 @@ export class MyPlayer {
   }
 
   setCurrClipIndex(index) {
+    console.log('in player.js setCurrClipIndex:', index);
     this.currClipIndex = index;
     this.currClip = this.clips[index];
   }
@@ -276,6 +279,10 @@ export class MyPlayer {
             this.setCurrentTime(this.currClip.start);
           } else {
             this.currClipIndex += 1;
+            console.log(
+              'in player.js this.currClipIndex += 1:',
+              this.currClipIndex
+            );
             this.currClip = this.clips[this.currClipIndex];
             this.setCurrentTime(this.currClip.start);
           }
@@ -295,6 +302,10 @@ export class MyPlayer {
         console.log('current subtitle is:', ass);
         if (this.playByClip === false && this.clipLoop === false) {
           this.currClipIndex = this.ass.indexOf(ass);
+          console.log(
+            'in player.js this.currClipIndex = this.ass.indexOf(ass):',
+            this.currClipIndex
+          );
           this.currClip = ass;
         }
         if (ass !== prevAss) {

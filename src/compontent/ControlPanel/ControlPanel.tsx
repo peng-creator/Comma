@@ -1,83 +1,86 @@
-import { Button, Col, Popconfirm, Row, Switch } from 'antd';
+import { Button, Col, Row, Switch, Tooltip } from 'antd';
 import React, { useEffect, useState } from 'react';
-import {
-  FastBackwardOutlined,
-  FastForwardOutlined,
-  FileSearchOutlined,
-  ForwardOutlined,
-  StepBackwardOutlined,
-  StepForwardOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
-import { filter } from 'rxjs/operators';
+import { StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import { MySlider } from '../MySlider';
 import playBtnSrc from '../../../assets/play_btn.svg';
 import pauseBtnSrc from '../../../assets/pause_btn.svg';
-import { myPlayer } from '../../player/player';
+import locateBtnSrc from '../../../assets/locate.svg';
 import styles from './ControlPanel.css';
-import { PlaySlider } from './PlaySlider';
 import { useObservable } from '../../state';
-import { clipsToPlay$ } from '../../state/reactive/clipsToPlay';
-import { Clip } from '../../types/WordClips';
-import { nextClipIndexToPlay$ } from '../../state/user_input/nextClipIndexToPlay';
 import { ClipSlider } from './ClipSlider';
-import { ThumbnailListOpener } from '../ThumbnailOpener/ThumbnailOpener';
 
 export type ControlPanelComponentProps = {
   onPlayNextFile: () => void;
   onPlayPrevFile: () => void;
-  onPlayPrevWord: () => void;
-  onPlayNextWord: () => void;
-  setShowThumbnils: (showThumbnails: boolean) => void;
-  setShowLeftPanel: (showLeftPanel: boolean) => void;
-  showThumbnails: boolean;
-  showLeftPanel: boolean;
+  onSubtitleMoveBack: () => void;
+  onSubtitleMoveForward: () => void;
+  onLocate: () => void;
+  player: any;
 };
 
 export const ControlPanelComponent = ({
   onPlayNextFile,
   onPlayPrevFile,
-  onPlayPrevWord,
-  onPlayNextWord,
-  setShowThumbnils,
-  setShowLeftPanel,
-  showThumbnails,
-  showLeftPanel,
+  onSubtitleMoveBack,
+  onSubtitleMoveForward,
+  onLocate,
+  player,
 }: ControlPanelComponentProps) => {
-  const [isPlaying] = useObservable(myPlayer.isPlaying$, false);
-  const [currentTime] = useObservable(myPlayer.currentTime$, 0);
-  const [start] = useObservable(myPlayer.start$, 0);
-  const [end] = useObservable(myPlayer.end$, 0);
+  const [isPlaying] = useObservable(player.isPlaying$, false);
+  // const [isPlaying, setIsPlaying] = useState(false);
+  // useEffect(() => {
+  //   const sp = player.isPlaying$.subscribe({
+  //     next(isPlaying: any) {
+  //       console.log(
+  //         'ControlPanelComponent player.isPlaying$.subscribe isPlaying:',
+  //         isPlaying
+  //       );
+  //       setIsPlaying(isPlaying);
+  //     },
+  //   });
+  //   return () => sp.unsubscribe();
+  // }, [player.isPlaying$]);
+  const [currentTime] = useObservable(player.currentTime$, 0);
+  const [start] = useObservable(player.start$, 0);
+  const [end] = useObservable(player.end$, 0);
+  const [playByClip, setPlayByClip] = useState(true);
+  const [clipLoop, setClipLoop] = useState(true);
+
+  useEffect(() => {
+    player?.setPlayByClip(playByClip);
+  }, [playByClip, player]);
+  useEffect(() => {
+    player?.setClipLoop(clipLoop);
+  }, [clipLoop, player]);
   // const [duration] = useObservable(
-  //   myPlayer.duration$.pipe(filter((duration) => !Number.isNaN(duration))),
+  //   player.duration$.pipe(filter((duration) => !Number.isNaN(duration))),
   //   0
   // );
   // const [clipsToPlay] = useObservable(clipsToPlay$, [] as Clip[]);
   // const [nextClipIndexToPlay] = useObservable(nextClipIndexToPlay$, 0);
   const max = end - start;
   const current = currentTime - start;
+  console.log('render progress:', max);
+  console.log(
+    'render ControlPanelComponent: ',
+    'isPlaying:',
+    isPlaying,
+    ', currentTime:',
+    currentTime,
+    ', start:',
+    start,
+    ', end:',
+    end
+  );
+  const subtitleContainer = player?.subtitleContainer;
+  let bottom = 60;
+  if (subtitleContainer && subtitleContainer.clientHeight > bottom) {
+    bottom = subtitleContainer.clientHeight;
+  }
   return (
-    <div className={styles.PlayBoard}>
+    <div className={styles.PlayBoard} style={{ bottom: `${bottom}px` }}>
       <Row>
-        <Col span={1}>
-          <div
-            className={[
-              styles.WordPanel,
-              showLeftPanel ? styles.ShowWordPanel : '',
-            ].join(' ')}
-            onClick={() => {
-              setShowLeftPanel(!showLeftPanel);
-            }}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                setShowLeftPanel(!showLeftPanel);
-              }
-            }}
-          >
-            <FileSearchOutlined style={{ fontSize: '25px' }} />
-          </div>
-        </Col>
+        <Col span={1}></Col>
         <Col span={6} style={{ padding: '0 12px' }}>
           <Row>
             <Col span={5} style={{ marginTop: '12px' }}>
@@ -92,7 +95,7 @@ export const ControlPanelComponent = ({
                 min={0}
                 max={100}
                 onChange={async (v) => {
-                  myPlayer.setVolume(v);
+                  player.setVolume(v);
                 }}
                 defaultValue={100}
                 step={1}
@@ -116,7 +119,7 @@ export const ControlPanelComponent = ({
               alignItems: 'center',
             }}
           >
-            <FastBackwardOutlined tabIndex={0} onClick={onPlayPrevWord} />
+            {/* <FastBackwardOutlined tabIndex={0} onClick={onPlayPrevWord} /> */}
             <StepBackwardOutlined tabIndex={0} onClick={onPlayPrevFile} />
             {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <img
@@ -124,15 +127,15 @@ export const ControlPanelComponent = ({
               style={{ width: '40px' }}
               src={isPlaying ? pauseBtnSrc : playBtnSrc}
               alt=""
-              onClick={() => myPlayer.togglePause()}
+              onClick={() => player.togglePause()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  myPlayer.togglePause();
+                  player.togglePause();
                 }
               }}
             />
             <StepForwardOutlined tabIndex={0} onClick={onPlayNextFile} />
-            <FastForwardOutlined tabIndex={0} onClick={onPlayNextWord} />
+            {/* <FastForwardOutlined tabIndex={0} onClick={onPlayNextWord} /> */}
           </div>
         </Col>
         <Col span={6} style={{ padding: '0 12px' }}>
@@ -149,7 +152,7 @@ export const ControlPanelComponent = ({
                 max={2}
                 onChange={async (v: number) => {
                   // setPlaySpeed(v);
-                  myPlayer.setPlaySpeed(v);
+                  player.setPlaySpeed(v);
                 }}
                 defaultValue={1}
                 step={0.05}
@@ -157,28 +160,13 @@ export const ControlPanelComponent = ({
             </Col>
           </Row>
         </Col>
-        <Col span={1}>
-          <ThumbnailListOpener
-            setShowThumbnils={setShowThumbnils}
-            showThumbnails={showThumbnails}
-          />
-        </Col>
       </Row>
       <Row>
         <Col span={24} style={{ display: 'flex', justifyContent: 'center' }}>
-          {/* <PlaySlider
-            max={max}
-            range={[0, max]}
-            value={current}
-            width={600}
-            onRangeChange={(range) => {
-              console.log('range:', range);
-            }}
-          /> */}
           <ClipSlider
             max={max}
             onChange={async (e, v) => {
-              myPlayer.player.currentTime((v as number) + start);
+              player.player.currentTime((v as number) + start);
             }}
             value={current}
             defaultValue={0}
@@ -186,6 +174,78 @@ export const ControlPanelComponent = ({
           />
         </Col>
       </Row>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+        }}
+      >
+        <Row style={{ width: '30%' }}>
+          <Col span={8}>逐句切换:</Col>
+          <Col span={4}>
+            <Switch
+              checked={playByClip}
+              onChange={(checked) => {
+                setPlayByClip(checked);
+              }}
+            />
+          </Col>
+          <Col span={8}>单句循环:</Col>
+          <Col span={4}>
+            <Switch
+              // defaultChecked={player?.clipLoop}
+              onChange={(checked) => {
+                setClipLoop(checked);
+              }}
+              checked={clipLoop}
+            />
+          </Col>
+        </Row>
+        <Col span={6}>
+          <Tooltip placement="bottom" title="在字幕列表中显示当前字幕">
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+            <img
+              tabIndex={0}
+              onKeyDown={() => {}}
+              onClick={() => onLocate()}
+              style={{ width: '40px', cursor: 'pointer' }}
+              src={locateBtnSrc}
+              alt=""
+            />
+          </Tooltip>
+        </Col>
+        <Row style={{ width: '30%' }}>
+          <Col
+            span={6}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <div>字幕调节: </div>
+          </Col>
+          <Col span={6}>
+            <Button
+              type="text"
+              style={{ width: '100%', color: '#fff' }}
+              onClick={() => onSubtitleMoveBack()}
+            >
+              - 0.5s
+            </Button>
+          </Col>
+          <Col span={6}>
+            <Button
+              type="text"
+              style={{ width: '100%', color: '#fff' }}
+              onClick={() => onSubtitleMoveForward()}
+            >
+              + 0.5s
+            </Button>
+          </Col>
+        </Row>
+      </div>
     </div>
   );
 };
