@@ -18,7 +18,7 @@ import { DictAndCardMaker } from '../../blocks/DictAndCardMaker/DictAndCardMaker
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 
-const L1 = PATH.join(dbRoot, 'resource', 'reading');
+const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);
 
 const Component = () => {
