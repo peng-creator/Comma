@@ -23,12 +23,7 @@ Ass.saveByVideoSrc = async (file, subtitleContent) => {
 };
 
 Ass.loadByVideoSrc = async (file) => {
-  try {
-    const res = await fs.readFile(`${file.slice(0, -4)}.json`);
-    return JSON.parse(res.toString());
-  } catch (e) {
-    const res = await fs.readFile(`${file.slice(0, -4)}.ass`);
-    const { encoding } = jschardet.detect(res);
-    return new Ass(res.toString(encoding)).parse();
-  }
+  const res = await fs.readFile(`${file.slice(0, -4)}.ass`);
+  const { encoding } = jschardet.detect(res);
+  return new Ass(res.toString(encoding)).parse();
 };

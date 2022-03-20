@@ -10,10 +10,10 @@
   background-color: rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(100px);
 
-  position: absolute;
-  left: 50%;
-  z-index: 3;
-  transform: translate(-50%, 0);
+  /* position: absolute; */
+  /* left: 50%; */
+  /* z-index: 3; */
+  /* transform: translate(-50%, 0); */
   width: 850px;
   min-width: 850px;
   padding: 12px 24px;

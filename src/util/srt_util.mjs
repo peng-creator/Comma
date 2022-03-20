@@ -1,4 +1,5 @@
 import srtParser2 from 'srt-parser-2';
+import { timeToMilliseconds } from './time_util.mjs';
 
 export function srtContentToCutProject(content) {
   const { default: Parser } = srtParser2;
@@ -6,5 +7,12 @@ export function srtContentToCutProject(content) {
   console.log('srtContentToCutProject content:', content);
   const parser = new Parser();
   const result = parser.fromSrt(content);
-  console.log('srtContentToCutProject result:', result);
+  return result.map(({id, startTime, endTime, text}) => {
+    return {
+      id,
+      start: timeToMilliseconds(startTime.replace(',', '.')),
+      end: timeToMilliseconds(endTime.replace(',', '.')),
+      subtitles: [text],
+    }
+  });
 }

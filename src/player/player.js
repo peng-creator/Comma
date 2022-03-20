@@ -326,7 +326,7 @@ export class MyPlayer {
               p.style.font = subtitleStrategy.font;
               p.style.background = subtitleStrategy.background;
               p.style.margin = '0';
-              subtitle.split(' ').forEach((w) => {
+              subtitle.split(/\s/).forEach((w) => {
                 const span = document.createElement('span');
                 span.style.cursor = 'pointer';
                 let word = w.replace(/[^a-zA-Z'-]+/g, '');
@@ -378,9 +378,9 @@ export class MyPlayer {
     player = this.player;
     player.src({ type: 'video/mp4', src: file });
     this.isDirty = true;
-    return Ass.loadByVideoSrc(file).then((ass) => {
-      this.ass = ass;
-    });
+    // return Ass.loadByVideoSrc(file).then((ass) => {
+    //   this.ass = ass;
+    // });
   }
 
   setPlaySpeed(speed) {

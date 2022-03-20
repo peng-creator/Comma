@@ -11,6 +11,7 @@ import { AutoSizer } from 'react-virtualized';
 import VList from 'react-virtualized/dist/commonjs/List';
 import { fromEvent } from 'rxjs';
 import { debounceTime, share } from 'rxjs/operators';
+import { promises as fs } from 'fs';
 import { ControlPanelComponent } from '../../compontent/ControlPanel/ControlPanel';
 import { addSubtitle$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { LazyInput } from '../../compontent/LazyInput/LazyInput';
@@ -21,6 +22,7 @@ import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { playVideo$ } from '../../state/user_input/playVideoAction';
 import { Subtitle } from '../../types/Subtitle';
 import { Ass } from '../../util/ass.mjs';
+import { srtContentToCutProject } from '../../util/srt_util.mjs';
 import { millisecondsToTime } from '../../util/index.mjs';
 import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
 
@@ -77,8 +79,27 @@ export const VideoPlayer = (
       tapWord$.next(word);
     });
     setPlayer(player);
-    Ass.loadByVideoSrc(videoPath)
+    console.log('initPlayer, loadSrt:');
+
+    fs.readFile(`${videoPath.slice(0, -4)}.json`).then((res) => {
+      return JSON.parse(res.toString());
+    }).catch(() => {
+      return Promise.all([fs.readFile(`${videoPath.slice(0, -4)}.srt`).then(srtBuf => srtBuf.toString()).then((srtContent) => {
+        return srtContentToCutProject(srtContent);
+      }).catch((e) => {
+        console.log('srtContentToCutProject(srtContent) error:', e);
+        return [];
+      }),
+      Ass.loadByVideoSrc(videoPath)
+        .catch((e) => {
+          console.log('Ass.loadByVideoSrc(', videoPath, ') error:', e);
+          return []
+        })])    .then(([srtRes, assRes]) => {
+          return [...srtRes, ...assRes];
+        })  
+    })
       .then((subtitles) => {
+        console.log('load srt or ass to subtitles:', subtitles);
         const validSubtitles = subtitles
           .filter((s: any) => s.subtitles.length > 0)
           .map((sub: any, index: number) => {
@@ -88,9 +109,6 @@ export const VideoPlayer = (
         setSubtitles(validSubtitles, videoPath);
         player.setSubtitle(validSubtitles);
         player.setClips(validSubtitles);
-      })
-      .catch((e) => {
-        console.log('Ass.loadByVideoSrc(', videoPath, ') error:', e);
       });
     return player;
   };
@@ -486,6 +504,25 @@ export const VideoPlayer = (
       </VanillaCard>
     );
   };
+  const [controlPanelScale, setControlPanelScale] = useState(1);
+  const [controlPanelLeft, setControlPanelLeft] = useState(0);
+  useEffect(() => {
+    const onResize = () => {
+      if (videoContainerRef.current === null) {
+        return;
+      }
+      let _controlPanelScale = videoContainerRef.current.clientWidth / 850;
+      if (controlPanelScale > 1) {
+        _controlPanelScale = 1;
+        setControlPanelLeft(0);
+      } else {
+        setControlPanelLeft(-(850 - videoContainerRef.current.clientWidth) / 2);
+      }
+      setControlPanelScale(_controlPanelScale);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('reisze', onResize);
+  }, [videoContainerRef.current]);
 
   return (
     <div
@@ -543,8 +580,11 @@ export const VideoPlayer = (
             player.togglePause();
           }}
         ></div>
-        {player && !hideControlPanel && (
-          <ControlPanelComponent
+        
+      </div>
+      <div>
+      {player && <ControlPanelComponent
+        style={{transform: `scale(${controlPanelScale})`, position: 'relative', left: `${controlPanelLeft}px`}}
             onPlayNextFile={() => {
               throw new Error('Function not implemented.');
             }}
@@ -580,8 +620,7 @@ export const VideoPlayer = (
               setScrollToIndex(currentSubtitleIndex);
               shine();
             }}
-          ></ControlPanelComponent>
-        )}
+          ></ControlPanelComponent>}
       </div>
       <div
         style={{

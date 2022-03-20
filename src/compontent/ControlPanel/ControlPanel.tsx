@@ -1,5 +1,5 @@
 import { Button, Col, Row, Switch, Tooltip } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 import { StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import { MySlider } from '../MySlider';
 import playBtnSrc from '../../../assets/play_btn.svg';
@@ -16,6 +16,7 @@ export type ControlPanelComponentProps = {
   onSubtitleMoveForward: () => void;
   onLocate: () => void;
   player: any;
+  style?: CSSProperties;
 };
 
 export const ControlPanelComponent = ({
@@ -25,21 +26,9 @@ export const ControlPanelComponent = ({
   onSubtitleMoveForward,
   onLocate,
   player,
+  style,
 }: ControlPanelComponentProps) => {
   const [isPlaying] = useObservable(player.isPlaying$, false);
-  // const [isPlaying, setIsPlaying] = useState(false);
-  // useEffect(() => {
-  //   const sp = player.isPlaying$.subscribe({
-  //     next(isPlaying: any) {
-  //       console.log(
-  //         'ControlPanelComponent player.isPlaying$.subscribe isPlaying:',
-  //         isPlaying
-  //       );
-  //       setIsPlaying(isPlaying);
-  //     },
-  //   });
-  //   return () => sp.unsubscribe();
-  // }, [player.isPlaying$]);
   const [currentTime] = useObservable(player.currentTime$, 0);
   const [start] = useObservable(player.start$, 0);
   const [end] = useObservable(player.end$, 0);
@@ -72,13 +61,8 @@ export const ControlPanelComponent = ({
     ', end:',
     end
   );
-  const subtitleContainer = player?.subtitleContainer;
-  let bottom = 60;
-  if (subtitleContainer && subtitleContainer.clientHeight > bottom) {
-    bottom = subtitleContainer.clientHeight;
-  }
   return (
-    <div className={styles.PlayBoard} style={{ bottom: `${bottom}px` }}>
+    <div className={styles.PlayBoard} style={style}>
       <Row>
         <Col span={1}></Col>
         <Col span={6} style={{ padding: '0 12px' }}>
@@ -124,7 +108,7 @@ export const ControlPanelComponent = ({
             {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <img
               tabIndex={0}
-              style={{ width: '40px' }}
+              style={{ width: '40px', cursor: 'pointer' }}
               src={isPlaying ? pauseBtnSrc : playBtnSrc}
               alt=""
               onClick={() => player.togglePause()}
