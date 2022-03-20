@@ -62,7 +62,10 @@ export const ControlPanelComponent = ({
     end
   );
   return (
-    <div className={styles.PlayBoard} style={{...style, position: 'relative', zIndex: 1}}>
+    <div
+      className={styles.PlayBoard}
+      style={{ ...style, position: 'relative', zIndex: 1 }}
+    >
       <Row>
         <Col span={1}></Col>
         <Col span={6} style={{ padding: '0 12px' }}>
