@@ -83,10 +83,8 @@ export const VideoPlayer = (
     player.onSearchWord((word: string) => {
       tapWord$.next(word);
     });
-    setPlayer(player);
-    console.log('initPlayer, loadSrt:');
-
-    fs.readFile(`${videoPath.slice(0, -4)}.json`)
+    return fs
+      .readFile(`${videoPath.slice(0, -4)}.json`)
       .then((res) => {
         return JSON.parse(res.toString());
       })
@@ -118,48 +116,11 @@ export const VideoPlayer = (
             sub.id = index;
             return sub;
           });
-        setSubtitles(validSubtitles, videoPath);
         player.setSubtitle(validSubtitles);
         player.setClips(validSubtitles);
-        if (validSubtitles.length > 0) {
-          player.setCurrentTime(validSubtitles[0].start);
-          player.setCurrClipIndex(0);
-          player.togglePause();
-        }
+        return player;
       });
-    return player;
   };
-
-  useEffect(() => {
-    if (subtitleToPlay === null) {
-      return;
-    }
-    if (player === null) {
-      return;
-    }
-    if (subtitles === null || subtitles.length === 0) {
-      return;
-    }
-    let playIndex = subtitles.findIndex(({ start, end }) => {
-      return start === subtitleToPlay.start && end === subtitleToPlay.end;
-    });
-    if (playIndex === -1) {
-      subtitles.push(subtitleToPlay);
-      const nextSubtitles = subtitles.sort((a, b) => a.start - b.start);
-      playIndex = nextSubtitles.findIndex(({ start, end }) => {
-        return start === subtitleToPlay.start && end === subtitleToPlay.end;
-      });
-      setSubtitles(nextSubtitles, videoPath);
-      console.log('从外部播放字幕, 加入该字幕到字幕列表');
-    } else {
-      console.log('从外部播放字幕, 字幕已存在列表中');
-    }
-    const { start } = subtitleToPlay;
-    player.setCurrentTime(start);
-    player.setCurrClipIndex(playIndex);
-    setCurrentSubtitleIndex(playIndex);
-    setSubtitleToPlay(null);
-  }, [player, subtitleToPlay, subtitles, videoPath]);
 
   useEffect(() => {
     const sp = playSubtitle$.subscribe({
@@ -210,15 +171,92 @@ export const VideoPlayer = (
     };
   }, [videoContainerRef]);
 
+  const playSubtitle = (subtitles: any, subtitleToPlay: any, player: any) => {
+    if (subtitleToPlay === null) {
+      console.log('待播字幕 subtitleToPlay === null');
+      return;
+    }
+    if (player === null) {
+      console.log('待播字幕 player === null');
+      return;
+    }
+    if (subtitles === null || subtitles.length === 0) {
+      console.log('待播字幕 subtitles === null || subtitles.length === 0');
+      return;
+    }
+    let playIndex = subtitles.findIndex(({ start, end }: any) => {
+      return start === subtitleToPlay.start && end === subtitleToPlay.end;
+    });
+    if (playIndex === -1) {
+      subtitles.push(subtitleToPlay);
+      const nextSubtitles = subtitles.sort(
+        (a: any, b: any) => a.start - b.start
+      );
+      playIndex = nextSubtitles.findIndex(({ start, end }: any) => {
+        return start === subtitleToPlay.start && end === subtitleToPlay.end;
+      });
+      setSubtitles(nextSubtitles, videoPath);
+      console.log(
+        '待播字幕 从外部播放字幕, 加入该字幕到字幕列表:',
+        subtitleToPlay
+      );
+    } else {
+      console.log('待播字幕 从外部播放字幕, 字幕已存在列表中:', subtitleToPlay);
+    }
+    const { start } = subtitleToPlay;
+    console.log('待播字幕 从外部播放字幕, setCurrentTime:', start);
+    player.setCurrentTime(start);
+    console.log('待播字幕 从外部播放字幕, playIndex:', playIndex);
+    player.setCurrClipIndex(playIndex);
+    setCurrentSubtitleIndex(playIndex);
+    setSubtitleToPlay(null);
+  };
+
   useEffect(() => {
     if (videoPath === '') {
       return;
     }
-    const player = initPlayer(videoPath);
+    if (subtitleToPlay !== null) {
+      console.log('有待播字幕。');
+      if (subtitleToPlay.file !== videoPath || player === null) {
+        initPlayer(videoPath).then((nextPlayer) => {
+          console.log('待播字幕不属于当前视频文件，重新打开新文件。');
+          setPlayer(nextPlayer);
+          setSubtitles(nextPlayer.getSubtitle(), videoPath);
+          nextPlayer.togglePause();
+        });
+      } else if (player !== null) {
+        console.log('待播字幕属于当前视频文件，直接播放');
+        playSubtitle(player.getSubtitle(), subtitleToPlay, player);
+      }
+    } else if (player === null) {
+      console.log('没有待播字幕，默认从第一个字幕开始放。');
+      initPlayer(videoPath).then((nextPlayer) => {
+        setPlayer(nextPlayer);
+        nextPlayer.togglePause();
+        const subtitles = nextPlayer.getSubtitle();
+        setSubtitles(subtitles, videoPath);
+        if (subtitles.length > 0) {
+          console.log(
+            'validSubtitles.length > 0, so player.setCurrentTime, subtitleToPlay:',
+            subtitleToPlay
+          );
+          nextPlayer.setCurrentTime(subtitles[0].start);
+          nextPlayer.setCurrClipIndex(0);
+          nextPlayer.togglePause();
+        }
+      });
+    }
+  }, [videoPath, subtitleToPlay, player]);
+
+  useEffect(() => {
+    if (player === null) {
+      return;
+    }
     return () => {
       player.clear();
     };
-  }, [videoPath]);
+  }, [player]);
 
   useEffect(() => {
     if (!player || videoContainerRef.current === null) {

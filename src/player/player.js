@@ -99,7 +99,12 @@ export class MyPlayer {
     this.ass = subtitles;
   }
 
+  getSubtitle(subtitles) {
+    return this.ass;
+  }
+
   setCurrentTime(time) {
+    console.log('in player.js, setCurrentTime:', time);
     this.player.currentTime(time / 1000);
   }
 
@@ -238,6 +243,9 @@ export class MyPlayer {
     this.setClips(clips);
     let prevAss;
     if (this.playByClip && this.currClip !== undefined) {
+      console.log(
+        'this.playByClip && this.currClip !== undefined , so this.setCurrentTime'
+      );
       this.setCurrentTime(this.currClip.start);
     }
     const subtitleRenderInterval = () =>
@@ -269,6 +277,9 @@ export class MyPlayer {
           this.clipLoop === true &&
           current * 1000 >= this.currClip.end
         ) {
+          console.log(`this.playByClip === false &&
+          this.clipLoop === true &&
+          current * 1000 >= this.currClip.end, so this.setCurrentTime(this.currClip.start)`);
           this.setCurrentTime(this.currClip.start);
         } else if (
           this.playByClip === true &&
@@ -276,6 +287,7 @@ export class MyPlayer {
           current * 1000 >= this.currClip.end
         ) {
           if (this.clipLoop) {
+            console.log('this.clipLoop, so this.setCurrentTime');
             this.setCurrentTime(this.currClip.start);
           } else {
             this.currClipIndex += 1;
@@ -284,6 +296,9 @@ export class MyPlayer {
               this.currClipIndex
             );
             this.currClip = this.clips[this.currClipIndex];
+            console.log(
+              'in player.js this.currClipIndex += 1, so this.setCurrentTime'
+            );
             this.setCurrentTime(this.currClip.start);
           }
         }
