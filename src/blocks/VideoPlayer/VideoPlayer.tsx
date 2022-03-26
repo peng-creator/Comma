@@ -2,57 +2,45 @@
 /* eslint-disable promise/no-nesting */
 import {
   CloseOutlined,
-  LeftOutlined,
   MoreOutlined,
   PlayCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Col, Dropdown, Input, List, Menu, Row, Switch } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AutoSizer } from 'react-virtualized';
 import VList from 'react-virtualized/dist/commonjs/List';
-import { fromEvent } from 'rxjs';
-import { debounceTime, share } from 'rxjs/operators';
 import { promises as fs } from 'fs';
 import { ControlPanelComponent } from '../../compontent/ControlPanel/ControlPanel';
 import { addSubtitle$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { LazyInput } from '../../compontent/LazyInput/LazyInput';
 import { VanillaCard } from '../../compontent/VanillaCard/VanillaCard';
 import { MyPlayer } from '../../player/player';
-import { useBehavior } from '../../state';
-import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { playVideo$ } from '../../state/user_input/playVideoAction';
-import { Subtitle } from '../../types/Subtitle';
 import { Ass } from '../../util/ass.mjs';
 import { srtContentToCutProject } from '../../util/srt_util.mjs';
 import { millisecondsToTime } from '../../util/index.mjs';
 import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
+import { playSubtitle$ } from '../../state/user_input/playClipAction';
 
 export const VideoPlayer = (
   { onClose }: { onClose: () => void } = { onClose: () => {} }
 ) => {
-  const [videoPath] = useBehavior(playVideo$, '');
+  const [videoPath, setVideoPath] = useState('');
   const [subtitles, setSubtitlesState] = useState([] as any[]);
-  const navigate = useNavigate();
   const [player, setPlayer] = useState<MyPlayer | null>(null);
 
-  const [adjustPace, setAdjustPace] = useState(100);
   const [scrollToIndex, _setScrollToIndex] = useState(0);
   const vlist = useRef<any>();
   const setScrollToIndex = (nextScrollToIndex: number) => {
     _setScrollToIndex(nextScrollToIndex);
     vlist.current.scrollToRow(nextScrollToIndex);
   };
-  const [hideControlPanel, setHideControlPanel] = useState(false);
 
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
 
   const [shineTheSubtitle, setShineTheSubtitle] = useState(false);
 
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const [subtitleToPlay, setSubtitleToPlay] = useState<Subtitle | null>(null); // 从外部定位的字幕
-
   const [controlPanelScale, setControlPanelScale] = useState(1);
   const [controlPanelLeft, setControlPanelLeft] = useState(0);
 
@@ -77,9 +65,15 @@ export const VideoPlayer = (
     }
   };
 
-  const initPlayer = (videoPath: string) => {
+  const initPlayer = async (videoPath: string) => {
     const player = new MyPlayer('video-player');
-    player.load(videoPath);
+    const loadRet = player.load(videoPath);
+    console.log(
+      'player.load(videoPath), loadRet:',
+      loadRet,
+      ', videoPath:',
+      videoPath
+    );
     player.onSearchWord((word: string) => {
       tapWord$.next(word);
     });
@@ -122,54 +116,12 @@ export const VideoPlayer = (
       });
   };
 
-  useEffect(() => {
-    const sp = playSubtitle$.subscribe({
-      next: (subtitle) => {
-        if (subtitle === null) {
-          return;
-        }
-        if (videoPath !== subtitle.file) {
-          setPlayer(null);
-          setSubtitlesState([]);
-        }
-        setSubtitleToPlay(subtitle);
-        playVideo$.next(subtitle.file);
-      },
-    });
-    return () => {
-      sp.unsubscribe();
-    };
-  }, [videoPath]);
-
   const shine = () => {
     setShineTheSubtitle(true);
     setTimeout(() => {
       setShineTheSubtitle(false);
     }, 1000);
   };
-
-  useEffect(() => {
-    if (videoContainerRef.current === null) {
-      return;
-    }
-    const mousemove$ = fromEvent(videoContainerRef.current, 'mousemove').pipe(
-      share()
-    );
-    const sp1 = mousemove$.subscribe({
-      next: () => {
-        setHideControlPanel(false);
-      },
-    });
-    const sp2 = mousemove$.pipe(debounceTime(3000)).subscribe({
-      next: () => {
-        setHideControlPanel(true);
-      },
-    });
-    return () => {
-      sp1.unsubscribe();
-      sp2.unsubscribe();
-    };
-  }, [videoContainerRef]);
 
   const playSubtitle = (subtitles: any, subtitleToPlay: any, player: any) => {
     if (subtitleToPlay === null) {
@@ -209,64 +161,84 @@ export const VideoPlayer = (
     console.log('待播字幕 从外部播放字幕, playIndex:', playIndex);
     player.setCurrClipIndex(playIndex);
     setCurrentSubtitleIndex(playIndex);
-    setSubtitleToPlay(null);
   };
 
   useEffect(() => {
-    if (videoPath === '') {
-      return;
-    }
-    if (subtitleToPlay !== null) {
-      console.log('有待播字幕。');
-      if (subtitleToPlay.file !== videoPath || player === null) {
-        initPlayer(videoPath).then((nextPlayer) => {
-          console.log('待播字幕不属于当前视频文件，重新打开新文件。');
-          setPlayer(nextPlayer);
-          setSubtitles(nextPlayer.getSubtitle(), videoPath);
-          nextPlayer.togglePause();
-        });
-      } else if (player !== null) {
-        console.log('待播字幕属于当前视频文件，直接播放');
-        playSubtitle(player.getSubtitle(), subtitleToPlay, player);
-      }
-    } else if (player === null) {
-      console.log('没有待播字幕，默认从第一个字幕开始放。');
-      initPlayer(videoPath).then((nextPlayer) => {
-        setPlayer(nextPlayer);
-        nextPlayer.togglePause();
-        const subtitles = nextPlayer.getSubtitle();
+    let videoPath = '';
+    let player: any = null;
+
+    const playTheVideoPath = async (videoPath: string) => {
+      setPlayer(null);
+      setSubtitlesState([]);
+      setVideoPath(videoPath);
+      console.log('initPlayer(videoPath):', videoPath);
+      player?.clear();
+      player = await initPlayer(videoPath);
+      setPlayer(player);
+      console.log('player.togglePause();');
+      player.togglePause();
+    };
+
+    console.log('playSubtitle$.subscribe');
+    const sp1 = playSubtitle$.subscribe({
+      next: async (subtitle) => {
+        console.log('playSubtitle$.next:', subtitle);
+        if (subtitle === null) {
+          return;
+        }
+        console.log('播放字幕');
+        if (videoPath !== subtitle.file) {
+          console.log('播放字幕引起了视频更换.');
+          videoPath = subtitle.file;
+          await playTheVideoPath(videoPath);
+        }
+        console.log('playSubtitle(player.getSubtitle(), subtitle, player)');
+        playSubtitle(player.getSubtitle(), subtitle, player);
+        playSubtitle$.next(null);
+      },
+    });
+
+    const sp2 = playVideo$.subscribe({
+      next: async (file) => {
+        if (file === '') {
+          return;
+        }
+        console.log('playVideo$:', file);
+        if (file !== videoPath) {
+          console.log('播放视频引起了视频更换.');
+          videoPath = file;
+          await playTheVideoPath(videoPath);
+        }
+        const subtitles = player.getSubtitle();
         setSubtitles(subtitles, videoPath);
         if (subtitles.length > 0) {
-          console.log(
-            'validSubtitles.length > 0, so player.setCurrentTime, subtitleToPlay:',
-            subtitleToPlay
-          );
-          nextPlayer.setCurrentTime(subtitles[0].start);
-          nextPlayer.setCurrClipIndex(0);
-          nextPlayer.togglePause();
+          console.log('播放第一字幕');
+          player.setCurrentTime(subtitles[0].start);
+          player.setCurrClipIndex(0);
+        } else {
+          console.log('没有可以播放的字幕！');
         }
-      });
-    }
-  }, [videoPath, subtitleToPlay, player]);
+        playVideo$.next('');
+      },
+    });
 
-  useEffect(() => {
-    if (player === null) {
-      return;
-    }
     return () => {
-      player.clear();
+      sp1.unsubscribe();
+      sp2.unsubscribe();
+      player?.clear();
     };
-  }, [player]);
+  }, []);
+
 
   useEffect(() => {
     if (!player || videoContainerRef.current === null) {
       return;
     }
     const interval = setInterval(() => {
-      console.log(
-        'setCurrentSubtitleIndex player.currClipIndex:',
-        player.currClipIndex
-      );
+      // console.log(
+      //   'setCurrentSubtitleIndex player.currClipIndex:',
+      //   player.currClipIndex
+      // );
       if (player.currClipIndex !== currentSubtitleIndex) {
         setCurrentSubtitleIndex(player.currClipIndex);
         setScrollToIndex(player.currClipIndex);
@@ -289,14 +261,14 @@ export const VideoPlayer = (
             -(850 - videoContainerRef.current.clientWidth) / 2
           );
         }
-        console.log(
-          'setControlPanelScale _controlPanelScale:',
-          _controlPanelScale
-        );
+        // console.log(
+        //   'setControlPanelScale _controlPanelScale:',
+        //   _controlPanelScale
+        // );
         setControlPanelScale(_controlPanelScale);
       }
       if (videoContainerRef.current !== null && video !== null) {
-        console.log('调整播放器宽高。。');
+        // console.log('调整播放器宽高。。');
         const wrapperHeight = videoContainerRef.current.offsetHeight;
         const wrapperWidth = videoContainerRef.current.offsetWidth;
         const videoPlayerHeight = video.clientHeight;
@@ -305,21 +277,21 @@ export const VideoPlayer = (
         let newHeight = wrapperWidth / ratio; // 宽度对齐，高度根据视频比例进行缩放。
         let newWidth = wrapperHeight * ratio; // 高度对齐，宽度根据视频比例进行缩放。
         if (newHeight > wrapperHeight + 10) {
-          console.log(
-            '高度对齐，宽度根据高度调整: newHeight:',
-            wrapperHeight,
-            ',newWidth:',
-            newWidth
-          );
+          // console.log(
+          //   '高度对齐，宽度根据高度调整: newHeight:',
+          //   wrapperHeight,
+          //   ',newWidth:',
+          //   newWidth
+          // );
           newHeight = wrapperHeight;
         }
         if (newWidth > wrapperWidth + 10) {
-          console.log(
-            '宽度对齐，高度根据宽度调整: newHeight:',
-            wrapperHeight,
-            ',newWidth:',
-            newWidth
-          );
+          // console.log(
+          //   '宽度对齐，高度根据宽度调整: newHeight:',
+          //   wrapperHeight,
+          //   ',newWidth:',
+          //   newWidth
+          // );
           newWidth = wrapperWidth;
         }
         videoPlayer.style.height = `${newHeight}px`;
@@ -335,15 +307,6 @@ export const VideoPlayer = (
       return null;
     }
     const { end, start, subtitles: localSubtitles, id } = subtitle;
-    const sortAndFoucus = () => {
-      const nextSubtitles = subtitles.sort((a, b) => a.start - b.start);
-      const nextScrollToIndex = nextSubtitles.findIndex(
-        ({ id: _id }) => _id === id
-      );
-      setSubtitles(nextSubtitles, videoPath);
-      setScrollToIndex(nextScrollToIndex);
-      shine();
-    };
     return (
       <List.Item
         key={key}
