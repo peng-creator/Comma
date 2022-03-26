@@ -124,13 +124,14 @@ const Component = () => {
     let lastKeyword = '';
     let cacheFlashCards: FlashCard[] = [];
     let cardIndexMapCache: CardIndexMap = {};
-
+    let cardCollections: string[] = [];
     cardIndexMapPromise
       .then((cardIndexMap: { [prop: string]: string }) => {
         cardIndexMapCache = cardIndexMap;
         setCardIndexMapCache(cardIndexMapCache);
         const collectionKeywordList = [...new Set(Object.values(cardIndexMap))];
         setCardCollections(collectionKeywordList);
+        cardCollections = collectionKeywordList;
         addSearchItems(
           collectionKeywordList.map((id) => {
             return { id };
@@ -174,7 +175,8 @@ const Component = () => {
             'setCurrentCardIndex:',
             nextFlashCards.length - 1
           );
-          setCardCollections([...new Set([...cardCollections, keyword])]);
+          cardCollections = [...new Set([...cardCollections, keyword])];
+          setCardCollections(cardCollections);
           setCurrentCollection(keyword);
         };
         if (keyword === lastKeyword) {
