@@ -294,38 +294,48 @@ const Component = () => {
         overflow: 'hidden',
       }}
     >
-      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
-        <Row>
-          <Col span={4}>
-            {currentCard !== null && (
-              <Button
-                type="ghost"
-                style={{ color: 'white' }}
-                onClick={() => {
-                  saveCard(currentCard, cardIndexMapCache)
-                    .then(() => setFlashCards([...flashCards]))
-                    .then(() => {
-                      const lastCard = flashCards[flashCards.length - 1];
-                      if (lastCard.clean === false) {
-                        const nextFlashCards = [
-                          ...flashCards,
-                          newFlashCard(lastCard.front.word),
-                        ];
-                        setFlashCards(nextFlashCards);
-                      }
-                    })
-                    .catch((e) => message.error(e.message));
-                }}
-              >
-                <SaveOutlined />
-              </Button>
-            )}
-          </Col>
-          <Col span={2} style={{ lineHeight: '30px' }}>
-            搜索记录
-          </Col>
-          <Col span={18}>{cardCollectionSelector}</Col>
-        </Row>
+      <div
+        style={{
+          marginTop: '10px',
+          marginBottom: '10px',
+          display: 'flex',
+          width: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <div>
+          {currentCard !== null && (
+            <Button
+              type="ghost"
+              style={{ color: 'white' }}
+              onClick={() => {
+                saveCard(currentCard, cardIndexMapCache)
+                  .then(() => setFlashCards([...flashCards]))
+                  .then(() => {
+                    const lastCard = flashCards[flashCards.length - 1];
+                    if (lastCard.clean === false) {
+                      const nextFlashCards = [
+                        ...flashCards,
+                        newFlashCard(lastCard.front.word),
+                      ];
+                      setFlashCards(nextFlashCards);
+                    }
+                  })
+                  .catch((e) => message.error(e.message));
+              }}
+            >
+              <SaveOutlined />
+            </Button>
+          )}
+        </div>
+        <div
+          style={{ lineHeight: '30px', marginLeft: '12px', minWidth: '56px' }}
+        >
+          搜索记录
+        </div>
+        <div style={{ width: '30%', marginLeft: '12px', flexGrow: 1 }}>
+          {cardCollectionSelector}
+        </div>
       </div>
       <div style={{ display: 'flex', flexGrow: 1 }}>
         {searchResultList.length > 0 && (
