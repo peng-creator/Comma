@@ -453,6 +453,7 @@ export const VideoPlayer = (
 
           <div style={{ position: 'absolute', top: 0, right: 0 }}>
             <Dropdown
+              trigger={['click']}
               overlay={
                 <Menu>
                   <Menu.Item>
