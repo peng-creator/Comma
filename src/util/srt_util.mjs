@@ -7,12 +7,12 @@ export function srtContentToCutProject(content) {
   console.log('srtContentToCutProject content:', content);
   const parser = new Parser();
   const result = parser.fromSrt(content);
-  return result.map(({id, startTime, endTime, text}) => {
+  return result.map(({ id, startTime, endTime, text }) => {
     return {
       id,
       start: timeToMilliseconds(startTime.replace(',', '.')),
       end: timeToMilliseconds(endTime.replace(',', '.')),
-      subtitles: [text],
-    }
+      subtitles: [text.replaceAll(/\s/g, ' ')],
+    };
   });
 }
