@@ -157,7 +157,7 @@ const Component = (
         <div
           style={{
             position: 'relative',
-            minHeight: '50%',
+            height: '50%',
             flexGrow: 1,
           }}
           onDrop={(e) => {
@@ -230,7 +230,7 @@ const Component = (
             ></Dict>
           </div>
         </div>
-        <div style={{ flexGrow: 1 }}>
+        <div style={{ flexGrow: 1, height: '50%' }}>
           <FlashCardMaker></FlashCardMaker>
         </div>
       </div>
