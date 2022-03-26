@@ -391,7 +391,7 @@ const Component = () => {
             </div>
           </div>
         )}
-        <div style={{ flexGrow: 1 }}>
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               display: 'flex',
@@ -440,7 +440,7 @@ const Component = () => {
           </div>
           {currentCard !== null && (
             <div
-              style={{ height: '100%', width: '100%' }}
+              style={{ flexGrow: 1, width: '100%' }}
               onDrop={(e) => {
                 const explain = e.dataTransfer.getData('explain');
                 if (explain) {
