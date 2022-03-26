@@ -167,14 +167,18 @@ export const VideoPlayer = (
         if (subtitle === null) {
           return;
         }
-        playVideo$.next(subtitle.file);
+        if (videoPath !== subtitle.file) {
+          setPlayer(null);
+          setSubtitlesState([]);
+        }
         setSubtitleToPlay(subtitle);
+        playVideo$.next(subtitle.file);
       },
     });
     return () => {
       sp.unsubscribe();
     };
-  }, []);
+  }, [videoPath]);
 
   const shine = () => {
     setShineTheSubtitle(true);
