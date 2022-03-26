@@ -339,7 +339,14 @@ const Component = () => {
       </div>
       <div style={{ display: 'flex', flexGrow: 1 }}>
         {searchResultList.length > 0 && (
-          <div style={{ width: '200px' }}>
+          <div
+            style={{
+              width: '200px',
+              flexGrow: 1,
+              height: '100%',
+              overflowY: 'auto',
+            }}
+          >
             <div
               style={{
                 borderBottom: '1px solid #ddd',
