@@ -389,6 +389,7 @@ export const VideoPlayer = (
                 flexDirection: 'column',
                 justifyContent: 'center',
                 textAlign: 'center',
+                padding: '0 14px',
               }}
             >
               {localSubtitles.map((s: string, subIndex: number) => {

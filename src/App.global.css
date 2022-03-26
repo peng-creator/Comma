@@ -107,8 +107,10 @@ body {
   left: 0;
   z-index: 1;
   text-align: center;
-  box-sizing: content-box;
+  box-sizing: border-box;
   user-select: none;
+  padding: 0 14px;
+  background-color: rgb(169, 118, 236);
 }
 
 .play-button {
