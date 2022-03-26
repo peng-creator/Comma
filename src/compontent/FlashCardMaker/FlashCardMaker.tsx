@@ -20,6 +20,7 @@ import PATH from 'path';
 import { promises as fs } from 'fs';
 import { v5 as uuidv5 } from 'uuid';
 import { Subject } from 'rxjs';
+import { SearchResult } from 'minisearch';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 import { FlashCard } from '../../types/FlashCard';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
@@ -30,6 +31,10 @@ import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { millisecondsToTime } from '../../util/time_util.mjs';
 import { Subtitle } from '../../types/Subtitle';
 import { LazyInput } from '../LazyInput/LazyInput';
+import {
+  addSearchItems,
+  searchFlashCardCollections,
+} from '../../flashCardSearch';
 
 const { Option } = Select;
 
@@ -69,12 +74,13 @@ const cardIndexMapPromise = fs
   });
 
 const saveCard = async (cardToSave: FlashCard, cardIndexMap: CardIndexMap) => {
-  // if (cardToSave.clean) {
-  //   throw new Error('无法保存空白卡片!');
-  // }
-  // if (!cardToSave.hasChanged) {
-  //   return;
-  // }
+  // 加入到搜索库
+  addSearchItems([
+    {
+      id: cardToSave.front.word,
+    },
+  ]);
+  // 保存卡片。
   cardToSave.clean = false;
   cardToSave.hasChanged = false;
   const keyword = cardToSave.front.word;
@@ -112,11 +118,11 @@ const Component = () => {
   const [cardCollections, setCardCollections] = useState<string[]>([]); // 全部卡片集
   const [currentCollection, setCurrentCollection] = useState('');
   const [cardIndexMapCache, setCardIndexMapCache] = useState<CardIndexMap>({});
+  const [searchResultList, setSearchResultList] = useState<SearchResult[]>([]);
 
   useEffect(() => {
     let lastKeyword = '';
     let cacheFlashCards: FlashCard[] = [];
-    let cardCollections: string[] = [];
     let cardIndexMapCache: CardIndexMap = {};
 
     cardIndexMapPromise
@@ -125,7 +131,11 @@ const Component = () => {
         setCardIndexMapCache(cardIndexMapCache);
         const collectionKeywordList = [...new Set(Object.values(cardIndexMap))];
         setCardCollections(collectionKeywordList);
-        cardCollections = collectionKeywordList;
+        addSearchItems(
+          collectionKeywordList.map((id) => {
+            return { id };
+          })
+        );
       })
       .catch((e) => {
         console.log('加载全部卡片集失败！');
@@ -133,9 +143,14 @@ const Component = () => {
 
     const sp = flashCardKeyword$.subscribe({
       next: async (keyword) => {
+        // 使用miniSearch搜索
+        const result = searchFlashCardCollections(keyword);
+        console.log('keyword:', keyword, ' search card collections:', result);
+        setSearchResultList(result);
         if (keyword === '') {
           return;
         }
+        // 与现存卡片集匹配，然后打开。
         let nextFlashCards: FlashCard[] = [...cacheFlashCards];
         const addNewFlashCardToCollection = () => {
           cacheFlashCards = nextFlashCards;
@@ -159,8 +174,7 @@ const Component = () => {
             'setCurrentCardIndex:',
             nextFlashCards.length - 1
           );
-          cardCollections = [...new Set([...cardCollections, keyword])];
-          setCardCollections(cardCollections);
+          setCardCollections([...new Set([...cardCollections, keyword])]);
           setCurrentCollection(keyword);
         };
         if (keyword === lastKeyword) {
@@ -305,253 +319,316 @@ const Component = () => {
               </Button>
             )}
           </Col>
-          <Col span={20}>{cardCollectionSelector}</Col>
+          <Col span={2} style={{ lineHeight: '30px' }}>
+            搜索记录
+          </Col>
+          <Col span={18}>{cardCollectionSelector}</Col>
         </Row>
       </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          overflowY: 'hidden',
-          overflowX: 'auto',
-        }}
-        className="scrollbarHidden"
-        onWheel={(e) => {
-          const delta = Math.max(-1, Math.min(1, e.nativeEvent.wheelDelta));
-          e.currentTarget.scrollLeft -= delta * 30;
-          console.log('1111111');
-        }}
-      >
-        {flashCards.map((card, index) => {
-          const selected = card === currentCard;
-          return (
-            <div key={index}>
-              <Button
-                type="text"
-                style={{
-                  color: selected ? '#138bff' : 'white',
-                  background: selected ? 'rgb(72, 72, 72)' : 'none',
-                  borderRadius: '5px 5px 0 0',
-                }}
-                onClick={() => {
-                  setCurrentCard(card);
-                }}
-              >
-                {card.clean && '*'} {stringFolder(card.front.word, 10)}
-                {card.hasChanged && (
-                  <span
-                    style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                      marginLeft: '6px',
-                    }}
-                  ></span>
-                )}
-              </Button>
+      <div style={{ display: 'flex', flexGrow: 1 }}>
+        {searchResultList.length > 0 && (
+          <div style={{ width: '200px' }}>
+            <div
+              style={{
+                borderBottom: '1px solid #ddd',
+              }}
+            >
+              相关卡片集合：
             </div>
-          );
-        })}
-      </div>
-      {currentCard !== null && (
-        <div
-          style={{ height: '100%', width: '100%' }}
-          onDrop={(e) => {
-            const explain = e.dataTransfer.getData('explain');
-            if (explain) {
-              const { def, examples } = JSON.parse(explain);
-              currentCard.back = `${def}\n- ${examples.join('\n- ')}`;
-              currentCard.clean = false;
-              currentCard.hasChanged = true;
-              setFlashCards([...flashCards]);
-            }
-            const sentence = e.dataTransfer.getData('sentence');
-            console.log(`e.dataTransfer.getData('sentence'): ${sentence}`);
-            if (sentence) {
-              currentCard.front.sentences.push(JSON.parse(sentence));
-              currentCard.clean = false;
-              currentCard.hasChanged = true;
-              setFlashCards([...flashCards]);
-            }
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-          }}
-        >
-          <div
-            style={{
-              height: '50%',
-              backgroundColor: 'rgb(72, 72, 72)',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '14px',
-              width: '100%',
-              overflowY: 'auto',
-            }}
-          >
-            <div>正面</div>
-            <div style={{ flex: 1, width: '100%' }}>
-              {currentCard.front.sentences.length === 0 &&
-                currentCard.front.subtitles.length === 0 && (
-                  <>
-                    <div>您可以从文章中拖拽句子到这里进行摘抄。</div>
-                    <div>或者在字幕列表里将字幕加入卡片。</div>
-                  </>
-                )}
-              {currentCard.front.sentences.map((sentence, index) => {
-                return (
-                  <div
-                    key={sentence.content + index}
-                    style={{ margin: '10px 10px', cursor: 'pointer' }}
-                    tabIndex={0}
-                    onClick={() => {
-                      console.log('open sentence in flashCard:', sentence);
-                      openSentence$.next(sentence);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key.toLowerCase() === 'enter') {
-                        openSentence$.next(sentence);
+            <div>
+              {searchResultList.map(({ id, match, score, terms }, index) => {
+                const item = () => {
+                  return id
+                    .split(/\s/)
+                    .map((word: string, wordIndex: number) => {
+                      if (
+                        terms.includes(word.replaceAll(/\W/g, '').toLowerCase())
+                      ) {
+                        return (
+                          <span
+                            key={wordIndex}
+                            style={{ color: 'rgb(226, 68, 68)' }}
+                          >
+                            {word}{' '}
+                          </span>
+                        );
                       }
-                    }}
-                  >
-                    {sentence.content}
-                  </div>
-                );
-              })}
-              {currentCard.front.subtitles.map((subtitle, index) => {
-                const { subtitles, start, end, file } = subtitle;
-                const deleteSubtitle = () => {
-                  const updatedSubtitles = currentCard.front.subtitles.filter(
-                    (sub) => subtitle !== sub
-                  );
-                  const nextCard: FlashCard = {
-                    ...currentCard,
-                    hasChanged: true,
-                  };
-                  nextCard.front.subtitles = updatedSubtitles;
-                  const currentCardIndex = flashCards.findIndex(
-                    (f) => f === currentCard
-                  );
-                  const nextCards = [
-                    ...flashCards.slice(0, currentCardIndex),
-                    nextCard,
-                    ...flashCards.slice(currentCardIndex + 1),
-                  ];
-                  setFlashCards(nextCards);
-                  setCurrentCard(nextCard);
+                      return <span key={wordIndex}>{word} </span>;
+                    });
                 };
                 return (
                   <div
-                    key={index}
-                    style={{ padding: '0 10px', cursor: 'pointer' }}
+                    key={id}
+                    style={{
+                      display: 'flex',
+                      borderBottom: '1px solid #ddd',
+                      padding: '5px',
+                      cursor: 'pointer',
+                    }}
+                    tabIndex={0}
+                    onKeyDown={() => {}}
+                    onClick={() => {
+                      flashCardKeyword$.next(id);
+                    }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        width: '100%',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div style={{ margin: '0 14px' }}>-{index}.</div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          flexGrow: 1,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div
-                          tabIndex={0}
-                          onClick={() => {
-                            playSubtitle$.next(subtitle);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key.toLowerCase() === 'enter') {
-                              playSubtitle$.next(subtitle);
-                            }
-                          }}
-                        >
-                          <PlayCircleOutlined></PlayCircleOutlined>
-                        </div>
-
-                        <div>
-                          <div style={{ padding: '0 14px' }}>
-                            {PATH.basename(file).replaceAll(/[^\w]/g, ' ')}
-                          </div>
-                          <div style={{ display: 'flex', textAlign: 'center' }}>
-                            <LazyInput
-                              value={start}
-                              onChange={(value) => {}}
-                              displayValueTo={(value) =>
-                                millisecondsToTime(value)
-                              }
-                            ></LazyInput>
-                            <div>至</div>
-                            <LazyInput
-                              value={end}
-                              onChange={(value) => {}}
-                              displayValueTo={(value) =>
-                                millisecondsToTime(value)
-                              }
-                            ></LazyInput>
-                          </div>
-                        </div>
-                        <div
-                          tabIndex={0}
-                          onClick={() => {
-                            deleteSubtitle();
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key.toLowerCase() === 'enter') {
-                              deleteSubtitle();
-                            }
-                          }}
-                        >
-                          <DeleteOutlined></DeleteOutlined>
-                        </div>
-                      </div>
-                    </div>
+                    {/* <div>{index}: </div> */}
+                    <div>{item()}</div>
                   </div>
                 );
               })}
             </div>
           </div>
+        )}
+        <div style={{ flexGrow: 1 }}>
           <div
             style={{
-              height: '50%',
-              backgroundColor: 'rgb(62, 62, 62)',
-              overflowY: 'auto',
               display: 'flex',
-              flexDirection: 'column',
+              alignItems: 'center',
+              overflowY: 'hidden',
+              overflowX: 'auto',
+            }}
+            className="scrollbarHidden"
+            onWheel={(e) => {
+              const delta = Math.max(-1, Math.min(1, e.nativeEvent.wheelDelta));
+              e.currentTarget.scrollLeft -= delta * 30;
+              console.log('1111111');
             }}
           >
-            <div>背面</div>
-            <Input.TextArea
-              value={currentCard.back}
-              onChange={(e) => {
-                currentCard.back = e.target.value;
-                currentCard.clean = false;
-                currentCard.hasChanged = true;
-                setFlashCards([...flashCards]);
-              }}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-              }}
-              placeholder="您可以从字典中拖拽释义到这里。"
-              style={{
-                flexGrow: 1,
-                resize: 'none',
-                background: 'none',
-                color: 'white',
-                outline: 'none',
-              }}
-            />
+            {flashCards.map((card, index) => {
+              const selected = card === currentCard;
+              return (
+                <div key={index}>
+                  <Button
+                    type="text"
+                    style={{
+                      color: selected ? '#138bff' : 'white',
+                      background: selected ? 'rgb(72, 72, 72)' : 'none',
+                      borderRadius: '5px 5px 0 0',
+                    }}
+                    onClick={() => {
+                      setCurrentCard(card);
+                    }}
+                  >
+                    {card.clean && '*'} {stringFolder(card.front.word, 10)}
+                    {card.hasChanged && (
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          marginLeft: '6px',
+                        }}
+                      ></span>
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
+          {currentCard !== null && (
+            <div
+              style={{ height: '100%', width: '100%' }}
+              onDrop={(e) => {
+                const explain = e.dataTransfer.getData('explain');
+                if (explain) {
+                  const { def, examples } = JSON.parse(explain);
+                  currentCard.back = `${def}\n- ${examples.join('\n- ')}`;
+                  currentCard.clean = false;
+                  currentCard.hasChanged = true;
+                  setFlashCards([...flashCards]);
+                }
+                const sentence = e.dataTransfer.getData('sentence');
+                console.log(`e.dataTransfer.getData('sentence'): ${sentence}`);
+                if (sentence) {
+                  currentCard.front.sentences.push(JSON.parse(sentence));
+                  currentCard.clean = false;
+                  currentCard.hasChanged = true;
+                  setFlashCards([...flashCards]);
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+              }}
+            >
+              <div
+                style={{
+                  height: '50%',
+                  backgroundColor: 'rgb(72, 72, 72)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '14px',
+                  width: '100%',
+                  overflowY: 'auto',
+                }}
+              >
+                <div>正面</div>
+                <div style={{ flex: 1, width: '100%' }}>
+                  {currentCard.front.sentences.length === 0 &&
+                    currentCard.front.subtitles.length === 0 && (
+                      <>
+                        <div>您可以从文章中拖拽句子到这里进行摘抄。</div>
+                        <div>或者在字幕列表里将字幕加入卡片。</div>
+                      </>
+                    )}
+                  {currentCard.front.sentences.map((sentence, index) => {
+                    return (
+                      <div
+                        key={sentence.content + index}
+                        style={{ margin: '10px 10px', cursor: 'pointer' }}
+                        tabIndex={0}
+                        onClick={() => {
+                          console.log('open sentence in flashCard:', sentence);
+                          openSentence$.next(sentence);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key.toLowerCase() === 'enter') {
+                            openSentence$.next(sentence);
+                          }
+                        }}
+                      >
+                        {sentence.content}
+                      </div>
+                    );
+                  })}
+                  {currentCard.front.subtitles.map((subtitle, index) => {
+                    const { subtitles, start, end, file } = subtitle;
+                    const deleteSubtitle = () => {
+                      const updatedSubtitles =
+                        currentCard.front.subtitles.filter(
+                          (sub) => subtitle !== sub
+                        );
+                      const nextCard: FlashCard = {
+                        ...currentCard,
+                        hasChanged: true,
+                      };
+                      nextCard.front.subtitles = updatedSubtitles;
+                      const currentCardIndex = flashCards.findIndex(
+                        (f) => f === currentCard
+                      );
+                      const nextCards = [
+                        ...flashCards.slice(0, currentCardIndex),
+                        nextCard,
+                        ...flashCards.slice(currentCardIndex + 1),
+                      ];
+                      setFlashCards(nextCards);
+                      setCurrentCard(nextCard);
+                    };
+                    return (
+                      <div
+                        key={index}
+                        style={{ padding: '0 10px', cursor: 'pointer' }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            width: '100%',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <div style={{ margin: '0 14px' }}>-{index}.</div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              flexGrow: 1,
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div
+                              tabIndex={0}
+                              onClick={() => {
+                                playSubtitle$.next(subtitle);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key.toLowerCase() === 'enter') {
+                                  playSubtitle$.next(subtitle);
+                                }
+                              }}
+                            >
+                              <PlayCircleOutlined></PlayCircleOutlined>
+                            </div>
+
+                            <div>
+                              <div style={{ padding: '0 14px' }}>
+                                {PATH.basename(file).replaceAll(/[^\w]/g, ' ')}
+                              </div>
+                              <div
+                                style={{ display: 'flex', textAlign: 'center' }}
+                              >
+                                <LazyInput
+                                  value={start}
+                                  onChange={(value) => {}}
+                                  displayValueTo={(value) =>
+                                    millisecondsToTime(value)
+                                  }
+                                ></LazyInput>
+                                <div>至</div>
+                                <LazyInput
+                                  value={end}
+                                  onChange={(value) => {}}
+                                  displayValueTo={(value) =>
+                                    millisecondsToTime(value)
+                                  }
+                                ></LazyInput>
+                              </div>
+                            </div>
+                            <div
+                              tabIndex={0}
+                              onClick={() => {
+                                deleteSubtitle();
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key.toLowerCase() === 'enter') {
+                                  deleteSubtitle();
+                                }
+                              }}
+                            >
+                              <DeleteOutlined></DeleteOutlined>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div
+                style={{
+                  height: '50%',
+                  backgroundColor: 'rgb(62, 62, 62)',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div>背面</div>
+                <Input.TextArea
+                  value={currentCard.back}
+                  onChange={(e) => {
+                    currentCard.back = e.target.value;
+                    currentCard.clean = false;
+                    currentCard.hasChanged = true;
+                    setFlashCards([...flashCards]);
+                  }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                  placeholder="您可以从字典中拖拽释义到这里。"
+                  style={{
+                    flexGrow: 1,
+                    resize: 'none',
+                    background: 'none',
+                    color: 'white',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

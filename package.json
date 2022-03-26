@@ -248,7 +248,7 @@
     "line-reader": "^0.4.0",
     "md5": "^2.3.0",
     "mdict-js": "^1.0.0",
-    "minisearch": "^3.2.0",
+    "minisearch": "^4.0.3",
     "node-html-parser": "^5.2.0",
     "pako": "^1.0.4",
     "query-lines-reader": "^0.2.3",
