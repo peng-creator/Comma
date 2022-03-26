@@ -301,6 +301,7 @@ const Component = () => {
           display: 'flex',
           width: '100%',
           overflow: 'hidden',
+          minHeight: '32px',
         }}
       >
         <div>
@@ -337,11 +338,17 @@ const Component = () => {
           {cardCollectionSelector}
         </div>
       </div>
-      <div style={{ display: 'flex', flexGrow: 1 }}>
+      <div
+        style={{
+          display: 'flex',
+          height: 'calc(100% - 32px)',
+          overflow: 'hidden',
+        }}
+      >
         {searchResultList.length > 0 && (
           <div
             style={{
-              width: '200px',
+              width: '30%',
               flexGrow: 1,
               height: '100%',
               overflowY: 'auto',
@@ -398,7 +405,14 @@ const Component = () => {
             </div>
           </div>
         )}
-        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{
+            width: '70%',
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <div
             style={{
               display: 'flex',
