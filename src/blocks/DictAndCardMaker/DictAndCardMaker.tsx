@@ -4,7 +4,6 @@ import { Input, Tabs } from 'antd';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { bufferWhen, debounceTime, shareReplay } from 'rxjs/operators';
 import { Dict } from '../../compontent/LeftPanel/Dict';
-import { globalKeyDownAction$ } from '../../state/user_input/globalKeyDownAction';
 import { WordExplain } from '../../compontent/WordExplain/WordExplain';
 import { FlashCardMaker } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';

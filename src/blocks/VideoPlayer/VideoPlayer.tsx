@@ -13,7 +13,6 @@ import { promises as fs } from 'fs';
 import { ControlPanelComponent } from '../../compontent/ControlPanel/ControlPanel';
 import { addSubtitle$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { LazyInput } from '../../compontent/LazyInput/LazyInput';
-import { VanillaCard } from '../../compontent/VanillaCard/VanillaCard';
 import { MyPlayer } from '../../player/player';
 import { playVideo$ } from '../../state/user_input/playVideoAction';
 import { Ass } from '../../util/ass.mjs';
@@ -229,7 +228,6 @@ export const VideoPlayer = (
     };
   }, []);
 
-
   useEffect(() => {
     if (!player || videoContainerRef.current === null) {
       return;
@@ -267,36 +265,54 @@ export const VideoPlayer = (
         // );
         setControlPanelScale(_controlPanelScale);
       }
-      if (videoContainerRef.current !== null && video !== null) {
-        // console.log('调整播放器宽高。。');
-        const wrapperHeight = videoContainerRef.current.offsetHeight;
-        const wrapperWidth = videoContainerRef.current.offsetWidth;
-        const videoPlayerHeight = video.clientHeight;
-        const videoPlayerWidth = video.clientWidth;
-        const ratio = videoPlayerWidth / videoPlayerHeight;
-        let newHeight = wrapperWidth / ratio; // 宽度对齐，高度根据视频比例进行缩放。
-        let newWidth = wrapperHeight * ratio; // 高度对齐，宽度根据视频比例进行缩放。
-        if (newHeight > wrapperHeight + 10) {
-          // console.log(
-          //   '高度对齐，宽度根据高度调整: newHeight:',
-          //   wrapperHeight,
-          //   ',newWidth:',
-          //   newWidth
-          // );
-          newHeight = wrapperHeight;
+      const adjustVideoPlayerSize = () => {
+        if (videoContainerRef.current !== null && video !== null) {
+          // console.log('调整播放器宽高。。');
+          const wrapperHeight = videoContainerRef.current.offsetHeight;
+          const wrapperWidth = videoContainerRef.current.offsetWidth;
+          const videoPlayerHeight = video.clientHeight;
+          const videoPlayerWidth = video.clientWidth;
+          if (
+            videoPlayerWidth <= wrapperWidth &&
+            videoPlayerHeight <= wrapperHeight &&
+            !(
+              wrapperWidth - videoPlayerWidth > 10 &&
+              wrapperHeight - videoPlayerHeight > 10
+            )
+          ) {
+            return;
+          }
+          const ratio = videoPlayerWidth / videoPlayerHeight;
+          let newHeight = wrapperWidth / ratio; // 宽度对齐，高度根据视频比例进行缩放。
+          let newWidth = wrapperHeight * ratio; // 高度对齐，宽度根据视频比例进行缩放。
+          if (newHeight > wrapperHeight) {
+            // console.log(
+            //   '高度对齐，宽度根据高度调整: newHeight:',
+            //   wrapperHeight,
+            //   ',newWidth:',
+            //   newWidth
+            // );
+            newHeight = wrapperHeight;
+          }
+          if (newWidth > wrapperWidth) {
+            // console.log(
+            //   '宽度对齐，高度根据宽度调整: newHeight:',
+            //   wrapperHeight,
+            //   ',newWidth:',
+            //   newWidth
+            // );
+            newWidth = wrapperWidth;
+          }
+          console.log(
+            `videoPlayer.style.height = ${newHeight.toFixed(
+              0
+            )}px;\nvideoPlayer.style.width = ${newWidth.toFixed(0)}px;`
+          );
+          videoPlayer.style.height = `${newHeight.toFixed(0)}px`;
+          videoPlayer.style.width = `${newWidth.toFixed(0)}px`;
         }
-        if (newWidth > wrapperWidth + 10) {
-          // console.log(
-          //   '宽度对齐，高度根据宽度调整: newHeight:',
-          //   wrapperHeight,
-          //   ',newWidth:',
-          //   newWidth
-          // );
-          newWidth = wrapperWidth;
-        }
-        videoPlayer.style.height = `${newHeight}px`;
-        videoPlayer.style.width = `${newWidth}px`;
-      }
+      };
+      adjustVideoPlayerSize();
     }, 16);
     return () => clearInterval(interval);
   }, [player, videoContainerRef, currentSubtitleIndex]);
@@ -547,13 +563,6 @@ export const VideoPlayer = (
           </div>
         </div>
       </List.Item>
-    );
-  };
-  const SubtitleCard = ({ subtitles }: any) => {
-    return (
-      <VanillaCard style={{ color: 'white' }}>
-        <div>{JSON.stringify(subtitles)}</div>
-      </VanillaCard>
     );
   };
 
