@@ -273,9 +273,13 @@ export const VideoPlayer = (
           const wrapperWidth = videoContainerRef.current.offsetWidth;
           const videoPlayerHeight = video.clientHeight;
           const videoPlayerWidth = video.clientWidth;
-          if (
+          const notOverflow =
             videoPlayerWidth <= wrapperWidth &&
-            videoPlayerHeight <= wrapperHeight &&
+            videoPlayerHeight <= wrapperHeight;
+          videoPlayer.style.height = `${videoPlayerHeight}px`;
+          videoPlayer.style.width = `${videoPlayerWidth}px`;
+          if (
+            notOverflow &&
             !(
               wrapperWidth - videoPlayerWidth > 10 &&
               wrapperHeight - videoPlayerHeight > 10
