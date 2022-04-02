@@ -254,7 +254,7 @@ const Component = () => {
     <Select
       style={{ width: '100%' }}
       showSearch
-      placeholder="选择卡片集"
+      placeholder="查看搜索记录"
       value={currentCollection || null}
       onChange={(collectionKeyword) => {
         console.log('select changed:', collectionKeyword);
@@ -279,8 +279,32 @@ const Component = () => {
     );
   }
 
+  const openReviewBtn = (
+    <Button
+      type="ghost"
+      style={{ color: 'white' }}
+      onClick={() => {
+        openCardReviewAction$.next('');
+      }}
+    >
+      卡片回顾
+    </Button>
+  );
+
   if (flashCards.length === 0 && cardCollections.length !== 0) {
-    return cardCollectionSelector;
+    return (
+      <div style={{ display: 'flex' }}>
+        <div>{openReviewBtn}</div>
+        <div style={{ flexGrow: 1, display: 'flex' }}>
+          <div
+            style={{ margin: '0 14px', display: 'flex', alignItems: 'center' }}
+          >
+            搜索记录
+          </div>
+          <div style={{ flexGrow: 1 }}>{cardCollectionSelector}</div>
+        </div>
+      </div>
+    );
   }
 
   console.log('flashCards:', flashCards, 'currentCard:', currentCard);
@@ -305,17 +329,7 @@ const Component = () => {
           minHeight: '32px',
         }}
       >
-        <div>
-          <Button
-            type="ghost"
-            style={{ color: 'white' }}
-            onClick={() => {
-              openCardReviewAction$.next('');
-            }}
-          >
-            卡片回顾
-          </Button>
-        </div>
+        <div>{openReviewBtn}</div>
         <div>
           {currentCard !== null && (
             <Button

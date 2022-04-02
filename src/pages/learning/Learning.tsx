@@ -27,7 +27,7 @@ const Component = () => {
   const [visible, setVisible] = useState(false);
   const [article, setArticle] = useState('');
   const [videoFile, setVideoFile] = useState('');
-  const [showCardReview, setShowCardReview] = useState(true);
+  const [showCardReview, setShowCardReview] = useState(false);
   useEffect(() => {
     const sp = openSentence$.subscribe({
       next(sentence) {
@@ -76,7 +76,7 @@ const Component = () => {
           style={{
             width: '30%',
             flexGrow: 1,
-            padding: '14px',
+            padding: '80px 14px 14px',
             position: 'relative',
             maxWidth: '600px',
           }}

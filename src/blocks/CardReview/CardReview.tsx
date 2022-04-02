@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, CSSProperties } from 'react';
 import dayjs from 'dayjs';
 import { supermemo, SuperMemoGrade } from 'supermemo';
 import { Button, Empty } from 'antd';
@@ -126,6 +126,33 @@ const Component = () => {
     console.log('cardFile:', cardFile);
     return fs.writeFile(cardFile, JSON.stringify(updatedCard));
   };
+  const PracticeButton = ({
+    message,
+    grade,
+    style,
+  }: {
+    message: string;
+    grade: SuperMemoGrade;
+    style?: CSSProperties;
+  }) => {
+    return (
+      <Button
+        type="ghost"
+        style={{
+          color: 'white',
+          border: '1px solid white',
+          borderBottom: 'none',
+          ...style,
+        }}
+        onClick={() => {
+          practiceAndSave(cardToReview, grade);
+          loadNextCardAction$.next(1);
+        }}
+      >
+        {message}
+      </Button>
+    );
+  };
   return (
     <div
       style={{
@@ -223,55 +250,17 @@ const Component = () => {
           <div>{cardToReview.back}</div>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <Button
-          onClick={() => {
-            practiceAndSave(cardToReview, 0);
-            loadNextCardAction$.next(1);
-          }}
-        >
-          complete blackout.
-        </Button>
-        <Button
-          onClick={() => {
-            practiceAndSave(cardToReview, 1);
-            loadNextCardAction$.next(1);
-          }}
-        >
-          incorrect response; the correct one remembered.
-        </Button>
-        <Button
-          onClick={() => {
-            practiceAndSave(cardToReview, 2);
-            loadNextCardAction$.next(1);
-          }}
-        >
-          incorrect response; where the correct one seemed easy to recall.
-        </Button>
-        <Button
-          onClick={() => {
-            practiceAndSave(cardToReview, 3);
-            loadNextCardAction$.next(1);
-          }}
-        >
-          correct response recalled with serious difficulty.
-        </Button>
-        <Button
-          onClick={() => {
-            practiceAndSave(cardToReview, 4);
-            loadNextCardAction$.next(1);
-          }}
-        >
-          correct response after a hesitation.
-        </Button>
-        <Button
-          onClick={() => {
-            practiceAndSave(cardToReview, 5);
-            loadNextCardAction$.next(1);
-          }}
-        >
-          perfect response.
-        </Button>
+      <div style={{ display: 'flex', flexDirection: 'column', color: 'white' }}>
+        <PracticeButton message="完全忘记" grade={0}></PracticeButton>
+        <PracticeButton message="非常模糊" grade={1}></PracticeButton>
+        <PracticeButton message="记得部分" grade={2}></PracticeButton>
+        <PracticeButton message="回想吃力" grade={3}></PracticeButton>
+        <PracticeButton message="略微犹豫" grade={4}></PracticeButton>
+        <PracticeButton
+          message="完全掌握"
+          grade={5}
+          style={{ borderBottom: '1px solid white' }}
+        ></PracticeButton>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ module.exports = {
     'promise/always-return': 'off',
     'consistent-return': 'off',
     'promise/catch-or-return': 'off',
+    'react/require-default-props': 'off',
     'no-continue': 'off',
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'off',
