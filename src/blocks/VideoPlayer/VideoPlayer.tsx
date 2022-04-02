@@ -193,6 +193,7 @@ export const VideoPlayer = (
         }
         console.log('playSubtitle(player.getSubtitle(), subtitle, player)');
         playSubtitle(player.getSubtitle(), subtitle, player);
+        setSubtitles(player.getSubtitle(), videoPath);
         playSubtitle$.next(null);
       },
     });
