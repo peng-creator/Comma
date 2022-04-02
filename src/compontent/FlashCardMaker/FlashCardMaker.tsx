@@ -111,6 +111,7 @@ const saveCard = async (cardToSave: FlashCard, cardIndexMap: CardIndexMap) => {
 };
 
 export const addSubtitle$ = new Subject<Subtitle>();
+export const openCardReviewAction$ = new Subject();
 
 const Component = () => {
   const [flashCards, setFlashCards] = useState<FlashCard[]>([]); // 卡片集，一个卡片集存储关键词相同的卡片。
@@ -304,6 +305,17 @@ const Component = () => {
           minHeight: '32px',
         }}
       >
+        <div>
+          <Button
+            type="ghost"
+            style={{ color: 'white' }}
+            onClick={() => {
+              openCardReviewAction$.next('');
+            }}
+          >
+            卡片回顾
+          </Button>
+        </div>
         <div>
           {currentCard !== null && (
             <Button

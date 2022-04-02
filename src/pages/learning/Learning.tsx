@@ -1,4 +1,8 @@
-import { FolderOpenOutlined, FolderOutlined } from '@ant-design/icons';
+import {
+  FolderOpenOutlined,
+  FolderOutlined,
+  CloseOutlined,
+} from '@ant-design/icons';
 import { Button, Drawer } from 'antd';
 import React, { memo, useEffect, useState } from 'react';
 import { shell } from 'electron';
@@ -13,6 +17,8 @@ import { DictAndCardMaker } from '../../blocks/DictAndCardMaker/DictAndCardMaker
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { CardReview } from '../../blocks/CardReview/CardReview';
+
+import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
 
 const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);
@@ -44,6 +50,15 @@ const Component = () => {
     return () => sp.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const sp = openCardReviewAction$.subscribe({
+      next() {
+        setShowCardReview(true);
+      },
+    });
+    return () => sp.unsubscribe();
+  }, []);
+
   return (
     <div
       style={{
@@ -57,7 +72,32 @@ const Component = () => {
       }}
     >
       {showCardReview && (
-        <div style={{ width: '30%', flexGrow: 1, padding: '14px' }}>
+        <div
+          style={{
+            width: '30%',
+            flexGrow: 1,
+            padding: '14px',
+            position: 'relative',
+            maxWidth: '600px',
+          }}
+        >
+          <Button
+            type="text"
+            style={{
+              fontSize: '40px',
+              color: 'white',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              zIndex: 2,
+            }}
+            // shape="circle"
+            onClick={() => {
+              setShowCardReview(false);
+            }}
+          >
+            <CloseOutlined />
+          </Button>
           <CardReview></CardReview>
         </div>
       )}
