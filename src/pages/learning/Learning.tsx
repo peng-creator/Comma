@@ -1,13 +1,8 @@
-import {
-  BookOutlined,
-  FolderOpenOutlined,
-  FolderOutlined,
-} from '@ant-design/icons';
+import { FolderOpenOutlined, FolderOutlined } from '@ant-design/icons';
 import { Button, Drawer } from 'antd';
 import React, { memo, useEffect, useState } from 'react';
 import { shell } from 'electron';
 import PATH from 'path';
-import { Article } from '../article/Article';
 import { dbRoot } from '../../database/db';
 import { mkdir } from '../../util/mkdir';
 import { ResourceLoader } from '../resourceLoader/ResourceLoader';
@@ -17,6 +12,7 @@ import { Reader } from '../../blocks/Reader/Reader';
 import { DictAndCardMaker } from '../../blocks/DictAndCardMaker/DictAndCardMaker';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
+import { CardReview } from '../../blocks/CardReview/CardReview';
 
 const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);
@@ -25,6 +21,7 @@ const Component = () => {
   const [visible, setVisible] = useState(false);
   const [article, setArticle] = useState('');
   const [videoFile, setVideoFile] = useState('');
+  const [showCardReview, setShowCardReview] = useState(true);
   useEffect(() => {
     const sp = openSentence$.subscribe({
       next(sentence) {
@@ -59,6 +56,11 @@ const Component = () => {
         padding: '14px',
       }}
     >
+      {showCardReview && (
+        <div style={{ width: '30%', flexGrow: 1, padding: '14px' }}>
+          <CardReview></CardReview>
+        </div>
+      )}
       {article && (
         <div
           style={{

@@ -39,7 +39,7 @@ import {
 const { Option } = Select;
 
 const MY_NAMESPACE = '2a671a64-40d5-491e-99b0-da01ff1f3341';
-const CARD_COLLECTION_NAMESPACE = '3b671a64-40d5-491e-99b0-da01ff1f3341';
+export const CARD_COLLECTION_NAMESPACE = '3b671a64-40d5-491e-99b0-da01ff1f3341';
 
 const newFlashCard = (keyword: string): FlashCard => {
   return {
@@ -496,7 +496,7 @@ const Component = () => {
                   overflowY: 'auto',
                 }}
               >
-                <div>正面</div>
+                <div>摘抄：</div>
                 <div style={{ flex: 1, width: '100%' }}>
                   {currentCard.front.sentences.length === 0 &&
                     currentCard.front.subtitles.length === 0 && (
@@ -634,9 +634,10 @@ const Component = () => {
                   overflowY: 'auto',
                   display: 'flex',
                   flexDirection: 'column',
+                  padding: '14px',
                 }}
               >
-                <div>背面</div>
+                <div>解释：</div>
                 <Input.TextArea
                   value={currentCard.back}
                   onChange={(e) => {

@@ -11,6 +11,7 @@ module.exports = {
     'no-param-reassign': 'off',
     'promise/always-return': 'off',
     'consistent-return': 'off',
+    'promise/catch-or-return': 'off',
     'no-continue': 'off',
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'off',

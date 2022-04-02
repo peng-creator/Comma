@@ -3,7 +3,7 @@ const { supermemo } = require('supermemo');
 
 function practice(flashcard, grade) {
   const { interval, repetition, efactor } = supermemo(flashcard, grade);
-  const dueDate = dayjs(Date.now()).add(interval, 'day').toISOString();
+  const dueDate = dayjs(Date.now()).add(interval, 'day').valueOf();
   return { ...flashcard, interval, repetition, efactor, dueDate };
 }
 
@@ -13,7 +13,7 @@ let flashcard = {
   interval: 0,
   repetition: 0,
   efactor: 2.5,
-  dueDate: dayjs(Date.now()).toISOString(),
+  dueDate: Date.now(),
 };
 
 console.log(flashcard);
