@@ -37,6 +37,7 @@ import {
   searchFlashCardCollections,
 } from '../../flashCardSearch';
 import { PDFNote } from '../../types/PDFNote';
+import { openPdf$ } from '../../blocks/PDF/PDF';
 
 const { Option } = Select;
 
@@ -688,6 +689,9 @@ const Component = () => {
                         tabIndex={0}
                         onClick={() => {
                           openNote$.next(pdfNote);
+                          if (pdfNote.file) {
+                            openPdf$.next(pdfNote.file);
+                          }
                         }}
                         onKeyDown={() => {}}
                         style={{ cursor: 'pointer' }}

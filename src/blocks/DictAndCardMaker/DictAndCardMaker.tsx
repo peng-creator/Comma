@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { Input, Tabs } from 'antd';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { bufferWhen, debounceTime, shareReplay } from 'rxjs/operators';
 import { Dict } from '../../compontent/Dict/Dict';
 import { FlashCardMaker } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
+import { useBehavior } from '../../state';
 
 const { TabPane } = Tabs;
 
@@ -16,9 +17,9 @@ const search$ = tapWord$.pipe(
   shareReplay(1)
 );
 
-const Component = (
-  { isDragging }: { isDragging: boolean } = { isDragging: false }
-) => {
+export const isDragging$ = new BehaviorSubject(false);
+
+const Component = () => {
   const [inputSearchValue, setInputSearchValue] = useState('');
   const [searchContent, setSearchContent] = useState('');
   const [explains, setExplains] = useState<any[]>([]);
@@ -26,6 +27,7 @@ const Component = (
   const searchBoxRef: any = useRef<Input | null>();
   const [tabKey, setTabKey] = useState('youdao');
   const [tapCache, setTapCache] = useState('');
+  const [isDragging] = useBehavior(isDragging$, false);
 
   const search = (content: string) => {
     setInputSearchValue(content);

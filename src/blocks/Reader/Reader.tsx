@@ -1,17 +1,7 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { promises as fs } from 'fs';
 import { useNavigate } from 'react-router-dom';
-import {
-  Button,
-  Col,
-  Input,
-  message,
-  Pagination,
-  Row,
-  Spin,
-  Tabs,
-  Tooltip,
-} from 'antd';
+import { Button, message, Pagination } from 'antd';
 import tokenizer from 'sbd';
 import QueryLinesReader from 'query-lines-reader';
 import {
@@ -21,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import { Sentence } from '../../types/Article';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
-import { focusSearch$, tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
+import { focusSearch$, isDragging$, tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
 
 const readerBuilder = (pageSize = 10) => {
   let reader: QueryLinesReader = null;
@@ -38,7 +28,6 @@ const readerBuilder = (pageSize = 10) => {
     return reader;
   };
 };
-const { TabPane } = Tabs;
 
 const PAGE_SIZE = 10;
 const getReader = readerBuilder(PAGE_SIZE);
@@ -64,7 +53,6 @@ const Component = (
   const [focusLineIndex, setFocusLineIndex] = useState(0);
   const [sentenceToOpen, setSentenceToOpen] = useState<Sentence | null>(null);
   const [focusLastLine, setFocusLastLine] = useState(false);
-  const [showTransPop, setShowTransPop] = useState(false);
   const [records, setRecords] = useState<Sentence[]>([]);
   let [fontSize, setFontSize] = useState(25);
 
@@ -77,8 +65,6 @@ const Component = (
     ) as HTMLSpanElement;
     return (span?.offsetHeight || 28) + 11;
   };
-
-  const [isDragging, setIsDragging] = useState(false);
 
   // 获取每段落的行数。
   const getTotalLines = (
@@ -148,9 +134,9 @@ const Component = (
         const nextLines: string[] = lineList.filter(
           (line: string) => line !== ''
         );
-        const sentencesOfParagraph = nextLines.map((line) =>
-          tokenizer.sentences(line)
-        );
+        // const sentencesOfParagraph = nextLines.map((line) =>
+        //   tokenizer.sentences(line)
+        // );
         if (lineList.length > 0) {
           setLines(nextLines);
         }
@@ -160,9 +146,6 @@ const Component = (
           setFocusParagraphIndex(focusParagraphIndex);
           setFocusSentenceIndex(focusSentenceIndex);
           setFocusLineIndex(0);
-          runTranslate(
-            sentencesOfParagraph[focusParagraphIndex][focusSentenceIndex]
-          );
         }
       })
       .catch((err: any) => {
@@ -454,8 +437,6 @@ const Component = (
             setFocusLineIndex(0);
             setFocusSentenceIndex(0);
             scrollDown(lineHeight * 2);
-            setShowTransPop(true);
-            runTranslate(sentencesOfParagraph[nextFocusParagraphIndex][0]);
             return;
           }
           console.log('移动到当前段落的下一行');
@@ -473,9 +454,6 @@ const Component = (
             sentencesCount
           );
           scrollDown((lineHeight * totalLinesOfParagraph) / sentencesCount);
-          runTranslate(
-            sentencesOfParagraph[focusParagraphIndex][focusSentenceIndex + 1]
-          );
         } else if (key === 'k') {
           console.log('kkkkk');
           if (focusSentenceIndex === 0) {
@@ -499,9 +477,6 @@ const Component = (
             );
             setFocusSentenceIndex(sentencesCount - 1);
             scrollUp(lineHeight * 2);
-            runTranslate(
-              sentencesOfParagraph[nextFocusParagraphIndex][sentencesCount - 1]
-            );
             return;
           }
           console.log('移动到当前段落的上一行');
@@ -509,9 +484,6 @@ const Component = (
             focusLineIndex - totalLinesOfParagraph / sentencesCount
           );
           setFocusSentenceIndex(focusSentenceIndex - 1);
-          runTranslate(
-            sentencesOfParagraph[focusParagraphIndex][focusSentenceIndex - 1]
-          );
           scrollUp((lineHeight * totalLinesOfParagraph) / sentencesCount);
         } else if (key === 'l') {
           console.log('llllll');
@@ -529,14 +501,6 @@ const Component = (
           }
           getPage(reader, currentPage - 1);
           divEl.current!.scrollTop = 0;
-        } else if (key === 't') {
-          if (translateLoading) {
-            return;
-          }
-          setShowTransPop(true);
-          runTranslate(
-            sentencesOfParagraph[focusParagraphIndex][focusSentenceIndex]
-          );
         } else if (key === 's') {
           search(sentencesOfParagraph[focusParagraphIndex][focusSentenceIndex]);
         } else if (key === 'p') {
@@ -619,53 +583,36 @@ const Component = (
                     const selected =
                       focusParagraphIndex === paragraphIndex &&
                       sentenceIndex === focusSentenceIndex;
-                    const Title = () => {
-                      if (translateLoading) {
-                        return <Spin></Spin>;
-                      }
-                      return (
-                        <span style={{ fontSize: '20px' }}>{transResult}</span>
-                      );
-                    };
                     return (
-                      <Tooltip
+                      <span
                         key={sentence + sentenceIndex}
-                        title={Title}
-                        visible={
-                          selected &&
-                          showTransPop &&
-                          (transResult !== '' || translateLoading)
-                        }
+                        className="sentence"
+                        style={{
+                          background: selected ? 'black' : 'none',
+                          color: selected ? 'rgb(202, 165, 42)' : 'inherit',
+                        }}
+                        draggable
+                        onDragStart={(e) => {
+                          isDragging$.next(true);
+                          e.dataTransfer.setData(
+                            'sentence',
+                            JSON.stringify({
+                              content: sentence,
+                              file: articleFilePath,
+                              page: currentPage,
+                              paragraph: paragraphIndex,
+                              index: sentenceIndex,
+                            } as Sentence)
+                          );
+                          e.dataTransfer.setData('search', sentence);
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                        onDragEnd={() => {
+                          isDragging$.next(false);
+                        }}
                       >
-                        <span
-                          className="sentence"
-                          style={{
-                            background: selected ? 'black' : 'none',
-                            color: selected ? 'rgb(202, 165, 42)' : 'inherit',
-                          }}
-                          draggable
-                          onDragStart={(e) => {
-                            setIsDragging(true);
-                            e.dataTransfer.setData(
-                              'sentence',
-                              JSON.stringify({
-                                content: sentence,
-                                file: articleFilePath,
-                                page: currentPage,
-                                paragraph: paragraphIndex,
-                                index: sentenceIndex,
-                              } as Sentence)
-                            );
-                            e.dataTransfer.setData('search', sentence);
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                          onDragEnd={() => {
-                            setIsDragging(false);
-                          }}
-                        >
-                          {sentence.split(' ').map(wordOfLine)}
-                        </span>
-                      </Tooltip>
+                        {sentence.split(' ').map(wordOfLine)}
+                      </span>
                     );
                   })}
                 </span>

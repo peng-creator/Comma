@@ -46,7 +46,7 @@ const textCache = {
 const pageText$ = new Subject<string>();
 
 // pageIndex - itemIndex - wordIndex, 可以唯一确定一个单词
-export const PDF = () => {
+export const PDF = ({ onClose }: { onClose: () => void }) => {
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [pdfFilePath, setPdfFilePath] = useBehavior(openPdf$, '');
@@ -75,6 +75,7 @@ export const PDF = () => {
         }
         setStartNote(false);
         setMarkMap(note.marks);
+        console.log('setPdfFilePath:', note.file);
         setPdfFilePath(note.file);
         const page = parseInt(note.firstKey.split('-')[0], 10);
         setPageNumber(page);
@@ -168,6 +169,13 @@ export const PDF = () => {
             }}
           >
             提取 PDF 文本
+          </Button>
+          <Button
+            onClick={() => {
+              onClose();
+            }}
+          >
+            退出
           </Button>
         </div>
         <div className="readingPagination" style={{ padding: '14px' }}>

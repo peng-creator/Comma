@@ -19,7 +19,7 @@ import { CardReview } from '../../blocks/CardReview/CardReview';
 import styles from './Learning.css';
 
 import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
-import { PDF, pdfWidth$ } from '../../blocks/PDF/PDF';
+import { openPdf$, PDF, pdfWidth$ } from '../../blocks/PDF/PDF';
 import { useBehavior } from '../../state';
 import { dbRoot } from '../../constant';
 
@@ -31,7 +31,19 @@ const Component = () => {
   const [article, setArticle] = useState('');
   const [videoFile, setVideoFile] = useState('');
   const [showCardReview, setShowCardReview] = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
   const [pdfWidth] = useBehavior(pdfWidth$, 0);
+
+  useEffect(() => {
+    const sp = openPdf$.subscribe({
+      next(file) {
+        if (file) {
+          setShowPdf(true);
+        }
+      },
+    });
+    return () => sp.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const sp = openSentence$.subscribe({
@@ -104,17 +116,19 @@ const Component = () => {
             <CardReview></CardReview>
           </div>
         )}
-        <div
-          style={{
-            height: '100%',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            margin: '0 14px',
-            minWidth: `${pdfWidth}px`,
-          }}
-        >
-          <PDF></PDF>
-        </div>
+        {showPdf && (
+          <div
+            style={{
+              height: '100%',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              margin: '0 14px',
+              minWidth: `${pdfWidth}px`,
+            }}
+          >
+            <PDF onClose={() => setShowPdf(false)}></PDF>
+          </div>
+        )}
         {article && (
           <div
             style={{
