@@ -5,7 +5,6 @@ import { Button, Empty, Pagination } from 'antd';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TextItem } from 'react-pdf';
-import { dbRoot } from '../../database/db';
 import styles from './PDF.css';
 import { useBehavior } from '../../state';
 import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';

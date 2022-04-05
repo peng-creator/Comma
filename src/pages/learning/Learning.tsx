@@ -7,7 +7,6 @@ import { Button, Drawer } from 'antd';
 import React, { memo, useEffect, useState } from 'react';
 import { shell } from 'electron';
 import PATH from 'path';
-import { dbRoot } from '../../database/db';
 import { mkdir } from '../../util/mkdir';
 import { ResourceLoader } from '../resourceLoader/ResourceLoader';
 import { VideoPlayer } from '../../blocks/VideoPlayer/VideoPlayer';
@@ -22,6 +21,7 @@ import styles from './Learning.css';
 import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { PDF, pdfWidth$ } from '../../blocks/PDF/PDF';
 import { useBehavior } from '../../state';
+import { dbRoot } from '../../constant';
 
 const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);

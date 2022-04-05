@@ -1,7 +1,6 @@
 import { SuperMemoItem } from 'supermemo';
 import { Sentence } from './Article';
 import { Subtitle } from './Subtitle';
-import { Clip } from './WordClips';
 
 export interface FlashCard extends SuperMemoItem {
   id: string;

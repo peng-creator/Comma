@@ -12,7 +12,6 @@ import {
   Tabs,
   Tooltip,
 } from 'antd';
-import { useRequest } from 'ahooks';
 import tokenizer from 'sbd';
 import QueryLinesReader from 'query-lines-reader';
 import {
@@ -20,7 +19,6 @@ import {
   LeftCircleFilled,
   SaveOutlined,
 } from '@ant-design/icons';
-import { translate } from '../../util/translate';
 import { Sentence } from '../../types/Article';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { focusSearch$, tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
@@ -67,8 +65,6 @@ const Component = (
   const [sentenceToOpen, setSentenceToOpen] = useState<Sentence | null>(null);
   const [focusLastLine, setFocusLastLine] = useState(false);
   const [showTransPop, setShowTransPop] = useState(false);
-  const [transResult, setTransResult] = useState('');
-  const [translateCache, setTranslateCache] = useState({} as any);
   const [records, setRecords] = useState<Sentence[]>([]);
   let [fontSize, setFontSize] = useState(25);
 
@@ -82,38 +78,8 @@ const Component = (
     return (span?.offsetHeight || 28) + 11;
   };
 
-  const { loading: translateLoading, run: _runTranslate } = useRequest(
-    translate,
-    {
-      manual: true,
-      onSuccess: ({ trans_result }: any, params: any) => {
-        if (trans_result && trans_result.length > 0) {
-          const res: string = trans_result[0].dst || '';
-          setTransResult(res);
-          setTranslateCache({ ...translateCache, [params[0]]: res });
-        }
-      },
-    }
-  );
   const [isDragging, setIsDragging] = useState(false);
-  const runTranslate = (content: string) => {
-    return; // 暂时禁用翻译功能。
-    setTransResult('');
-    const cache = translateCache[content];
-    console.log(
-      'translateCache:',
-      translateCache,
-      'key:',
-      content,
-      ' cache:',
-      cache
-    );
-    if (cache !== undefined) {
-      setTransResult(cache);
-      return;
-    }
-    _runTranslate(content);
-  };
+
   // 获取每段落的行数。
   const getTotalLines = (
     divEl: React.MutableRefObject<HTMLDivElement | null>,

@@ -1,6 +1,5 @@
 import { app, Menu, BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import * as remote from '@electron/remote';
-import { Wordbook } from './database/wordbook';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -14,7 +13,7 @@ export default class MenuBuilder {
     this.mainWindow = mainWindow;
   }
 
-  buildMenu(wordbooks: Wordbook[], selectedWordbook: Wordbook | null) {
+  buildMenu() {
     if (
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
@@ -22,12 +21,12 @@ export default class MenuBuilder {
       this.setupDevelopmentEnvironment();
     }
     if (process.platform === 'darwin') {
-      let template = this.buildDarwinTemplate(wordbooks, selectedWordbook);
+      let template = this.buildDarwinTemplate();
       const menu = remote.Menu.buildFromTemplate(template);
       remote.Menu.setApplicationMenu(menu);
       return menu.items;
     }
-    return this.buildDefaultTemplate(wordbooks, selectedWordbook);
+    return this.buildDefaultTemplate();
   }
 
   setupDevelopmentEnvironment(): void {
@@ -45,10 +44,7 @@ export default class MenuBuilder {
     });
   }
 
-  buildDarwinTemplate(
-    wordbooks: Wordbook[],
-    selectedWordbook: Wordbook | null
-  ): MenuItemConstructorOptions[] {
+  buildDarwinTemplate(): MenuItemConstructorOptions[] {
     const subMenuAbout: DarwinMenuItemConstructorOptions = {
       label: 'Comma',
       submenu: [
@@ -156,18 +152,11 @@ export default class MenuBuilder {
     return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }
 
-  buildDefaultTemplate(
-    wordbooks: Wordbook[],
-    selectedWordbook: Wordbook | null
-  ) {
+  buildDefaultTemplate() {
     const templateDefault = [
       {
         label: 'Comma',
         submenu: [
-          // {
-          //   label: '&Open',
-          //   accelerator: 'Ctrl+O',
-          // },
           {
             label: '退出',
             accelerator: 'Ctrl+W',

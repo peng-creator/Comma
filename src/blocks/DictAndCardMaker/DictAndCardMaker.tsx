@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { Input, Tabs } from 'antd';
 import { Subject } from 'rxjs';
 import { bufferWhen, debounceTime, shareReplay } from 'rxjs/operators';
-import { Dict } from '../../compontent/LeftPanel/Dict';
+import { Dict } from '../../compontent/Dict/Dict';
 import { FlashCardMaker } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 

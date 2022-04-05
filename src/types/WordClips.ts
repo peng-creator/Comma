@@ -3,7 +3,3 @@ export interface Clip {
   cutStart: number;
   cutEnd: number;
 }
-
-export interface WordClips {
-  [word: string]: Clip[];
-}
