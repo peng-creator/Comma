@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Input, Tabs } from 'antd';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { bufferWhen, debounceTime, shareReplay } from 'rxjs/operators';
 import { Dict } from '../../compontent/LeftPanel/Dict';
-import { WordExplain } from '../../compontent/WordExplain/WordExplain';
 import { FlashCardMaker } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 
@@ -26,7 +24,7 @@ const Component = (
   const [explains, setExplains] = useState<any[]>([]);
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
   const searchBoxRef: any = useRef<Input | null>();
-  const [tabKey, setTabKey] = useState('collins');
+  const [tabKey, setTabKey] = useState('youdao');
   const [tapCache, setTapCache] = useState('');
 
   const search = (content: string) => {
@@ -196,31 +194,9 @@ const Component = (
             style={{ color: 'white' }}
             onChange={(key) => setTabKey(key)}
           >
-            <TabPane tab="柯林斯" key="collins"></TabPane>
             <TabPane tab="有道" key="youdao"></TabPane>
           </Tabs>
           <div style={{ height: 'calc(100% - 120px)', overflow: 'hidden' }}>
-            <div
-              style={{
-                height: '100%',
-                overflowY: 'auto',
-                display: tabKey === 'collins' ? 'block' : 'none',
-              }}
-            >
-              <WordExplain
-                searchWord={searchContent}
-                onGetExplains={(explains: any[]) => {
-                  console.log('onGetExplains:', explains);
-                  setExplains(explains);
-                  if (explains.length === 0) {
-                    setTabKey('youdao');
-                  } else {
-                    setTabKey('collins');
-                  }
-                }}
-              ></WordExplain>
-            </div>
-
             <Dict
               style={{
                 display: tabKey === 'youdao' && !isDragging ? 'block' : 'none',

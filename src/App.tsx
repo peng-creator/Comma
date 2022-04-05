@@ -1,22 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.global.css';
-import { fromEvent } from 'rxjs';
-import { debounceTime, share } from 'rxjs/operators';
 import { ipcRenderer } from 'electron';
 import { getCurrentWindow } from '@electron/remote';
 import TitleBar from 'frameless-titlebar';
 import { Menu } from 'electron/main';
-import { Route, Routes } from 'react-router-dom';
 import styles from './App.css';
 import { menu$ } from './state/system/menu';
-import { Word } from './pages/word/Word';
-import { Home } from './pages/home/Home';
-import { EpisodePage } from './pages/episode/Episode';
-import { PlayVideo } from './pages/playVideo/PlayVideo';
-import { Reading } from './pages/reading/Reading';
-import { AddWordbookComponent } from './compontent/AddWordbook/AddWordbook';
-import { WordImportComponent } from './compontent/WordImport/WordImport';
-import { VocabularyTest } from './pages/vocabularyTest/VocabularyTest';
 import { Learning } from './pages/learning/Learning';
 
 const currentWindow = getCurrentWindow();
@@ -29,7 +18,6 @@ export default function App() {
     currentWindow.isFullScreen()
   );
   const [menu, setMenu] = useState<Menu | null>(null);
-  const [hideControlPanel, setHideControlPanel] = useState(false);
 
   useEffect(() => {
     setShowTitleBar(!isPlayerMaximum);
@@ -40,33 +28,6 @@ export default function App() {
     }
   }, [isPlayerMaximum]);
 
-  // useEffect(() => {
-  //   const subscription = mousemove$.subscribe({
-  //     next: () => {
-  //       ipcRenderer.send('showContollButton');
-  //       setShowTitleBar(true);
-  //       setHideControlPanel(false);
-  //     },
-  //   });
-  //   return () => {
-  //     subscription.unsubscribe();
-  //   };
-  // }, []);
-
-  // useEffect(() => {
-  //   const subscription = mousemove$.pipe(debounceTime(3000)).subscribe({
-  //     next: () => {
-  //       if (isPlayerMaximum) {
-  //         ipcRenderer.send('hideContollButton');
-  //         setShowTitleBar(false);
-  //       }
-  //       setHideControlPanel(true);
-  //     },
-  //   });
-  //   return () => {
-  //     subscription.unsubscribe();
-  //   };
-  // }, [isPlayerMaximum]);
   // add window listeners for currentWindow
   useEffect(() => {
     const onMaximized = () => {
@@ -163,28 +124,7 @@ export default function App() {
           maximized={maximized}
         />
       </div>
-      <Routes>
-        {/* <Route path="/" element={<Home />} /> */}
-        <Route
-          path="word"
-          element={
-            <div className={styles.App}>
-              <Word
-                isPlayerMaximum={isPlayerMaximum}
-                setIsPlayerMaximum={setIsPlayerMaximum}
-                hideControlPanel={hideControlPanel}
-              />
-            </div>
-          }
-        />
-        <Route path="episode" element={<EpisodePage />} />
-        <Route path="video" element={<PlayVideo />} />
-        <Route path="reading" element={<Reading />} />
-        <Route path="vocabularytest" element={<VocabularyTest />} />
-        <Route path="/" element={<Learning />} />
-      </Routes>
-      <AddWordbookComponent />
-      <WordImportComponent />
+      <Learning />
     </div>
   );
 }

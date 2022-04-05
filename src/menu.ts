@@ -1,50 +1,7 @@
 import { app, Menu, BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import * as remote from '@electron/remote';
 import { Wordbook } from './database/wordbook';
-import { newWordbookAction$ } from './state/user_input/newWordbookAction';
-import { selectedWordbook$ } from './state/user_input/selectedWordbook';
-import { wordImportAction$ } from './state/user_input/wordImportAction';
 
-const buildWordbookMenu = (
-  wordbooks: Wordbook[],
-  selectedWordbook: Wordbook | null
-) => {
-  type checkbox = 'checkbox';
-  const wordbookSubMenu = wordbooks.map((wb) => {
-    return {
-      label: wb.name,
-      type: 'checkbox' as checkbox,
-      checked: wb.name === selectedWordbook?.name,
-      click: () => {
-        selectedWordbook$.next(wb);
-      },
-    };
-  });
-  const subMenuWordbook: MenuItemConstructorOptions = {
-    label: '单词本',
-    submenu: [
-      {
-        label: '新增单词本',
-        click: () => {
-          newWordbookAction$.next('');
-        },
-      },
-      {
-        label: selectedWordbook?.name || '请选择单词本',
-        submenu: wordbookSubMenu,
-      },
-      {
-        label: '导入单词',
-        click: () => {
-          wordImportAction$.next('');
-        },
-      },
-    ],
-  };
-  return subMenuWordbook;
-};
-
-// const { Menu } = remote;
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
   submenu?: DarwinMenuItemConstructorOptions[] | Menu;
@@ -99,20 +56,6 @@ export default class MenuBuilder {
           label: '关于 Comma',
           selector: 'orderFrontStandardAboutPanel:',
         },
-        // { type: 'separator' },
-        // { label: 'Services', submenu: [] },
-        // { type: 'separator' },
-        // {
-        //   label: 'Hide ElectronReact',
-        //   accelerator: 'Command+H',
-        //   selector: 'hide:',
-        // },
-        // {
-        //   label: 'Hide Others',
-        //   accelerator: 'Command+Shift+H',
-        //   selector: 'hideOtherApplications:',
-        // },
-        // { label: 'Show All', selector: 'unhideAllApplications:' },
         { type: 'separator' },
         {
           label: '退出',
@@ -210,14 +153,7 @@ export default class MenuBuilder {
         ? subMenuViewDev
         : subMenuViewProd;
 
-    return [
-      subMenuAbout,
-      buildWordbookMenu(wordbooks, selectedWordbook),
-      subMenuEdit,
-      subMenuView,
-      subMenuWindow,
-      subMenuHelp,
-    ];
+    return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }
 
   buildDefaultTemplate(
@@ -241,7 +177,6 @@ export default class MenuBuilder {
           },
         ],
       },
-      buildWordbookMenu(wordbooks, selectedWordbook),
       {
         label: '帮助',
         submenu: [

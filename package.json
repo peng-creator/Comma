@@ -1,7 +1,7 @@
 {
   "name": "comma",
   "productName": "Comma",
-  "description": "A cross-platform desktop video player for language learning based on Electron, FFmpeg, VideoJS and AntDesign",
+  "description": "A cross-platform desktop Multimedia English learning tool",
   "scripts": {
     "build": "concurrently \"yarn build:main\" \"yarn build:renderer\"",
     "build:main": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.main.prod.babel.js",
