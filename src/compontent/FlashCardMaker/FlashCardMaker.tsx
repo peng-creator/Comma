@@ -7,6 +7,7 @@ import {
   Empty,
   Input,
   message,
+  Popconfirm,
   Row,
   Select,
 } from 'antd';
@@ -19,7 +20,7 @@ import {
 import PATH from 'path';
 import { promises as fs } from 'fs';
 import { v5 as uuidv5 } from 'uuid';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { SearchResult } from 'minisearch';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 import { FlashCard } from '../../types/FlashCard';
@@ -35,6 +36,7 @@ import {
   addSearchItems,
   searchFlashCardCollections,
 } from '../../flashCardSearch';
+import { PDFNote } from '../../types/PDFNote';
 
 const { Option } = Select;
 
@@ -48,6 +50,7 @@ const newFlashCard = (keyword: string): FlashCard => {
       word: keyword,
       subtitles: [],
       sentences: [],
+      pdfNote: [],
     },
     back: '',
     dueDate: Date.now(),
@@ -72,6 +75,9 @@ const cardIndexMapPromise = fs
   .catch(() => {
     return {};
   });
+
+export const pdfNote$ = new Subject<PDFNote>();
+export const openNote$ = new BehaviorSubject<PDFNote | null>(null);
 
 const saveCard = async (cardToSave: FlashCard, cardIndexMap: CardIndexMap) => {
   // 加入到搜索库
@@ -242,6 +248,28 @@ const Component = () => {
           return;
         }
         currentCard.front.subtitles.push(subtitle);
+        currentCard.clean = false;
+        currentCard.hasChanged = true;
+        setFlashCards([...flashCards]);
+      },
+    });
+    return () => sp.unsubscribe();
+  }, [currentCard]);
+
+  useEffect(() => {
+    const sp = pdfNote$.subscribe({
+      next(note) {
+        if (note === null) {
+          return;
+        }
+        if (currentCard === null) {
+          message.warn('没有打开的卡片');
+          return;
+        }
+        if (!currentCard.front.pdfNote) {
+          currentCard.front.pdfNote = [];
+        }
+        currentCard.front.pdfNote.push(note);
         currentCard.clean = false;
         currentCard.hasChanged = true;
         setFlashCards([...flashCards]);
@@ -525,10 +553,11 @@ const Component = () => {
                 <div>摘抄：</div>
                 <div style={{ flex: 1, width: '100%' }}>
                   {currentCard.front.sentences.length === 0 &&
-                    currentCard.front.subtitles.length === 0 && (
+                    currentCard.front.subtitles.length === 0 &&
+                    (currentCard.front.pdfNote === undefined ||
+                      currentCard.front.pdfNote.length === 0) && (
                       <>
-                        <div>您可以从文章中拖拽句子到这里进行摘抄。</div>
-                        <div>或者在字幕列表里将字幕加入卡片。</div>
+                        <div>您可以从文章或者字幕列表中摘抄。</div>
                       </>
                     )}
                   {currentCard.front.sentences.map((sentence, index) => {
@@ -648,6 +677,56 @@ const Component = () => {
                             </div>
                           </div>
                         </div>
+                      </div>
+                    );
+                  })}
+                  {(currentCard.front.pdfNote || []).map((pdfNote, index) => {
+                    const { mergedStr } = pdfNote;
+                    return (
+                      <div
+                        key={index}
+                        tabIndex={0}
+                        onClick={() => {
+                          openNote$.next(pdfNote);
+                        }}
+                        onKeyDown={() => {}}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        [pdf] {mergedStr}
+                        <Popconfirm
+                          title="删除"
+                          onConfirm={() => {
+                            const updatedPdfNote =
+                              currentCard.front.pdfNote.filter(
+                                (note) => pdfNote !== note
+                              );
+                            const nextCard: FlashCard = {
+                              ...currentCard,
+                              hasChanged: true,
+                            };
+                            nextCard.front.pdfNote = updatedPdfNote;
+                            const currentCardIndex = flashCards.findIndex(
+                              (f) => f === currentCard
+                            );
+                            const nextCards = [
+                              ...flashCards.slice(0, currentCardIndex),
+                              nextCard,
+                              ...flashCards.slice(currentCardIndex + 1),
+                            ];
+                            setFlashCards(nextCards);
+                            setCurrentCard(nextCard);
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'inline-block',
+                              cursor: 'pointer',
+                              color: 'rgb(189, 79, 79)',
+                            }}
+                          >
+                            <DeleteOutlined></DeleteOutlined>
+                          </div>
+                        </Popconfirm>
                       </div>
                     );
                   })}

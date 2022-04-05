@@ -1,4 +1,5 @@
 import { SuperMemoItem } from 'supermemo';
+import { PDFNote } from './PDFNote';
 import { Sentence } from './Article';
 import { Subtitle } from './Subtitle';
 
@@ -8,6 +9,7 @@ export interface FlashCard extends SuperMemoItem {
     word: string;
     subtitles: Subtitle[];
     sentences: Sentence[];
+    pdfNote: PDFNote[];
   };
   back: string;
   dueDate: number;

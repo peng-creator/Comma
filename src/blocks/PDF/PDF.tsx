@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack';
-import PATH from 'path';
-import { Button, Empty, Pagination } from 'antd';
+import { Button, Empty, message, Modal, Pagination } from 'antd';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TextItem } from 'react-pdf';
+import tokenizer from 'sbd';
 import styles from './PDF.css';
 import { useBehavior } from '../../state';
 import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
+import {
+  openNote$,
+  pdfNote$,
+} from '../../compontent/FlashCardMaker/FlashCardMaker';
+import { MarkMap, PDFNote } from '../../types/PDFNote';
 
 const wordClick$ = new Subject<React.MouseEvent<HTMLSpanElement, MouseEvent>>();
 
@@ -40,18 +45,43 @@ const textCache = {
 
 const pageText$ = new Subject<string>();
 
-pageText$.pipe(debounceTime(200)).subscribe({
-  next: () => {},
-});
 // pageIndex - itemIndex - wordIndex, 可以唯一确定一个单词
 export const PDF = () => {
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [pdfFilePath] = useBehavior(openPdf$, '');
+  const [pdfFilePath, setPdfFilePath] = useBehavior(openPdf$, '');
   const [startNote, setStartNote] = useState(false);
   const [startMarking, setStartMarking] = useState(false);
-  const [markMap, setMarkMap] = useState<any>({});
-  const [noteList, setNoteList] = useState<any[]>([]);
+  const [markMap, setMarkMap] = useState<MarkMap>({});
+  const [noteList, setNoteList] = useState<PDFNote[]>([]);
+  const [text, setText] = useState('');
+  const [showText, setShowText] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+
+  useEffect(() => {
+    const sp = pageText$.pipe(debounceTime(200)).subscribe({
+      next: () => {
+        setText(textCache.current);
+      },
+    });
+    return () => sp.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const sp = openNote$.subscribe({
+      next(note) {
+        if (note === null || note.file === undefined) {
+          return;
+        }
+        setStartNote(false);
+        setMarkMap(note.marks);
+        setPdfFilePath(note.file);
+        const page = parseInt(note.firstKey.split('-')[0], 10);
+        setPageNumber(page);
+      },
+    });
+    return () => sp.unsubscribe();
+  }, []);
 
   console.log('numPages:', numPages);
   console.log('pdf file path:', pdfFilePath);
@@ -77,6 +107,80 @@ export const PDF = () => {
         console.log('start marking:', false);
       }}
     >
+      <div className={styles.operations}>
+        <div>
+          <Button
+            onClick={() => {
+              const markedKeys = Object.keys(markMap);
+              if (startNote && markedKeys.length > 0) {
+                message.info('已暂存摘录，可点击`显示摘录`按钮进行查看');
+                const sortedKeys = markedKeys.sort((a, b) => {
+                  const [pa, ia, wa] = a.split('-').map((w) => parseInt(w, 10));
+                  const [pb, ib, wb] = b.split('-').map((w) => parseInt(w, 10));
+                  let p = pa - pb;
+                  let i = ia - ib;
+                  let w = wa - wb;
+                  if (p !== 0) {
+                    return p;
+                  }
+                  if (i !== 0) {
+                    return i;
+                  }
+                  if (w !== 0) {
+                    return w;
+                  }
+                  return 0;
+                });
+                console.log('sortedKeys:', sortedKeys);
+                const mergedStr = sortedKeys
+                  .map((key) => {
+                    return markMap[key];
+                  })
+                  .join(' ');
+                setNoteList([
+                  {
+                    firstKey: sortedKeys[0],
+                    mergedStr,
+                    marks: markMap,
+                    file: pdfFilePath,
+                  },
+                  ...noteList,
+                ]);
+              } else if (!startNote) {
+                message.info('开始摘录：请点击文字进行标记');
+              }
+              setStartNote(!startNote);
+              setMarkMap({});
+            }}
+          >
+            {startNote ? '结束摘录' : '摘录'}
+          </Button>
+          <Button
+            onClick={() => {
+              setShowNote(true);
+            }}
+          >
+            显示摘录
+          </Button>
+          <Button
+            onClick={() => {
+              setShowText(true);
+            }}
+          >
+            提取 PDF 文本
+          </Button>
+        </div>
+        <div className="readingPagination" style={{ padding: '14px' }}>
+          <Pagination
+            simple
+            current={pageNumber}
+            total={numPages * 10}
+            onChange={(pageNumber: number) => {
+              setPageNumber(pageNumber);
+            }}
+          />
+        </div>
+      </div>
       <Document
         file={pdfFilePath}
         onLoadSuccess={({ numPages }) => {
@@ -105,6 +209,9 @@ export const PDF = () => {
             return (
               <>
                 {layer.str.split(/\s/).map((w, index) => {
+                  if (w === '') {
+                    return ' ';
+                  }
                   const key = `${pageNumber}-${layer.itemIndex}-${index}`;
                   const marked = markMap[key] !== undefined;
                   const checkMark = () => {
@@ -113,14 +220,18 @@ export const PDF = () => {
                       [key]: marked ? undefined : w,
                     });
                   };
+                  const endWithNoneWord = w.match(/\w*\W$/);
+                  if (endWithNoneWord) {
+                    console.log('endWithNoneWord:', w);
+                  }
                   return (
                     <span
                       className={styles.word}
-                      style={{
-                        background: markMap[key]
-                          ? 'rgba(6, 62, 166, 0.5)'
-                          : 'none',
-                      }}
+                      style={
+                        markMap[key]
+                          ? { background: 'rgba(6, 62, 166, .5)' }
+                          : {}
+                      }
                       key={index}
                       tabIndex={0}
                       onKeyDown={() => {}}
@@ -178,67 +289,62 @@ export const PDF = () => {
           )}
         </div>
       </Document>
-      <div className="readingPagination" style={{ padding: '14px' }}>
-        <Pagination
-          simple
-          current={pageNumber}
-          total={numPages * 10}
-          onChange={(pageNumber: number) => {
-            setPageNumber(pageNumber);
-          }}
-        />
-        <Button
-          type="ghost"
-          onClick={() => {
-            if (startNote) {
-              const sortedKeys = Object.keys(markMap).sort((a, b) => {
-                const [pa, ia, wa] = a.split('-').map((w) => parseInt(w, 10));
-                const [pb, ib, wb] = b.split('-').map((w) => parseInt(w, 10));
-                let p = pa - pb;
-                let i = ia - ib;
-                let w = wa - wb;
-                if (p !== 0) {
-                  return p;
-                }
-                if (i !== 0) {
-                  return i;
-                }
-                if (w !== 0) {
-                  return w;
-                }
-                return 0;
-              });
-              console.log('sortedKeys:', sortedKeys);
-              const mergedStr = sortedKeys
-                .map((key) => {
-                  return markMap[key];
-                })
-                .join(' ');
-              setNoteList([
-                ...noteList,
-                {
-                  firstKey: sortedKeys[0],
-                  mergedStr,
-                  marks: markMap,
-                },
-              ]);
-            }
-            setStartNote(!startNote);
-            setMarkMap({});
-          }}
-          style={{
-            color: 'white',
-            outline: 'none',
-          }}
-        >
-          {startNote ? '完成摘录' : '摘录'}
-        </Button>
-      </div>
-      <div className={styles.note}>
-        {noteList.map((note, index) => {
-          return <div key={index}>{note.mergedStr}</div>;
-        })}
-      </div>
+      <Modal
+        title="文本内容"
+        visible={showText}
+        onOk={() => {
+          setShowText(false);
+        }}
+        onCancel={() => {
+          setShowText(false);
+        }}
+        width={800}
+      >
+        <div className={styles.text}>
+          {tokenizer.sentences(text).map((p, index) => {
+            return <p key={index}>{p}</p>;
+          })}
+        </div>
+      </Modal>
+      <Modal
+        title="摘录"
+        visible={showNote}
+        onOk={() => {
+          setShowNote(false);
+        }}
+        onCancel={() => {
+          setShowNote(false);
+        }}
+        width={800}
+      >
+        <div className={styles.note}>
+          {noteList.map((note, index) => {
+            return (
+              <div key={index}>
+                <Button
+                  type="text"
+                  style={{ color: 'rgb(6, 62, 166)' }}
+                  onClick={() => {
+                    pdfNote$.next(note);
+                  }}
+                >
+                  插入卡片
+                </Button>
+                {note.mergedStr}
+                <Button
+                  type="text"
+                  style={{ color: 'rgb(243, 90, 90)' }}
+                  onClick={() => {
+                    setNoteList(noteList.filter((n) => n !== note));
+                  }}
+                >
+                  删除
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </Modal>
     </div>
   );
 };
