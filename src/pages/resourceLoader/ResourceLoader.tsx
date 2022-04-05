@@ -4,6 +4,7 @@ import PATH from 'path';
 import { Button } from 'antd';
 import lineReader from 'line-reader';
 import {
+  FilePdfFilled,
   FileTextOutlined,
   FolderOutlined,
   VideoCameraFilled,
@@ -11,6 +12,7 @@ import {
 import { dbRoot } from '../../constant';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { mkdir } from '../../util/mkdir';
+import { openPdf$ } from '../../blocks/PDF/PDF';
 
 const readOneLineOfTextFile = (filePath: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -53,6 +55,7 @@ const loadDirChildren = async (dir: string) => {
   const dirs: string[] = [];
   const articles: string[] = [];
   const videos: string[] = [];
+  const pdfs: string[] = [];
   return fs
     .readdir(dir)
     .then(async (files) => {
@@ -60,16 +63,19 @@ const loadDirChildren = async (dir: string) => {
         const stat = await fs.stat(PATH.join(dir, file));
         if (stat.isDirectory()) {
           dirs.push(file);
-        } else if (file.endsWith('txt')) {
+        } else if (file.toLowerCase().endsWith('txt')) {
           articles.push(file);
-        } else if (file.endsWith('mp4')) {
+        } else if (file.toLowerCase().endsWith('mp4')) {
           videos.push(file);
+        } else if (file.toLowerCase().endsWith('pdf')) {
+          pdfs.push(file);
         }
       }
       return {
         dirs,
         articles,
         videos,
+        pdfs,
       };
     })
     .catch((e) => {
@@ -78,6 +84,7 @@ const loadDirChildren = async (dir: string) => {
         dirs,
         articles,
         videos,
+        pdfs,
       };
     });
 };
@@ -96,6 +103,7 @@ export const ResourceLoader = ({
   const [paths, setPaths] = useState([] as string[]);
   const [firstLines, setFirstLines] = useState([] as string[]);
   const [videos, setVideos] = useState([] as string[]);
+  const [pdfs, setPdfs] = useState([] as string[]);
 
   const setArticles = async (articles: string[], paths: string[]) => {
     articles = articles.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
@@ -127,10 +135,11 @@ export const ResourceLoader = ({
   const localLoadDirChildren = (paths: string[] = [], dir = '') => {
     console.log('localLoadDirChildren, paths:', paths, ', dir:', dir);
     return loadDirChildren(PATH.join(L1, ...paths, dir))
-      .then(({ dirs, articles, videos }) => {
+      .then(({ dirs, articles, videos, pdfs }) => {
         setDirs(dirs);
         setArticles(articles, [...paths, dir]);
         setVideos(videos);
+        setPdfs(pdfs);
       })
       .catch((e) => {
         console.log('Error initializing the dirs and articles:', e);
@@ -210,6 +219,36 @@ export const ResourceLoader = ({
             </div>
           );
         })}
+      <div style={{ flexGrow: 1 }}>
+        {pdfs.map((pdfFile, index) => {
+          const openPdf = () => {
+            const filePath = PATH.join(L1, ...paths, pdfFile);
+            openPdf$.next(filePath);
+          };
+          return (
+            <div
+              key={pdfFile}
+              style={{
+                color: 'black',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                marginTop: '10px',
+              }}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  openPdf();
+                }
+              }}
+              onClick={openPdf}
+            >
+              <FilePdfFilled />
+              <div style={{ marginLeft: '14px' }}>{pdfFile}</div>
+            </div>
+          );
+        })}
+      </div>
       <div style={{ flexGrow: 1 }}>
         {videos.map((videoFile, index) => {
           const openVideo = () => {

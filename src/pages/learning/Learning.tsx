@@ -17,8 +17,11 @@ import { DictAndCardMaker } from '../../blocks/DictAndCardMaker/DictAndCardMaker
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { CardReview } from '../../blocks/CardReview/CardReview';
+import styles from './Learning.css';
 
 import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
+import { PDF, pdfWidth$ } from '../../blocks/PDF/PDF';
+import { useBehavior } from '../../state';
 
 const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);
@@ -28,6 +31,8 @@ const Component = () => {
   const [article, setArticle] = useState('');
   const [videoFile, setVideoFile] = useState('');
   const [showCardReview, setShowCardReview] = useState(false);
+  const [pdfWidth] = useBehavior(pdfWidth$, 0);
+
   useEffect(() => {
     const sp = openSentence$.subscribe({
       next(sentence) {
@@ -63,80 +68,87 @@ const Component = () => {
     <div
       style={{
         marginTop: '22px',
-        display: 'flex',
         height: 'calc(100% - 22px)',
         backgroundColor: 'rgb(30, 30, 35)',
         position: 'relative',
-        justifyContent: 'center',
         padding: '14px',
       }}
     >
-      {showCardReview && (
-        <div
-          style={{
-            width: '30%',
-            flexGrow: 1,
-            padding: '80px 14px 14px',
-            position: 'relative',
-            maxWidth: '600px',
-          }}
-        >
-          <Button
-            type="text"
+      <div className={styles.learningContainer}>
+        {showCardReview && (
+          <div
             style={{
-              fontSize: '40px',
-              color: 'white',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              zIndex: 2,
-            }}
-            // shape="circle"
-            onClick={() => {
-              setShowCardReview(false);
+              width: '30%',
+              padding: '80px 14px 14px',
+              position: 'relative',
+              minWidth: '600px',
             }}
           >
-            <CloseOutlined />
-          </Button>
-          <CardReview></CardReview>
-        </div>
-      )}
-      {article && (
+            <Button
+              type="text"
+              style={{
+                fontSize: '40px',
+                color: 'white',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 2,
+              }}
+              // shape="circle"
+              onClick={() => {
+                setShowCardReview(false);
+              }}
+            >
+              <CloseOutlined />
+            </Button>
+            <CardReview></CardReview>
+          </div>
+        )}
         <div
           style={{
-            width: '30%',
-            flexGrow: 1,
-            padding: '14px',
-            minWidth: '300px',
-            maxWidth: '800px',
+            height: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            margin: '0 14px',
+            minWidth: `${pdfWidth}px`,
           }}
         >
-          <Reader
-            onClose={() => {
-              setArticle('');
-            }}
-          ></Reader>
+          <PDF></PDF>
         </div>
-      )}
-      <div
-        style={{
-          width: '20%',
-          maxWidth: '800px',
-          flexGrow: 1,
-          padding: '14px',
-        }}
-      >
-        <DictAndCardMaker isDragging={false}></DictAndCardMaker>
+        {article && (
+          <div
+            style={{
+              width: '30%',
+              padding: '14px',
+              minWidth: '800px',
+            }}
+          >
+            <Reader
+              onClose={() => {
+                setArticle('');
+              }}
+            ></Reader>
+          </div>
+        )}
+        {videoFile && (
+          <div style={{ minWidth: '900px', padding: '14px' }}>
+            <VideoPlayer
+              onClose={() => {
+                setVideoFile('');
+              }}
+            ></VideoPlayer>
+          </div>
+        )}
+        <div
+          style={{
+            width: '20%',
+            minWidth: '800px',
+            padding: '14px',
+          }}
+        >
+          <DictAndCardMaker isDragging={false}></DictAndCardMaker>
+        </div>
       </div>
-      {videoFile && (
-        <div style={{ width: '30%', flexGrow: 1, padding: '14px' }}>
-          <VideoPlayer
-            onClose={() => {
-              setVideoFile('');
-            }}
-          ></VideoPlayer>
-        </div>
-      )}
       <Drawer
         title={
           <div
