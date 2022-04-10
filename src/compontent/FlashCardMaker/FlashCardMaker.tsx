@@ -316,7 +316,7 @@ const Component = () => {
         openCardReviewAction$.next('');
       }}
     >
-      卡片回顾
+      Super Memo
     </Button>
   );
 
