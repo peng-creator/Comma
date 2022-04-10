@@ -12,7 +12,7 @@ import {
 import { dbRoot } from '../../constant';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { mkdir } from '../../util/mkdir';
-import { openPdf$ } from '../../blocks/PDF/PDF';
+import { openPdf$ } from '../../state/user_input/openPdfAction';
 
 const readOneLineOfTextFile = (filePath: string): Promise<string> => {
   return new Promise((resolve, reject) => {

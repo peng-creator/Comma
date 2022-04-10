@@ -1,358 +1,510 @@
-import React, { useEffect, useState } from 'react';
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack';
-import { Button, Empty, message, Modal, Pagination } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Icon, Viewer, Worker } from '@react-pdf-viewer/core';
+import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+import { Button, Empty } from 'antd';
+import { EditFilled, EditOutlined } from '@ant-design/icons';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-import { TextItem } from 'react-pdf';
-import tokenizer from 'sbd';
-import styles from './PDF.css';
-import { useBehavior } from '../../state';
+import { debounceTime, throttleTime } from 'rxjs/operators';
 import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
-import {
-  openNote$,
-  pdfNote$,
-} from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { MarkMap, PDFNote } from '../../types/PDFNote';
+import {
+  pdfNote$,
+  openNote$,
+} from '../../compontent/FlashCardMaker/FlashCardMaker';
+import { useBehavior, useObservable } from '../../state';
+import { openPdf$ } from '../../state/user_input/openPdfAction';
+import styles from './PDF.css';
+// import { BehaviorSubject } from 'rxjs';
 
-const wordClick$ = new Subject<React.MouseEvent<HTMLSpanElement, MouseEvent>>();
+// const isDark$ = new BehaviorSubject();
 
-wordClick$.pipe(debounceTime(200)).subscribe({
-  next: (e) => {
-    switch (e.detail) {
-      case 1:
-        console.log('click');
-        break;
-      case 2:
-        console.log('double click');
-        break;
-      case 3:
-        console.log('triple click');
-        break;
-      default:
-    }
-  },
-});
+const nextMarkMap$ = new BehaviorSubject<MarkMap>({});
+const markMap$ = nextMarkMap$.pipe(throttleTime(1));
 
-export const pdfWidth$ = new BehaviorSubject(0);
-
-export const openPdf$ = new BehaviorSubject<string>('');
-
-const textCache = {
-  prev: '',
-  current: '',
-  next: '',
-};
-
-const pageText$ = new Subject<string>();
-
-// pageIndex - itemIndex - wordIndex, 可以唯一确定一个单词
-export const PDF = ({ onClose }: { onClose: () => void }) => {
-  const [numPages, setNumPages] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pdfFilePath, setPdfFilePath] = useBehavior(openPdf$, '');
+export const PDF = () => {
+  const [isDark, setIsDark] = useState(false);
   const [startNote, setStartNote] = useState(false);
-  const [startMarking, setStartMarking] = useState(false);
-  const [markMap, setMarkMap] = useState<MarkMap>({});
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [markMap] = useObservable(markMap$, {} as MarkMap);
   const [noteList, setNoteList] = useState<PDFNote[]>([]);
-  const [text, setText] = useState('');
-  const [showText, setShowText] = useState(false);
-  const [showNote, setShowNote] = useState(false);
+  const [file, setFile] = useBehavior(openPdf$, '');
+  const setMarkMap = (markMap: MarkMap) => nextMarkMap$.next(markMap);
+  const [documentLoaded, setDocumentLoaded] = useState(false);
 
+  const getValidKeyFromMarkMap = (markMap: MarkMap) => {
+    const markKeys = Object.keys(markMap);
+    console.log('marKkeys:', markKeys);
+    const validKeys = markKeys.filter((key) => {
+      return markMap[key] === true;
+    });
+    console.log('validKeys:', validKeys);
+    return validKeys;
+  };
+
+  const forEachMark = (
+    markMap: MarkMap,
+    each: (span: HTMLSpanElement) => void
+  ) => {
+    const validKeys = getValidKeyFromMarkMap(markMap);
+    for (let i = 0; i < validKeys.length; i += 1) {
+      const position = validKeys[i];
+      console.log('clear mark, position:', position);
+      const span = document.querySelector(
+        `span[data-position='${position}']`
+      ) as HTMLSpanElement | null;
+      console.log('clear mark:', span);
+      if (span) {
+        span.style.background = 'none';
+        each(span);
+      }
+    }
+  };
+
+  const clearMark = (markMap: MarkMap) => {
+    forEachMark(markMap, (span) => {
+      span.style.background = 'none';
+    });
+  };
+
+  const mark = (markMap: MarkMap) => {
+    forEachMark(markMap, (span) => {
+      span.style.background = 'yellow';
+    });
+  };
+
+  const defaultLayoutPluginInstance = defaultLayoutPlugin({
+    renderToolbar: (ToolBar) => {
+      console.log('got markMap in renderToolbar:', markMap);
+      return ToolBar({
+        children({
+          CurrentPageInput,
+          GoToFirstPage,
+          GoToLastPage,
+          GoToNextPage,
+          GoToPreviousPage,
+          NumberOfPages,
+          EnterFullScreen,
+          SwitchTheme,
+          Zoom,
+          ZoomIn,
+          ZoomOut,
+        }) {
+          return (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                width: '100%',
+                padding: '0 14px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Button
+                  type="text"
+                  style={{
+                    color: isDark ? '#fff' : '#000',
+                  }}
+                  onClick={() => {
+                    setFile('');
+                  }}
+                >
+                  关闭
+                </Button>
+                <GoToPreviousPage></GoToPreviousPage>
+                <CurrentPageInput></CurrentPageInput>
+                <span
+                  style={{
+                    color: isDark ? '#fff' : '#000',
+                    marginRight: '5px',
+                  }}
+                >
+                  /{NumberOfPages()}
+                </span>
+                <GoToNextPage></GoToNextPage>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ZoomOut></ZoomOut>
+                <Zoom levels={[1, 2, 3]}></Zoom>
+                <ZoomIn></ZoomIn>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Button
+                  type="text"
+                  style={{
+                    color: isDark ? '#fff' : '#000',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  onClick={() => {
+                    clearMark(markMap);
+                    setStartNote(!startNote);
+                    console.log('startNote:', startNote);
+                    const validKeys = getValidKeyFromMarkMap(markMap);
+                    const sortedValidKeys = validKeys.sort((keyA, keyB) => {
+                      const [pageIdA, layerIndexA, wordIndexA] =
+                        keyA.split('%');
+                      let pageIndexA: number | string | undefined = pageIdA
+                        .split('-')
+                        .pop();
+                      if (pageIndexA) {
+                        pageIndexA = parseInt(pageIndexA, 10);
+                      }
+                      const [pageIdB, layerIndexB, wordIndexB] =
+                        keyB.split('%');
+                      let pageIndexB: number | string | undefined = pageIdB
+                        .split('-')
+                        .pop();
+                      if (pageIndexB) {
+                        pageIndexB = parseInt(pageIndexB, 10);
+                      }
+                      console.log(
+                        'sort, pageIndexA:',
+                        typeof pageIndexA,
+                        pageIndexA
+                      );
+                      console.log(
+                        'sort, pageIndexB:',
+                        typeof pageIndexB,
+                        pageIndexB
+                      );
+                      if (
+                        typeof pageIndexA === 'number' &&
+                        typeof pageIndexB === 'number' &&
+                        pageIndexA - pageIndexB !== 0
+                      ) {
+                        console.log(
+                          'sort with pageIndex:',
+                          pageIndexA - pageIndexB
+                        );
+                        return pageIndexA - pageIndexB;
+                      }
+                      let l =
+                        parseInt(layerIndexA, 10) - parseInt(layerIndexB, 10);
+                      if (l !== 0) {
+                        return l;
+                      }
+                      let w =
+                        parseInt(wordIndexA, 10) - parseInt(wordIndexB, 10);
+                      return w;
+                    });
+                    const mergedStr = sortedValidKeys
+                      .map((key) => {
+                        const span = document.querySelector(
+                          `span[data-position='${key}']`
+                        ) as HTMLSpanElement | null;
+                        return span?.innerHTML || '';
+                      })
+                      .join(' ');
+                    if (!mergedStr.match(/$\s*^/) && startNote) {
+                      setNoteList([
+                        {
+                          firstKey: validKeys[0],
+                          marks: markMap,
+                          mergedStr,
+                          file,
+                        },
+                        ...noteList,
+                      ]);
+                    }
+                    setMarkMap({});
+                  }}
+                >
+                  {startNote ? <EditFilled /> : <EditOutlined />}
+                </Button>
+                <SwitchTheme>
+                  {({ onClick }) => {
+                    return (
+                      <Button
+                        onClick={() => {
+                          setIsDark(!isDark);
+                          onClick();
+                        }}
+                        type="text"
+                        style={{ color: isDark ? '#fff' : '#000' }}
+                      >
+                        {isDark ? (
+                          <Icon size={16}>
+                            <path d="M19.5,15.106l2.4-2.4a1,1,0,0,0,0-1.414l-2.4-2.4V5.5a1,1,0,0,0-1-1H15.106l-2.4-2.4a1,1,0,0,0-1.414,0l-2.4,2.4H5.5a1,1,0,0,0-1,1V8.894l-2.4,2.4a1,1,0,0,0,0,1.414l2.4,2.4V18.5a1,1,0,0,0,1,1H8.894l2.4,2.4a1,1,0,0,0,1.414,0l2.4-2.4H18.5a1,1,0,0,0,1-1Z" />
+                            <path d="M10,6.349a6,6,0,0,1,0,11.3,6,6,0,1,0,0-11.3Z" />
+                          </Icon>
+                        ) : (
+                          <Icon size={16}>
+                            <path d="M19.491,15.106l2.4-2.4a1,1,0,0,0,0-1.414l-2.4-2.4V5.5a1,1,0,0,0-1-1H15.1L12.7,2.1a1,1,0,0,0-1.414,0l-2.4,2.4H5.491a1,1,0,0,0-1,1V8.894l-2.4,2.4a1,1,0,0,0,0,1.414l2.4,2.4V18.5a1,1,0,0,0,1,1H8.885l2.4,2.4a1,1,0,0,0,1.414,0l2.4-2.4h3.394a1,1,0,0,0,1-1Z" />
+                            <path d="M11.491,6c4,0,6,2.686,6,6s-2,6-6,6Z" />
+                          </Icon>
+                        )}
+                      </Button>
+                    );
+                  }}
+                </SwitchTheme>
+                <EnterFullScreen></EnterFullScreen>
+                <GoToFirstPage></GoToFirstPage>
+                <GoToLastPage></GoToLastPage>
+              </div>
+            </div>
+          );
+        },
+      });
+    },
+    sidebarTabs: (tabs) => {
+      console.log('sideBarTabs:', tabs);
+      return [
+        ...tabs,
+        {
+          icon: <EditOutlined></EditOutlined>,
+          title: '摘抄',
+          content: (
+            <div style={{ padding: '0 14px' }}>
+              {noteList.map((note, index) => {
+                return (
+                  <div key={index} style={{ borderBottom: '1px solid #ddd' }}>
+                    <Button
+                      type="text"
+                      style={{ color: 'rgb(6, 62, 166)' }}
+                      onClick={() => {
+                        pdfNote$.next(note);
+                      }}
+                    >
+                      插入卡片
+                    </Button>
+                    <Button
+                      type="text"
+                      style={{ color: 'rgb(6, 62, 166)' }}
+                      onClick={() => {
+                        note.mergedStr.split(/\s/).forEach((w) => {
+                          tapWord$.next(w);
+                        });
+                      }}
+                    >
+                      翻译
+                    </Button>
+                    {note.mergedStr}
+                    <Button
+                      type="text"
+                      style={{ color: 'rgb(243, 90, 90)' }}
+                      onClick={() => {
+                        setNoteList(noteList.filter((n) => n !== note));
+                      }}
+                    >
+                      删除
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          ),
+        },
+      ];
+    },
+  });
   useEffect(() => {
-    const sp = pageText$.pipe(debounceTime(200)).subscribe({
-      next: () => {
-        setText(textCache.current);
+    if (documentLoaded === false) {
+      return;
+    }
+    let markMap: MarkMap = {};
+    const sp1 = markMap$.subscribe({
+      next(_markMap) {
+        clearMark(markMap);
+        markMap = _markMap;
+        mark(markMap);
       },
     });
-    return () => sp.unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const sp = openNote$.subscribe({
       next(note) {
-        if (note === null || note.file === undefined) {
-          return;
+        console.log('open note:', note);
+        if (note?.firstKey) {
+          const pageStr = note.firstKey.split('-').pop();
+          if (pageStr !== undefined) {
+            const pageNumber = parseInt(pageStr, 10);
+            defaultLayoutPluginInstance.toolbarPluginInstance.pageNavigationPluginInstance.jumpToPage(
+              pageNumber
+            );
+            setMarkMap(note.marks);
+            markMap = note.marks;
+          }
         }
-        setStartNote(false);
-        setMarkMap(note.marks);
-        console.log('setPdfFilePath:', note.file);
-        setPdfFilePath(note.file);
-        const page = parseInt(note.firstKey.split('-')[0], 10);
-        setPageNumber(page);
       },
     });
-    return () => sp.unsubscribe();
-  }, []);
+    return () => {
+      sp.unsubscribe();
+      sp1.unsubscribe();
+    };
+  }, [documentLoaded]);
 
-  console.log('numPages:', numPages);
-  console.log('pdf file path:', pdfFilePath);
-  if (pdfFilePath === '') {
-    return <Empty description="没有打开的pdf文件"></Empty>;
-  }
-  const getPageText = (pageItems: TextItem[]) => {
-    return pageItems
-      .reduce((acc, curr) => {
-        return acc + curr.str;
-      }, '')
-      .replaceAll('\t', ' ');
-  };
-  return (
-    <div
-      className={styles.PDFWrapper}
-      onMouseDown={() => {
-        setStartMarking(true);
-        console.log('start marking:', true);
-      }}
-      onMouseUp={() => {
-        setStartMarking(false);
-        console.log('start marking:', false);
-      }}
-    >
-      <div className={styles.operations}>
-        <div>
-          <Button
-            onClick={() => {
-              const markedKeys = Object.keys(markMap);
-              if (startNote && markedKeys.length > 0) {
-                message.info('已暂存摘录，可点击`显示摘录`按钮进行查看');
-                const sortedKeys = markedKeys.sort((a, b) => {
-                  const [pa, ia, wa] = a.split('-').map((w) => parseInt(w, 10));
-                  const [pb, ib, wb] = b.split('-').map((w) => parseInt(w, 10));
-                  let p = pa - pb;
-                  let i = ia - ib;
-                  let w = wa - wb;
-                  if (p !== 0) {
-                    return p;
-                  }
-                  if (i !== 0) {
-                    return i;
-                  }
-                  if (w !== 0) {
-                    return w;
-                  }
-                  return 0;
-                });
-                console.log('sortedKeys:', sortedKeys);
-                const mergedStr = sortedKeys
-                  .map((key) => {
-                    return markMap[key];
-                  })
-                  .join(' ');
-                setNoteList([
-                  {
-                    firstKey: sortedKeys[0],
-                    mergedStr,
-                    marks: markMap,
-                    file: pdfFilePath,
-                  },
-                  ...noteList,
-                ]);
-              } else if (!startNote) {
-                message.info('开始摘录：请点击文字进行标记');
+  useEffect(() => {
+    if (wrapperRef.current === null) {
+      return;
+    }
+    const onClick = ({ target }: MouseEvent) => {
+      if (target instanceof HTMLSpanElement && target.className === 'word') {
+        console.log('target:', target);
+        if (target.innerHTML !== '') {
+          if (startNote) {
+            const { background } = target.style;
+            const { position } = target.dataset;
+            if (position === undefined) {
+              return;
+            }
+            if (background === 'yellow') {
+              target.style.background = 'none';
+              const nextMarkMap = { ...markMap, [position]: false };
+              console.log('nextMarkMap:', nextMarkMap);
+              setMarkMap(nextMarkMap);
+            } else {
+              target.style.background = 'yellow';
+              const nextMarkMap = { ...markMap, [position]: true };
+              console.log('nextMarkMap:', nextMarkMap);
+              setMarkMap(nextMarkMap);
+            }
+          } else {
+            tapWord$.next(target.innerHTML);
+          }
+        }
+      }
+    };
+    wrapperRef.current.addEventListener('click', onClick);
+    return () => wrapperRef.current?.removeEventListener('click', onClick);
+  }, [wrapperRef, startNote, markMap]);
+
+  useEffect(() => {
+    console.log('selection effect got markMap:', markMap);
+    if (wrapperRef.current === null) {
+      return;
+    }
+    const mouseUp$ = new Subject();
+    mouseUp$.pipe(debounceTime(1)).subscribe({
+      next() {
+        let text = '';
+        const selection = window.getSelection();
+        if (selection !== null) {
+          console.log('selection:', selection);
+          if (!startNote) {
+            console.log('startNode:', startNote);
+            text = selection.toString();
+            console.log('text:', text);
+            text.split(/\s/).forEach((w) => {
+              if (w !== '') {
+                tapWord$.next(w);
               }
-              setStartNote(!startNote);
-              setMarkMap({});
-            }}
-          >
-            {startNote ? '结束摘录' : '摘录'}
-          </Button>
-          <Button
-            onClick={() => {
-              setShowNote(true);
-            }}
-          >
-            显示摘录
-          </Button>
-          <Button
-            onClick={() => {
-              setShowText(true);
-            }}
-          >
-            提取 PDF 文本
-          </Button>
-          <Button
-            onClick={() => {
-              onClose();
-            }}
-          >
-            退出
-          </Button>
-        </div>
-        <div className="readingPagination" style={{ padding: '14px' }}>
-          <Pagination
-            simple
-            current={pageNumber}
-            total={numPages * 10}
-            onChange={(pageNumber: number) => {
-              setPageNumber(pageNumber);
+            });
+          } else if (wrapperRef.current !== null) {
+            console.log('startNode:', startNote);
+            console.log('selection:', selection);
+            try {
+              const wordSpanList = selection
+                .getRangeAt(0)
+                .cloneContents()
+                .querySelectorAll('span.word');
+              for (let i = 0; i < wordSpanList.length; i += 1) {
+                let childNode = wordSpanList[i] as HTMLSpanElement;
+                if (
+                  childNode.innerHTML !== '' &&
+                  !childNode.innerHTML.match(/^\s+$/)
+                ) {
+                  const { position } = childNode.dataset;
+                  if (position === undefined) {
+                    continue;
+                  }
+                  const span = wrapperRef.current.querySelector(
+                    `span[data-position='${position}']`
+                  ) as HTMLSpanElement | null;
+                  console.log('span data selector:', span);
+                  if (span === null) {
+                    continue;
+                  }
+                  const { background } = span.style;
+                  if (background === 'yellow') {
+                    span.style.background = 'none';
+                    markMap[position] = false;
+                  } else {
+                    span.style.background = 'yellow';
+                    markMap[position] = true;
+                  }
+                }
+              }
+              const nextMarkMap = { ...markMap };
+              console.log('selection chaged the nextMarkMap:', markMap);
+              setMarkMap(nextMarkMap);
+            } catch (e) {
+              console.log(e);
+            }
+          }
+        }
+      },
+    });
+    const onMouseUp = () => {
+      mouseUp$.next('');
+    };
+    wrapperRef.current.addEventListener('mouseup', onMouseUp);
+    const onMouseDown = () => {
+      const selection = window.getSelection();
+      if (selection !== null) {
+        selection.removeAllRanges();
+      }
+    };
+    wrapperRef.current.addEventListener('mousedown', onMouseDown);
+    return () => {
+      wrapperRef.current?.removeEventListener('mouseup', onMouseUp);
+      wrapperRef.current?.removeEventListener('mousedown', onMouseDown);
+    };
+  }, [wrapperRef, startNote, markMap]);
+
+  console.log('render startNote?', startNote);
+  if (file === '') {
+    return <Empty description="没有打开的pdf"></Empty>;
+  }
+  return (
+    <div className={styles.pdfWrapper} ref={wrapperRef}>
+      <Worker workerUrl="../assets/pdf.worker.min.js">
+        <div
+          style={{
+            height: '750px',
+            width: '900px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
+          <Viewer
+            fileUrl={file}
+            plugins={[
+              defaultLayoutPluginInstance,
+              {
+                onTextLayerRender: ({ ele: page }) => {
+                  console.log('page:', page);
+                  const pageId = page.dataset.testid;
+                  const layerList = page.querySelectorAll(
+                    '.rpv-core__text-layer-text'
+                  );
+                  const len = layerList.length;
+                  for (let i = 0; i < len; i += 1) {
+                    const layer = layerList[i] as HTMLSpanElement;
+                    console.log('layer:', layer);
+                    const { innerHTML } = layer;
+                    layer.innerHTML = innerHTML
+                      .split(' ')
+                      .map((word, index) => {
+                        const id = `${pageId}%${i}%${index}`;
+                        if (markMap[id]) {
+                          return `<span class='word' style="background: yellow;" data-position='${id}'>${word}</span>`;
+                        }
+                        return `<span class='word' data-position='${id}'>${word}</span>`;
+                      })
+                      .join(' ');
+                  }
+                },
+              },
+            ]}
+            onDocumentLoad={() => {
+              setDocumentLoaded(true);
             }}
           />
         </div>
-      </div>
-      <Document
-        file={pdfFilePath}
-        onLoadSuccess={({ numPages }) => {
-          setNumPages(numPages);
-        }}
-      >
-        <Page
-          pageNumber={pageNumber}
-          renderMode="svg"
-          scale={1.5}
-          onGetTextSuccess={(items) => {
-            textCache.current = getPageText(items);
-            pageText$.next('');
-          }}
-          onLoadSuccess={() => {
-            const pageDiv: HTMLDivElement | null = document.querySelector(
-              `.react-pdf__Page__svg`
-            );
-            if (pageDiv !== null) {
-              pdfWidth$.next(pageDiv.clientWidth);
-              // wrapper.style.width = `${wrapper.clientWidth}px`;
-              // wrapper.style.height = `${wrapper.clientHeight}px`;
-            }
-          }}
-          customTextRenderer={(layer) => {
-            return (
-              <>
-                {layer.str.split(/\s/).map((w, index) => {
-                  if (w === '') {
-                    return ' ';
-                  }
-                  const key = `${pageNumber}-${layer.itemIndex}-${index}`;
-                  const marked = markMap[key] !== undefined;
-                  const checkMark = () => {
-                    setMarkMap({
-                      ...markMap,
-                      [key]: marked ? undefined : w,
-                    });
-                  };
-                  const endWithNoneWord = w.match(/\w*\W$/);
-                  if (endWithNoneWord) {
-                    console.log('endWithNoneWord:', w);
-                  }
-                  return (
-                    <span
-                      className={styles.word}
-                      style={
-                        markMap[key]
-                          ? { background: 'rgba(6, 62, 166, .5)' }
-                          : {}
-                      }
-                      key={index}
-                      tabIndex={0}
-                      onKeyDown={() => {}}
-                      onMouseDown={() => {
-                        if (startNote) {
-                          checkMark();
-                          return;
-                        }
-                        tapWord$.next(w);
-                      }}
-                      onClick={(e) => {
-                        wordClick$.next(e);
-                        console.log('layer txt:', layer.str);
-                      }}
-                      onMouseEnter={() => {
-                        if (startMarking && startNote) {
-                          console.log(
-                            'word mouse enter, layer:',
-                            layer,
-                            ' wordIndex:',
-                            index
-                          );
-                          checkMark();
-                        }
-                      }}
-                    >
-                      {w}
-                    </span>
-                  );
-                })}
-              </>
-            );
-          }}
-        />
-        <div style={{ display: 'none' }}>
-          {pageNumber > 1 && (
-            <Page
-              pageNumber={pageNumber - 1}
-              onGetTextSuccess={(items) => {
-                console.log(pageNumber - 1, 'onGetTextSuccess:', items);
-                textCache.prev = getPageText(items);
-                pageText$.next('');
-              }}
-            />
-          )}
-          {pageNumber < numPages && (
-            <Page
-              pageNumber={pageNumber + 1}
-              onGetTextSuccess={(items) => {
-                console.log(pageNumber + 1, 'onGetTextSuccess:', items);
-                textCache.next = getPageText(items);
-                pageText$.next('');
-              }}
-            />
-          )}
-        </div>
-      </Document>
-      <Modal
-        title="文本内容"
-        visible={showText}
-        onOk={() => {
-          setShowText(false);
-        }}
-        onCancel={() => {
-          setShowText(false);
-        }}
-        width={800}
-      >
-        <div className={styles.text}>
-          {tokenizer.sentences(text).map((p, index) => {
-            return <p key={index}>{p}</p>;
-          })}
-        </div>
-      </Modal>
-      <Modal
-        title="摘录"
-        visible={showNote}
-        onOk={() => {
-          setShowNote(false);
-        }}
-        onCancel={() => {
-          setShowNote(false);
-        }}
-        width={800}
-      >
-        <div className={styles.note}>
-          {noteList.map((note, index) => {
-            return (
-              <div key={index}>
-                <Button
-                  type="text"
-                  style={{ color: 'rgb(6, 62, 166)' }}
-                  onClick={() => {
-                    pdfNote$.next(note);
-                  }}
-                >
-                  插入卡片
-                </Button>
-                {note.mergedStr}
-                <Button
-                  type="text"
-                  style={{ color: 'rgb(243, 90, 90)' }}
-                  onClick={() => {
-                    setNoteList(noteList.filter((n) => n !== note));
-                  }}
-                >
-                  删除
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </Modal>
+      </Worker>
     </div>
   );
 };

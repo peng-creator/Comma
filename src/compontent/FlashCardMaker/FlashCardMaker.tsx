@@ -37,7 +37,7 @@ import {
   searchFlashCardCollections,
 } from '../../flashCardSearch';
 import { PDFNote } from '../../types/PDFNote';
-import { openPdf$ } from '../../blocks/PDF/PDF';
+import { openPdf$ } from '../../state/user_input/openPdfAction';
 
 const { Option } = Select;
 

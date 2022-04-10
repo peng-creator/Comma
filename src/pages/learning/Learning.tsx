@@ -19,9 +19,9 @@ import { CardReview } from '../../blocks/CardReview/CardReview';
 import styles from './Learning.css';
 
 import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
-import { openPdf$, PDF, pdfWidth$ } from '../../blocks/PDF/PDF';
-import { useBehavior } from '../../state';
 import { dbRoot } from '../../constant';
+import { PDF } from '../../blocks/PDF/PDF';
+import { openPdf$ } from '../../state/user_input/openPdfAction';
 
 const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);
@@ -32,13 +32,14 @@ const Component = () => {
   const [videoFile, setVideoFile] = useState('');
   const [showCardReview, setShowCardReview] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
-  const [pdfWidth] = useBehavior(pdfWidth$, 0);
 
   useEffect(() => {
     const sp = openPdf$.subscribe({
       next(file) {
         if (file) {
           setShowPdf(true);
+        } else {
+          setShowPdf(false);
         }
       },
     });
@@ -120,13 +121,10 @@ const Component = () => {
           <div
             style={{
               height: '100%',
-              overflowY: 'auto',
-              overflowX: 'hidden',
               margin: '0 14px',
-              minWidth: `${pdfWidth}px`,
             }}
           >
-            <PDF onClose={() => setShowPdf(false)}></PDF>
+            <PDF></PDF>
           </div>
         )}
         {article && (
