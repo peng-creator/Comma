@@ -65,7 +65,7 @@ const loadNextCardAction$ = new BehaviorSubject<any>(1);
 const Component = () => {
   const [cardToReview, setCardToReview] = useState<FlashCard | null>(null);
   const [showBack, setShowBack] = useState(false);
-  const [recall, setRecall] = useState('');
+  const [recall, setRecall] = useState(null);
 
   useEffect(() => {
     let currentCollectionIndex = 0;
@@ -82,6 +82,7 @@ const Component = () => {
           if (card !== undefined) {
             setCardToReview(card);
             setShowBack(false);
+            setRecall(null);
             return;
           }
         }
