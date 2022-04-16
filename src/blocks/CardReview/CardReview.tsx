@@ -76,13 +76,13 @@ const Component = () => {
 
     loadNextCardAction$.subscribe({
       next: async () => {
+        setRecall(null);
         if (cardsToReview.length > 0) {
           // 从缓存中获取。
           const card = cardsToReview.shift();
           if (card !== undefined) {
             setCardToReview(card);
             setShowBack(false);
-            setRecall(null);
             return;
           }
         }
