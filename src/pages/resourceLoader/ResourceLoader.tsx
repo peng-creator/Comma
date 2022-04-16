@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { promises as fs } from 'fs';
 import PATH from 'path';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import lineReader from 'line-reader';
 import {
   FilePdfFilled,
@@ -13,6 +13,7 @@ import { dbRoot } from '../../constant';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { mkdir } from '../../util/mkdir';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
+import { stringFolder } from '../../util/string_util';
 
 const readOneLineOfTextFile = (filePath: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -159,6 +160,7 @@ export const ResourceLoader = ({
             display: 'flex',
             borderBottom: '1px solid #000',
             marginBottom: '12px',
+            flexWrap: 'wrap',
           }}
           key={2}
         >
@@ -174,18 +176,19 @@ export const ResourceLoader = ({
           </Button>
           {paths.map((path, index) => {
             return (
-              <Button
-                type="text"
-                style={{ padding: 0, paddingRight: '14px' }}
-                key={path}
-                onClick={() => {
-                  const nextPaths = paths.slice(0, index + 1);
-                  setPaths(nextPaths);
-                  localLoadDirChildren(nextPaths);
-                }}
-              >
-                {path}/
-              </Button>
+              <Tooltip title={path} key={path}>
+                <Button
+                  type="text"
+                  style={{ padding: 0, paddingRight: '14px' }}
+                  onClick={() => {
+                    const nextPaths = paths.slice(0, index + 1);
+                    setPaths(nextPaths);
+                    localLoadDirChildren(nextPaths);
+                  }}
+                >
+                  {stringFolder(path, 40)}/
+                </Button>
+              </Tooltip>
             );
           })}
         </div>
