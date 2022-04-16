@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo, CSSProperties } from 'react';
 import dayjs from 'dayjs';
 import { supermemo, SuperMemoGrade } from 'supermemo';
-import { Button, Empty } from 'antd';
+import { Button, Empty, Input } from 'antd';
 import PATH from 'path';
 import { promises as fs } from 'fs';
 import { v5 as uuidv5 } from 'uuid';
@@ -65,6 +65,7 @@ const loadNextCardAction$ = new BehaviorSubject<any>(1);
 const Component = () => {
   const [cardToReview, setCardToReview] = useState<FlashCard | null>(null);
   const [showBack, setShowBack] = useState(false);
+  const [recall, setRecall] = useState('');
 
   useEffect(() => {
     let currentCollectionIndex = 0;
@@ -223,6 +224,24 @@ const Component = () => {
             })}
           </div>
         </div>
+        <Input.TextArea
+          rows={4}
+          value={recall}
+          onChange={(e) => {
+            setRecall(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+          }}
+          placeholder="请写下您记忆中的内容。"
+          style={{
+            resize: 'none',
+            background: 'none',
+            color: 'white',
+            outline: 'none',
+            marginBottom: '12px',
+          }}
+        />
         <div style={{ position: 'relative' }}>
           {!showBack && (
             <div
