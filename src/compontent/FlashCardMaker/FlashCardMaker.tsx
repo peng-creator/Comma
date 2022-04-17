@@ -464,8 +464,6 @@ const Component = () => {
           style={{
             width: '70%',
             flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
           }}
         >
           <div
@@ -474,6 +472,7 @@ const Component = () => {
               alignItems: 'center',
               overflowY: 'hidden',
               overflowX: 'auto',
+              minHeight: '30px',
             }}
             className="scrollbarHidden"
             onWheel={(e) => {
@@ -516,7 +515,11 @@ const Component = () => {
           </div>
           {currentCard !== null && (
             <div
-              style={{ flexGrow: 1, width: '100%' }}
+              style={{
+                height: 'calc(100% - 30px)',
+                width: '100%',
+                overflowY: 'auto',
+              }}
               onDrop={(e) => {
                 const explain = e.dataTransfer.getData('explain');
                 if (explain) {
@@ -541,7 +544,7 @@ const Component = () => {
             >
               <div
                 style={{
-                  height: '50%',
+                  minHeight: '50%',
                   backgroundColor: 'rgb(72, 72, 72)',
                   overflow: 'hidden',
                   display: 'flex',
@@ -577,7 +580,7 @@ const Component = () => {
                           }
                         }}
                       >
-                        {sentence.content}
+                        {stringFolder(sentence.content, 60)}
                       </div>
                     );
                   })}
@@ -696,7 +699,7 @@ const Component = () => {
                         onKeyDown={() => {}}
                         style={{ cursor: 'pointer' }}
                       >
-                        [pdf] {mergedStr}
+                        [pdf] {stringFolder(mergedStr, 60)}
                         <Popconfirm
                           title="删除"
                           onConfirm={() => {
@@ -738,9 +741,8 @@ const Component = () => {
               </div>
               <div
                 style={{
-                  height: '50%',
+                  minHeight: '50%',
                   backgroundColor: 'rgb(62, 62, 62)',
-                  overflowY: 'auto',
                   display: 'flex',
                   flexDirection: 'column',
                   padding: '14px',

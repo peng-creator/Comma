@@ -9,9 +9,11 @@ import { BehaviorSubject } from 'rxjs';
 import { dbRoot } from '../../constant';
 import { mkdir } from '../../util/mkdir';
 import { FlashCard } from '../../types/FlashCard';
-import { CARD_COLLECTION_NAMESPACE } from '../../compontent/FlashCardMaker/FlashCardMaker';
+import { CARD_COLLECTION_NAMESPACE, openNote$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
+import { openPdf$ } from '../../state/user_input/openPdfAction';
+import { stringFolder } from '../../util/string_util';
 
 const L1 = PATH.join(dbRoot, 'flash_cards');
 mkdir(L1);
@@ -155,6 +157,7 @@ const Component = () => {
       </Button>
     );
   };
+  console.log('render cardToReview:', cardToReview);
   return (
     <div
       style={{
@@ -203,6 +206,35 @@ const Component = () => {
             })}
           </div>
           <div>
+            {(cardToReview.front.pdfNote || []).map((pdfNote, index) => {
+              return (
+                <div
+                  key={index}
+                  tabIndex={0}
+                  onClick={() => {
+                    openNote$.next(pdfNote);
+                    if (pdfNote.file) {
+                      openPdf$.next(pdfNote.file);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key.toLowerCase() === 'enter') {
+                      openNote$.next(pdfNote);
+                      if (pdfNote.file) {
+                        openPdf$.next(pdfNote.file);
+                      }
+                    }
+                  }}
+                  style={{
+                    cursor: 'pointer',
+                  }}
+                >
+                  - {stringFolder(pdfNote.mergedStr, 100)}
+                </div>
+              );
+            })}
+          </div>
+          <div>
             {cardToReview.front.sentences.map((s, index) => {
               return (
                 <div
@@ -219,7 +251,7 @@ const Component = () => {
                   }}
                   style={{ cursor: 'pointer' }}
                 >
-                  {index}. {s.content}
+                  {index}. {stringFolder(s.content, 100)}
                 </div>
               );
             })}
