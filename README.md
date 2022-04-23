@@ -9,7 +9,7 @@ git clone https://github.com/peng-creator/Comma.git
 ```
 ### 安装依赖
 ```
-cd Comma && yarn . 
+cd Comma && yarn
 ```
 
 ### 开发调试
