@@ -1,19 +1,31 @@
-<img src=".erb/img/banner.jpg" width="100%" />
+Comma 是一款帮助您学习英语的桌面应用。
 
-Comma 是一款帮助您利用视频资源学习单词的桌面应用。
+[Comma下载、使用简介](https://peng-creator.github.io/comma-web/comma/)
 
-##### 功能简介
+## 开发者
+### 拉取代码
+```
+git clone https://github.com/peng-creator/Comma.git
+```
+### 安装依赖
+```
+cd Comma && yarn . 
+```
 
-它能够根据字幕文本中的单词自动剪辑视频，将包含相同单词的视频片段归集起来，从而达到在不同场景中学习单词的目的。
+### 开发调试
+```
+yarn start
+```
 
-##### 导入单词
+### 打包调试
+```
+yarn package:debug
+```
 
-新建一个单词本，然后选择一个包含单词的 .txt 文件进行导入。
+### 打包
+```
+yarn package
+```
 
-##### 导入视频
-
-将视频文件（目前仅支持 .mp4 和 .mkv 格式）与字幕文件（目前仅支持.ass 格式）放置在同一目录下，然后选择这个目录进行导入。
-
-##### 设置单词生疏度
-
-单词的播放顺序是自动计算的。您可以根据熟练程度给每个单词设定生疏度，越生疏的单词出现的次数也越多。
+### 使用安装包
+打包成功后，在项目内找到release目录，双击 .exe （windows）或 .dmg（MacOS）引导安装。
