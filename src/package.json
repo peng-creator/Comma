@@ -2,7 +2,7 @@
   "name": "comma",
   "productName": "Comma",
   "version": "1.1.0",
-  "description": "A cross-platform desktop video player for language learning based on Electron, FFmpeg, VideoJS and AntDesign",
+  "description": "A cross-platform desktop English learning tool",
   "main": "./main.prod.js",
   "author": {
     "name": "pengpongpang",

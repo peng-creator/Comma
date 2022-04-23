@@ -9,7 +9,10 @@ import { BehaviorSubject } from 'rxjs';
 import { dbRoot } from '../../constant';
 import { mkdir } from '../../util/mkdir';
 import { FlashCard } from '../../types/FlashCard';
-import { CARD_COLLECTION_NAMESPACE, openNote$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
+import {
+  CARD_COLLECTION_NAMESPACE,
+  openNote$,
+} from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
