@@ -20,6 +20,7 @@ import { srtContentToCutProject } from '../../util/srt_util.mjs';
 import { millisecondsToTime } from '../../util/index.mjs';
 import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
+import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
 
 export const VideoPlayer = (
   { onClose }: { onClose: () => void } = { onClose: () => {} }
@@ -63,6 +64,20 @@ export const VideoPlayer = (
       player.setClips(subtitles);
     }
   };
+
+  useEffect(() => {
+    const sp = addSubtitleContentAction$.subscribe({
+      next: (content) => {
+        if (content) {
+          setSubtitles(
+            [{ start: 0, end: 0, subtitles: [content] }, ...subtitles],
+            videoPath
+          );
+        }
+      },
+    });
+    return () => sp.unsubscribe();
+  }, [videoPath, subtitles]);
 
   const initPlayer = async (videoPath: string) => {
     const player = new MyPlayer('video-player');

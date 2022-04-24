@@ -1,4 +1,4 @@
-import { Button, Col, Row, Switch, Tooltip } from 'antd';
+import { Button, Col, Input, Modal, Row, Switch, Tooltip } from 'antd';
 import React, { CSSProperties, useEffect, useState } from 'react';
 import { StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import { MySlider } from '../MySlider';
@@ -8,6 +8,8 @@ import locateBtnSrc from '../../../assets/locate.svg';
 import styles from './ControlPanel.css';
 import { useObservable } from '../../state';
 import { ClipSlider } from './ClipSlider';
+import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
+import { millisecondsToTime } from '../../util/index.mjs';
 
 export type ControlPanelComponentProps = {
   onPlayNextFile: () => void;
@@ -34,6 +36,10 @@ export const ControlPanelComponent = ({
   const [end] = useObservable(player.end$, 0);
   const [playByClip, setPlayByClip] = useState(true);
   const [clipLoop, setClipLoop] = useState(true);
+  const [addingSubtitle, setAddingSubtitle] = useState(false);
+  const [addingSubtitleContent, setAddingSubtitleContent] = useState<
+    string | undefined
+  >();
 
   useEffect(() => {
     player?.setPlayByClip(playByClip);
@@ -149,16 +155,38 @@ export const ControlPanelComponent = ({
         </Col>
       </Row>
       <Row>
-        <Col span={24} style={{ display: 'flex', justifyContent: 'center' }}>
+        <Col
+          span={3}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {millisecondsToTime(currentTime * 1000)}
+        </Col>
+        <Col span={18} style={{ display: 'flex', justifyContent: 'center' }}>
           <ClipSlider
             max={max}
             onChange={async (e, v) => {
-              player.player.currentTime((v as number) + start);
+              const time = (v as number) + start;
+              player.player.currentTime(time);
+              player.currentTime$.next(time);
             }}
             value={current}
             defaultValue={0}
             step={0.001}
           />
+        </Col>
+        <Col
+          span={3}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {millisecondsToTime(end * 1000)}
         </Col>
       </Row>
       <div
@@ -231,8 +259,46 @@ export const ControlPanelComponent = ({
               + 0.5s
             </Button>
           </Col>
+          <Col span={6}>
+            <Button
+              type="text"
+              style={{ color: '#fff' }}
+              onClick={() => {
+                setAddingSubtitle(true);
+              }}
+            >
+              插入字幕
+            </Button>
+          </Col>
         </Row>
       </div>
+      {addingSubtitle ? (
+        <Modal
+          title="插入字幕"
+          visible={addingSubtitle}
+          onOk={() => {
+            setAddingSubtitle(false);
+            if (addingSubtitleContent) {
+              addSubtitleContentAction$.next(addingSubtitleContent);
+            }
+            setAddingSubtitleContent(undefined);
+          }}
+          onCancel={() => {
+            setAddingSubtitle(false);
+            setAddingSubtitleContent(undefined);
+          }}
+        >
+          <div>字幕内容</div>
+          <div>
+            <Input
+              value={addingSubtitleContent}
+              onChange={(e) => {
+                setAddingSubtitleContent(e.target.value);
+              }}
+            ></Input>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   );
 };
