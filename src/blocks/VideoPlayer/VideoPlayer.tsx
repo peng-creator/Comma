@@ -67,10 +67,17 @@ export const VideoPlayer = (
 
   useEffect(() => {
     const sp = addSubtitleContentAction$.subscribe({
-      next: (content) => {
-        if (content) {
+      next: (addContent) => {
+        if (addContent) {
           setSubtitles(
-            [{ start: 0, end: 0, subtitles: [content] }, ...subtitles],
+            [
+              {
+                start: addContent.start,
+                end: addContent.start + 1000,
+                subtitles: [addContent.content],
+              },
+              ...subtitles,
+            ],
             videoPath
           );
         }

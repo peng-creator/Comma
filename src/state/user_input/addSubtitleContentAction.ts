@@ -1,3 +1,8 @@
 import { Subject } from 'rxjs';
 
-export const addSubtitleContentAction$ = new Subject<string>();
+type AddSubtitle = {
+  content: string;
+  start: number;
+};
+
+export const addSubtitleContentAction$ = new Subject<AddSubtitle>();

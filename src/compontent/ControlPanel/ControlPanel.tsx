@@ -279,7 +279,10 @@ export const ControlPanelComponent = ({
           onOk={() => {
             setAddingSubtitle(false);
             if (addingSubtitleContent) {
-              addSubtitleContentAction$.next(addingSubtitleContent);
+              addSubtitleContentAction$.next({
+                start: currentTime * 1000,
+                content: addingSubtitleContent,
+              });
             }
             setAddingSubtitleContent(undefined);
           }}
