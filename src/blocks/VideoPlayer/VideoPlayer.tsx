@@ -73,7 +73,7 @@ export const VideoPlayer = (
             [
               {
                 start: addContent.start,
-                end: addContent.start + 1000,
+                end: addContent.start + 2000,
                 subtitles: [addContent.content],
               },
               ...subtitles,

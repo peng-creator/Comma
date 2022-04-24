@@ -33,6 +33,7 @@ export class MyPlayer {
     this.playSpeed = 1;
     this.playButton = null;
     this.timePadding = 6000;
+    this.showSubtitle = true;
     // 片段
     this.clips = [];
     this.clipLoop = true; // 片段循环
@@ -70,6 +71,10 @@ export class MyPlayer {
     window.addEventListener('resize', () => {
       this.resizeSubtitle();
     });
+  }
+
+  setShowSubtitle(show) {
+    this.showSubtitle = show;
   }
 
   setPlayByClip(playByClip) {
@@ -237,6 +242,7 @@ export class MyPlayer {
     player.volume(this.volume);
     this.setClips(clips);
     let prevAss;
+    let prevShowSubtitle;
     if (this.playByClip && this.currClip !== undefined) {
       console.log(
         'this.playByClip && this.currClip !== undefined , so this.setCurrentTime'
@@ -318,9 +324,7 @@ export class MyPlayer {
           );
           this.currClip = ass;
         }
-        if (ass !== prevAss) {
-          this.subtitleContainer.innerHTML = '';
-          prevAss = ass;
+        const renderSubtitle = () => {
           if (ass !== undefined) {
             const subtitles = ass.subtitles || [];
             for (let i = 0; i < subtitles.length; i += 1) {
@@ -368,9 +372,26 @@ export class MyPlayer {
               this.subtitleContainer.appendChild(p);
             }
           }
-        } else if (!ass || ass.end <= currentTime) {
+        };
+        if (
+          (ass !== prevAss && this.showSubtitle === true) ||
+          (prevShowSubtitle === false && this.showSubtitle === true)
+        ) {
+          console.log('显示字幕：', this.showSubtitle);
           this.subtitleContainer.innerHTML = '';
+          prevAss = ass;
+          renderSubtitle();
+        } else if (
+          !ass ||
+          ass.end <= currentTime ||
+          this.showSubtitle === false
+        ) {
+          console.log('显示字幕：', this.showSubtitle);
+          this.subtitleContainer.innerHTML = '';
+        } else {
+          console.log('else, 显示字幕：', this.showSubtitle);
         }
+        prevShowSubtitle = this.showSubtitle;
         subtitleRenderInterval();
       });
     subtitleRenderInterval();

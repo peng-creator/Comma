@@ -196,18 +196,34 @@ export const ControlPanelComponent = ({
           alignItems: 'center',
         }}
       >
-        <Row style={{ width: '30%' }}>
-          <Col span={8}>逐句切换:</Col>
-          <Col span={4}>
+        <div
+          style={{
+            width: '30%',
+            display: 'flex',
+            flexGrow: 1,
+            justifyContent: 'space-around',
+          }}
+        >
+          <div>字幕:</div>
+          <div>
+            <Switch
+              defaultChecked
+              onChange={(checked) => {
+                player?.setShowSubtitle(checked);
+              }}
+            />
+          </div>
+          <div>逐句切换:</div>
+          <div>
             <Switch
               checked={playByClip}
               onChange={(checked) => {
                 setPlayByClip(checked);
               }}
             />
-          </Col>
-          <Col span={8}>单句循环:</Col>
-          <Col span={4}>
+          </div>
+          <div>单句循环:</div>
+          <div>
             <Switch
               // defaultChecked={player?.clipLoop}
               onChange={(checked) => {
@@ -215,9 +231,9 @@ export const ControlPanelComponent = ({
               }}
               checked={clipLoop}
             />
-          </Col>
-        </Row>
-        <Col span={6}>
+          </div>
+        </div>
+        <div>
           <Tooltip placement="bottom" title="在字幕列表中显示当前字幕">
             {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <img
@@ -229,10 +245,16 @@ export const ControlPanelComponent = ({
               alt=""
             />
           </Tooltip>
-        </Col>
-        <Row style={{ width: '30%' }}>
-          <Col
-            span={6}
+        </div>
+        <div
+          style={{
+            width: '30%',
+            flexGrow: 1,
+            display: 'flex',
+            justifyContent: 'space-around',
+          }}
+        >
+          <div
             style={{
               display: 'flex',
               justifyContent: 'center',
@@ -240,8 +262,8 @@ export const ControlPanelComponent = ({
             }}
           >
             <div>字幕调节: </div>
-          </Col>
-          <Col span={6}>
+          </div>
+          <div>
             <Button
               type="text"
               style={{ width: '100%', color: '#fff' }}
@@ -249,8 +271,8 @@ export const ControlPanelComponent = ({
             >
               - 0.5s
             </Button>
-          </Col>
-          <Col span={6}>
+          </div>
+          <div>
             <Button
               type="text"
               style={{ width: '100%', color: '#fff' }}
@@ -258,8 +280,8 @@ export const ControlPanelComponent = ({
             >
               + 0.5s
             </Button>
-          </Col>
-          <Col span={6}>
+          </div>
+          <div>
             <Button
               type="text"
               style={{ color: '#fff' }}
@@ -269,8 +291,8 @@ export const ControlPanelComponent = ({
             >
               插入字幕
             </Button>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
       {addingSubtitle ? (
         <Modal
