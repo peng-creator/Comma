@@ -249,152 +249,149 @@ export class MyPlayer {
       );
       this.setCurrentTime(this.currClip.start);
     }
-    const subtitleRenderInterval = () =>
-      requestAnimationFrame(() => {
-        if (player.isDisposed()) {
-          return;
-        }
-        if (player.paused()) {
-          return subtitleRenderInterval();
-        }
-        const duration = player.duration();
-        this.duration$.next(duration);
-        const current = player.currentTime();
-        this.currentTime$.next(current);
-        console.log(
-          'currentTime:',
-          current,
-          'clips:',
-          this.clips,
-          'currClipIndex:',
-          this.currClipIndex,
-          'currentClip',
-          this.currClip,
-          ' this.clipLoop:',
-          this.clipLoop
-        );
-        if (
-          this.playByClip === false &&
-          this.clipLoop === true &&
-          current * 1000 >= this.currClip.end
-        ) {
-          console.log(`this.playByClip === false &&
-          this.clipLoop === true &&
-          current * 1000 >= this.currClip.end, so this.setCurrentTime(this.currClip.start)`);
+    player.on('timeupdate', () => {
+      if (player.isDisposed()) {
+        return;
+      }
+      if (player.paused()) {
+        return;
+      }
+      const duration = player.duration();
+      this.duration$.next(duration);
+      const current = player.currentTime();
+      this.currentTime$.next(current);
+      console.log(
+        'currentTime:',
+        current,
+        'clips:',
+        this.clips,
+        'currClipIndex:',
+        this.currClipIndex,
+        'currentClip',
+        this.currClip,
+        ' this.clipLoop:',
+        this.clipLoop
+      );
+      if (
+        this.playByClip === false &&
+        this.clipLoop === true &&
+        current * 1000 >= this.currClip.end
+      ) {
+        console.log(`this.playByClip === false &&
+        this.clipLoop === true &&
+        current * 1000 >= this.currClip.end, so this.setCurrentTime(this.currClip.start)`);
+        this.setCurrentTime(this.currClip.start);
+      } else if (
+        this.playByClip === true &&
+        this.currClip !== undefined &&
+        current * 1000 >= this.currClip.end
+      ) {
+        if (this.clipLoop) {
+          console.log('this.clipLoop, so this.setCurrentTime');
           this.setCurrentTime(this.currClip.start);
-        } else if (
-          this.playByClip === true &&
-          this.currClip !== undefined &&
-          current * 1000 >= this.currClip.end
-        ) {
-          if (this.clipLoop) {
-            console.log('this.clipLoop, so this.setCurrentTime');
-            this.setCurrentTime(this.currClip.start);
-          } else {
-            this.currClipIndex += 1;
-            console.log(
-              'in player.js this.currClipIndex += 1:',
-              this.currClipIndex
-            );
-            this.currClip = this.clips[this.currClipIndex];
-            console.log(
-              'in player.js this.currClipIndex += 1, so this.setCurrentTime'
-            );
-            this.setCurrentTime(this.currClip.start);
-          }
-        }
-
-        const { videoWidth, videoHeight } = videoEl;
-        if (videoWidth === 0 || videoHeight === 0) {
-          return subtitleRenderInterval();
-        }
-        this.resizeSubtitle();
-        const currentTime = player.currentTime() * 1000;
-        const ass =
-          this.ass.find(({ start, end }) => {
-            // console.log("start, end, currentTime:", start, end, currentTime);
-            return start <= currentTime && end >= currentTime;
-          }) || prevAss;
-        console.log('current subtitle is:', ass);
-        if (this.playByClip === false && this.clipLoop === false) {
-          this.currClipIndex = this.ass.indexOf(ass);
+        } else {
+          this.currClipIndex += 1;
           console.log(
-            'in player.js this.currClipIndex = this.ass.indexOf(ass):',
+            'in player.js this.currClipIndex += 1:',
             this.currClipIndex
           );
-          this.currClip = ass;
+          this.currClip = this.clips[this.currClipIndex];
+          console.log(
+            'in player.js this.currClipIndex += 1, so this.setCurrentTime'
+          );
+          this.setCurrentTime(this.currClip.start);
         }
-        const renderSubtitle = () => {
-          if (ass !== undefined) {
-            const subtitles = ass.subtitles || [];
-            for (let i = 0; i < subtitles.length; i += 1) {
-              // console.log('i ===>', i);
-              const subtitle = subtitles[i];
-              const subtitleStrategy =
-                this.subtitleStrategies[i] || this.defaultSubtitleStrategy;
-              const p = document.createElement('p');
-              if (subtitleStrategy.show === false) {
-                continue;
-              }
-              p.style.color = subtitleStrategy.color;
-              p.style.font = subtitleStrategy.font;
-              p.style.background = subtitleStrategy.background;
-              p.style.margin = '0';
-              subtitle.split(/\s/).forEach((w) => {
-                const span = document.createElement('span');
-                span.style.cursor = 'pointer';
-                let word = w.replace(/[^a-zA-Z'-]+/g, '');
-                span.addEventListener('click', () => {
-                  if (word.length > 0) {
-                    this.searchWord(word);
-                  }
-                });
-                span.addEventListener('contextmenu', (e) => {
-                  if (word.length === 0) {
-                    return;
-                  }
-                  e.preventDefault();
-                  const { clientX, clientY } = e;
-                  let left = clientX;
-                  let top = clientY - 30;
-                  if (clientX + 100 >= this.subtitleContainer.clientWidth) {
-                    left = this.subtitleContainer.clientWidth - 100;
-                  }
-                  this.menu.style.left = `${left}px`;
-                  // this.menu.style.bottom = `${this.subtitleContainer.clientHeight}px`;
-                  this.menu.style.top = `${top}px`;
-                  this.menu.style.height = 'auto';
-                  this.rightClickWord = word;
-                });
-                span.innerHTML = `${w} `;
-                p.appendChild(span);
-              });
-              this.subtitleContainer.appendChild(p);
+      }
+
+      const { videoWidth, videoHeight } = videoEl;
+      if (videoWidth === 0 || videoHeight === 0) {
+        return;
+      }
+      this.resizeSubtitle();
+      const currentTime = player.currentTime() * 1000;
+      const ass =
+        this.ass.find(({ start, end }) => {
+          // console.log("start, end, currentTime:", start, end, currentTime);
+          return start <= currentTime && end >= currentTime;
+        }) || prevAss;
+      console.log('current subtitle is:', ass);
+      if (this.playByClip === false && this.clipLoop === false) {
+        this.currClipIndex = this.ass.indexOf(ass);
+        console.log(
+          'in player.js this.currClipIndex = this.ass.indexOf(ass):',
+          this.currClipIndex
+        );
+        this.currClip = ass;
+      }
+      const renderSubtitle = () => {
+        if (ass !== undefined) {
+          const subtitles = ass.subtitles || [];
+          for (let i = 0; i < subtitles.length; i += 1) {
+            // console.log('i ===>', i);
+            const subtitle = subtitles[i];
+            const subtitleStrategy =
+              this.subtitleStrategies[i] || this.defaultSubtitleStrategy;
+            const p = document.createElement('p');
+            if (subtitleStrategy.show === false) {
+              continue;
             }
+            p.style.color = subtitleStrategy.color;
+            p.style.font = subtitleStrategy.font;
+            p.style.background = subtitleStrategy.background;
+            p.style.margin = '0';
+            subtitle.split(/\s/).forEach((w) => {
+              const span = document.createElement('span');
+              span.style.cursor = 'pointer';
+              let word = w.replace(/[^a-zA-Z'-]+/g, '');
+              span.addEventListener('click', () => {
+                if (word.length > 0) {
+                  this.searchWord(word);
+                }
+              });
+              span.addEventListener('contextmenu', (e) => {
+                if (word.length === 0) {
+                  return;
+                }
+                e.preventDefault();
+                const { clientX, clientY } = e;
+                let left = clientX;
+                let top = clientY - 30;
+                if (clientX + 100 >= this.subtitleContainer.clientWidth) {
+                  left = this.subtitleContainer.clientWidth - 100;
+                }
+                this.menu.style.left = `${left}px`;
+                // this.menu.style.bottom = `${this.subtitleContainer.clientHeight}px`;
+                this.menu.style.top = `${top}px`;
+                this.menu.style.height = 'auto';
+                this.rightClickWord = word;
+              });
+              span.innerHTML = `${w} `;
+              p.appendChild(span);
+            });
+            this.subtitleContainer.appendChild(p);
           }
-        };
-        if (
-          (ass !== prevAss && this.showSubtitle === true) ||
-          (prevShowSubtitle === false && this.showSubtitle === true)
-        ) {
-          console.log('显示字幕：', this.showSubtitle);
-          this.subtitleContainer.innerHTML = '';
-          prevAss = ass;
-          renderSubtitle();
-        } else if (
-          !ass ||
-          ass.end <= currentTime ||
-          this.showSubtitle === false
-        ) {
-          console.log('显示字幕：', this.showSubtitle);
-          this.subtitleContainer.innerHTML = '';
-        } else {
-          console.log('else, 显示字幕：', this.showSubtitle);
         }
-        prevShowSubtitle = this.showSubtitle;
-        subtitleRenderInterval();
-      });
-    subtitleRenderInterval();
+      };
+      if (
+        (ass !== prevAss && this.showSubtitle === true) ||
+        (prevShowSubtitle === false && this.showSubtitle === true)
+      ) {
+        console.log('显示字幕：', this.showSubtitle);
+        this.subtitleContainer.innerHTML = '';
+        prevAss = ass;
+        renderSubtitle();
+      } else if (
+        !ass ||
+        ass.end <= currentTime ||
+        this.showSubtitle === false
+      ) {
+        console.log('显示字幕：', this.showSubtitle);
+        this.subtitleContainer.innerHTML = '';
+      } else {
+        console.log('else, 显示字幕：', this.showSubtitle);
+      }
+      prevShowSubtitle = this.showSubtitle;
+    });
   }
 
   load(file) {
