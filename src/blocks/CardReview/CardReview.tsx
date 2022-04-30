@@ -12,11 +12,13 @@ import { FlashCard } from '../../types/FlashCard';
 import {
   CARD_COLLECTION_NAMESPACE,
   openNote$,
+  saveCard$,
 } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import { stringFolder } from '../../util/string_util';
+import { searchSentence } from '../DictAndCardMaker/DictAndCardMaker';
 
 const L1 = PATH.join(dbRoot, 'flash_cards');
 mkdir(L1);
@@ -113,6 +115,21 @@ const Component = () => {
       },
     });
   }, []);
+
+  useEffect(() => {
+    if (cardToReview === null) {
+      return;
+    }
+    const sp = saveCard$.subscribe({
+      next(card) {
+        if (cardToReview.id === card.id) {
+          setCardToReview(card);
+        }
+      },
+    });
+    return () => sp.unsubscribe();
+  }, [cardToReview]);
+
   if (cardToReview === null) {
     return <Empty description="没有需要回顾的卡片。"></Empty>;
   }
@@ -177,7 +194,14 @@ const Component = () => {
           flexGrow: 1,
         }}
       >
-        <div>{cardToReview.front.word}</div>
+        <div
+          tabIndex={0}
+          onClick={() => searchSentence(cardToReview.front.word)}
+          onKeyDown={() => {}}
+          style={{ cursor: 'pointer' }}
+        >
+          {cardToReview.front.word}
+        </div>
         <div
           style={{
             borderBottom: '1px solid #ddd',

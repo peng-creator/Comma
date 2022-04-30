@@ -12,6 +12,12 @@ const { TabPane } = Tabs;
 export const focusSearch$ = new Subject<void>();
 export const tapWord$ = new Subject<string>();
 
+export const searchSentence = (s: string) => {
+  s.split(/\s/).forEach((w) => {
+    tapWord$.next(w);
+  });
+};
+
 const search$ = tapWord$.pipe(
   bufferWhen(() => tapWord$.pipe(debounceTime(1500))),
   shareReplay(1)

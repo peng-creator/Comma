@@ -79,8 +79,10 @@ const cardIndexMapPromise = fs
 
 export const pdfNote$ = new Subject<PDFNote>();
 export const openNote$ = new BehaviorSubject<PDFNote | null>(null);
+export const saveCard$ = new Subject<FlashCard>();
 
 const saveCard = async (cardToSave: FlashCard, cardIndexMap: CardIndexMap) => {
+  saveCard$.next(cardToSave);
   // 加入到搜索库
   addSearchItems([
     {
