@@ -184,6 +184,7 @@ export const VideoPlayer = (
     setCurrentSubtitleIndex(playIndex);
     setTimeout(() => {
       setScrollToIndex(playIndex);
+      shine();
     });
   };
 
