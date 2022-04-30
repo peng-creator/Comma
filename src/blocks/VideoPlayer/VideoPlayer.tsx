@@ -182,6 +182,9 @@ export const VideoPlayer = (
     console.log('待播字幕 从外部播放字幕, playIndex:', playIndex);
     player.setCurrClipIndex(playIndex);
     setCurrentSubtitleIndex(playIndex);
+    setTimeout(() => {
+      setScrollToIndex(playIndex);
+    });
   };
 
   useEffect(() => {
