@@ -145,7 +145,19 @@ const createWindow = async () => {
       mainWindow.focus();
     }
   });
-
+  mainWindow.webContents.session.webRequest.onHeadersReceived(
+    { urls: ['*://*/*'] },
+    (d, c) => {
+      if (!d.responseHeaders) {
+        return;
+      }
+      delete d.responseHeaders['X-Frame-Options'];
+      delete d.responseHeaders['x-frame-options'];
+      delete d.responseHeaders['Content-Security-Policy'];
+      delete d.responseHeaders['content-security-policy'];
+      c({ cancel: false, responseHeaders: d.responseHeaders });
+    }
+  );
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

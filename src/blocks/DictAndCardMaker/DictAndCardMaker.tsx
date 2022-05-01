@@ -1,11 +1,26 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { Input, Tabs } from 'antd';
+import {
+  Button,
+  Col,
+  Empty,
+  Input,
+  message,
+  Popconfirm,
+  Row,
+  Tabs,
+} from 'antd';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { bufferWhen, debounceTime, shareReplay } from 'rxjs/operators';
 import { Dict } from '../../compontent/Dict/Dict';
 import { FlashCardMaker } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 import { useBehavior } from '../../state';
+import {
+  addEngine,
+  engineList$,
+  removeEngine,
+} from '../../searchEngine/searchEngine';
+import { SettingOutlined } from '@ant-design/icons';
 
 const { TabPane } = Tabs;
 
@@ -28,12 +43,14 @@ export const isDragging$ = new BehaviorSubject(false);
 const Component = () => {
   const [inputSearchValue, setInputSearchValue] = useState('');
   const [searchContent, setSearchContent] = useState('');
-  const [explains, setExplains] = useState<any[]>([]);
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
   const searchBoxRef: any = useRef<Input | null>();
-  const [tabKey, setTabKey] = useState('youdao');
+  const [tabKey, setTabKey] = useState('有道');
   const [tapCache, setTapCache] = useState('');
   const [isDragging] = useBehavior(isDragging$, false);
+  const [engineList] = useBehavior(engineList$, []);
+  const [addDictTitle, setAddDictTitle] = useState('');
+  const [addDictAddress, setAddDictAddress] = useState('');
 
   const search = (content: string) => {
     setInputSearchValue(content);
@@ -81,6 +98,8 @@ const Component = () => {
     });
     return () => sp.unsubscribe();
   }, [searchBoxFocused, searchBoxRef.current]);
+
+  const currentEngine = engineList.find(({ title }) => title === tabKey);
 
   return (
     <div
@@ -202,16 +221,106 @@ const Component = () => {
             style={{ color: 'white' }}
             onChange={(key) => setTabKey(key)}
           >
-            <TabPane tab="有道" key="youdao"></TabPane>
             <TabPane tab="隐藏词典" key="none"></TabPane>
+            {engineList.map(({ title }) => {
+              return <TabPane tab={title} key={title}></TabPane>;
+            })}
+            <TabPane
+              tab={
+                <SettingOutlined
+                  style={{ position: 'relative', left: '6px' }}
+                ></SettingOutlined>
+              }
+              key="addDict"
+            ></TabPane>
           </Tabs>
-          <div style={{ height: 'calc(100% - 120px)', overflow: 'hidden' }}>
-            <Dict
-              style={{
-                display: tabKey === 'youdao' && !isDragging ? 'block' : 'none',
-              }}
-              searchWord={searchContent}
-            ></Dict>
+          <div style={{ height: 'calc(100% - 72px)', overflow: 'hidden' }}>
+            {currentEngine && (
+              <Dict
+                style={{
+                  display: !isDragging ? 'block' : 'none',
+                }}
+                searchWord={searchContent}
+                address={currentEngine.pattern}
+              ></Dict>
+            )}
+            {tabKey === 'addDict' && (
+              <div
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <Row>
+                  <Col span={3}>标题:</Col>
+                  <Col span={21}>
+                    <Input
+                      value={addDictTitle}
+                      onChange={(e) => {
+                        setAddDictTitle(e.target.value);
+                      }}
+                      placeholder="请输入词典名称"
+                    ></Input>
+                  </Col>
+                </Row>
+                <Row style={{ margin: '12px 0' }}>
+                  <Col span={3}>搜索地址:</Col>
+                  <Col span={21}>
+                    <Input
+                      placeholder="请使用 {} 作为关键词占位符"
+                      value={addDictAddress}
+                      onChange={(e) => setAddDictAddress(e.target.value)}
+                    ></Input>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={3}></Col>
+                  <Col span={5}>
+                    <Button
+                      onClick={() => {
+                        if (!addDictTitle || !addDictAddress) {
+                          message.error('请输入完整!');
+                          return;
+                        }
+                        addEngine({
+                          title: addDictTitle,
+                          pattern: addDictAddress,
+                        });
+                        setAddDictAddress('');
+                        setAddDictTitle('');
+                      }}
+                    >
+                      保存
+                    </Button>
+                  </Col>
+                </Row>
+                <div style={{ margin: '14px 0' }}>管理词典</div>
+                {engineList.length === 0 && <Empty description="没有词典" />}
+                <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+                  {engineList.map(({ title, pattern }) => {
+                    return (
+                      <Row key={title}>
+                        <Col span={4}>{title}</Col>
+                        <Col span={16}>{pattern}</Col>
+                        <Col span={4}>
+                          <Popconfirm
+                            title="删除"
+                            onConfirm={() => {
+                              removeEngine(title);
+                            }}
+                          >
+                            <Button type="text" style={{ color: 'red' }}>
+                              删除
+                            </Button>
+                          </Popconfirm>
+                        </Col>
+                      </Row>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div style={{ flexGrow: 1, height: '50%' }}>

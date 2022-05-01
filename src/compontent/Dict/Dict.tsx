@@ -3,15 +3,20 @@ import React, { CSSProperties } from 'react';
 export const Dict = ({
   searchWord,
   style,
+  address,
 }: {
   searchWord: string;
+  address: string;
   // eslint-disable-next-line react/require-default-props
   style?: CSSProperties;
 }) => {
+  if (!searchWord) {
+    return <div>请在上方搜索框内输入您要查询的内容</div>;
+  }
+  const src = address.replace('{}', encodeURIComponent(searchWord));
   return (
-    // eslint-disable-next-line react/no-danger
     <iframe
-      title="youdao"
+      title="dict"
       style={{
         width: '100%',
         border: 'none',
@@ -19,7 +24,7 @@ export const Dict = ({
         height: '100%',
         ...(style || {}),
       }}
-      src={`http://mobile.youdao.com/dict?le=eng&q=${searchWord}`}
+      src={src}
     />
   );
 };
