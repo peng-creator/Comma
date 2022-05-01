@@ -171,7 +171,7 @@ export const ControlPanelComponent = ({
             onChange={async (e, v) => {
               const time = (v as number) + start;
               player.player.currentTime(time);
-              player.currentTime$.next(time);
+              // player.currentTime$.next(time);
             }}
             value={current}
             defaultValue={0}
