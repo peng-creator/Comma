@@ -4,6 +4,7 @@ import {
   CloseOutlined,
   MoreOutlined,
   PlayCircleOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { Button, Col, Dropdown, Input, List, Menu, Row, Switch } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
@@ -18,7 +19,7 @@ import { playVideo$ } from '../../state/user_input/playVideoAction';
 import { Ass } from '../../util/ass.mjs';
 import { srtContentToCutProject } from '../../util/srt_util.mjs';
 import { millisecondsToTime } from '../../util/index.mjs';
-import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
+import { searchSentence, tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
 
@@ -592,6 +593,21 @@ export const VideoPlayer = (
               </Button>
             </Dropdown>
           </div>
+          <Button
+            type="text"
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              right: 0,
+              color: 'wheat',
+              fontSize: '20px',
+            }}
+            onClick={() => {
+              searchSentence(localSubtitles.join(' '));
+            }}
+          >
+            <SearchOutlined></SearchOutlined>
+          </Button>
         </div>
       </List.Item>
     );
