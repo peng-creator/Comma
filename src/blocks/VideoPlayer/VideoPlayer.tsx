@@ -487,48 +487,47 @@ export const VideoPlayer = (
                 flexGrow: 1,
                 flexDirection: 'column',
                 justifyContent: 'center',
+                alignItems: 'center',
                 textAlign: 'center',
-                padding: '0 14px',
+                margin: '10px 14px',
+                overflowY: 'auto',
               }}
             >
               {localSubtitles.map((s: string, subIndex: number) => {
                 return (
-                  <Row key={s}>
-                    <Col span={24}>
-                      <LazyInput
-                        menu={[
-                          [
-                            {
-                              title: '翻译',
-                              onClick: () => {
-                                searchSentence(localSubtitles.join(' '));
-                              },
-                            },
+                  <LazyInput
+                    key={s + subIndex}
+                    menu={[
+                      [
+                        {
+                          title: '翻译',
+                          onClick: () => {
+                            searchSentence(localSubtitles.join(' '));
+                          },
+                        },
+                      ],
+                    ]}
+                    onWordClick={(word) => {
+                      tapWord$.next(word);
+                    }}
+                    value={s}
+                    onChange={(value) => {
+                      console.log('changed to:', value);
+                      const nextSubtitles = [
+                        ...subtitles.slice(0, index),
+                        {
+                          ...subtitles[index],
+                          subtitles: [
+                            ...localSubtitles.slice(0, subIndex),
+                            value,
+                            ...localSubtitles.slice(subIndex + 1),
                           ],
-                        ]}
-                        onWordClick={(word) => {
-                          tapWord$.next(word);
-                        }}
-                        value={s}
-                        onChange={(value) => {
-                          console.log('changed to:', value);
-                          const nextSubtitles = [
-                            ...subtitles.slice(0, index),
-                            {
-                              ...subtitles[index],
-                              subtitles: [
-                                ...localSubtitles.slice(0, subIndex),
-                                value,
-                                ...localSubtitles.slice(subIndex + 1),
-                              ],
-                            },
-                            ...subtitles.slice(index + 1),
-                          ];
-                          setSubtitles(nextSubtitles, videoPath);
-                        }}
-                      ></LazyInput>
-                    </Col>
-                  </Row>
+                        },
+                        ...subtitles.slice(index + 1),
+                      ];
+                      setSubtitles(nextSubtitles, videoPath);
+                    }}
+                  ></LazyInput>
                 );
               })}
             </div>

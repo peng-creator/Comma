@@ -29,7 +29,7 @@ export const LazyInput = ({
   });
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div>
       <div
         onContextMenu={(event) => {
           event.preventDefault();
@@ -62,6 +62,11 @@ export const LazyInput = ({
               key: 'value',
             },
           });
+        }}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          flexWrap: 'wrap',
         }}
       >
         {content.split(' ').map((word: string, index: number) => {
