@@ -65,7 +65,6 @@ export const LazyInput = ({
         }}
         style={{
           display: 'flex',
-          justifyContent: 'space-around',
           flexWrap: 'wrap',
         }}
       >
