@@ -11,7 +11,8 @@ import {
 } from '@ant-design/icons';
 import { Sentence } from '../../types/Article';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
-import { focusSearch$, isDragging$, tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
+import { focusSearch$, isDragging$ } from '../DictAndCardMaker/DictAndCardMaker';
+import { tapWord$ } from '../../state/user_input/tapWordAction';
 
 const readerBuilder = (pageSize = 10) => {
   let reader: QueryLinesReader = null;

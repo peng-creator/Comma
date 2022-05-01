@@ -11,6 +11,7 @@ import {
 } from 'antd';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { bufferWhen, debounceTime, shareReplay } from 'rxjs/operators';
+import { SettingOutlined } from '@ant-design/icons';
 import { Dict } from '../../compontent/Dict/Dict';
 import { FlashCardMaker } from '../../compontent/FlashCardMaker/FlashCardMaker';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
@@ -20,12 +21,11 @@ import {
   engineList$,
   removeEngine,
 } from '../../searchEngine/searchEngine';
-import { SettingOutlined } from '@ant-design/icons';
+import { tapWord$ } from '../../state/user_input/tapWordAction';
 
 const { TabPane } = Tabs;
 
 export const focusSearch$ = new Subject<void>();
-export const tapWord$ = new Subject<string>();
 
 export const searchSentence = (s: string) => {
   s.split(/\s/).forEach((w) => {

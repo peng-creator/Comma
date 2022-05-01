@@ -5,7 +5,6 @@ import { Button, Empty } from 'antd';
 import { EditFilled, EditOutlined } from '@ant-design/icons';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime, throttleTime } from 'rxjs/operators';
-import { tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
 import { MarkMap, PDFNote } from '../../types/PDFNote';
 import {
   pdfNote$,
@@ -14,6 +13,7 @@ import {
 import { useBehavior, useObservable } from '../../state';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import styles from './PDF.css';
+import { tapWord$ } from '../../state/user_input/tapWordAction';
 // import { BehaviorSubject } from 'rxjs';
 
 // const isDark$ = new BehaviorSubject();

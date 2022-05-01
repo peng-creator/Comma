@@ -19,9 +19,10 @@ import { playVideo$ } from '../../state/user_input/playVideoAction';
 import { Ass } from '../../util/ass.mjs';
 import { srtContentToCutProject } from '../../util/srt_util.mjs';
 import { millisecondsToTime } from '../../util/index.mjs';
-import { searchSentence, tapWord$ } from '../DictAndCardMaker/DictAndCardMaker';
+import { searchSentence } from '../DictAndCardMaker/DictAndCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
+import { tapWord$ } from '../../state/user_input/tapWordAction';
 
 export const VideoPlayer = (
   { onClose }: { onClose: () => void } = { onClose: () => {} }
@@ -450,6 +451,9 @@ export const VideoPlayer = (
                   <Row key={s}>
                     <Col span={24}>
                       <LazyInput
+                        onWordClick={(word) => {
+                          tapWord$.next(word);
+                        }}
                         value={s}
                         onChange={(value) => {
                           console.log('changed to:', value);
