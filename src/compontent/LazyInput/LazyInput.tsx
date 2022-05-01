@@ -1,6 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Col, Input, List, Modal, Row, Switch } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
+import React, { useRef, useState } from 'react';
+import { Input, Modal } from 'antd';
+import { useContextMenu } from 'react-contexify';
+import { DynamicMenu, setContextMenu } from '../../state/system/contextMenu';
+
+const MENU_ID = 'MENU_ID';
 
 export const LazyInput = ({
   value,
@@ -8,8 +11,10 @@ export const LazyInput = ({
   displayValueTo,
   modalTitle,
   onWordClick,
+  menu,
 }: {
   value: any;
+  menu?: DynamicMenu;
   displayValueTo?: (value: any) => any;
   onChange: (value: any) => void;
   onWordClick?: (word: string) => void;
@@ -19,9 +24,46 @@ export const LazyInput = ({
   const [editing, setEditing] = useState(false);
   const content = displayValueTo && displayValueTo(value);
 
+  const { show } = useContextMenu({
+    id: MENU_ID,
+  });
+
   return (
     <div style={{ width: '100%', height: '100%' }}>
-      <div>
+      <div
+        onContextMenu={(event) => {
+          event.preventDefault();
+          if (menu) {
+            setContextMenu([
+              [
+                {
+                  onClick: () => {
+                    setEditing(true);
+                  },
+                  title: '修改',
+                },
+              ],
+              ...menu,
+            ]);
+          } else {
+            setContextMenu([
+              [
+                {
+                  onClick: () => {
+                    setEditing(true);
+                  },
+                  title: '修改',
+                },
+              ],
+            ]);
+          }
+          show(event, {
+            props: {
+              key: 'value',
+            },
+          });
+        }}
+      >
         {content.split(' ').map((word: string, index: number) => {
           return (
             <span
@@ -39,15 +81,6 @@ export const LazyInput = ({
             </span>
           );
         })}
-        <Button
-          type="text"
-          onClick={() => {
-            setEditing(true);
-          }}
-          style={{ color: 'white' }}
-        >
-          <EditOutlined />
-        </Button>
       </div>
       {editing ? (
         <Modal

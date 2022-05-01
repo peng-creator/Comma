@@ -4,9 +4,18 @@ import { ipcRenderer } from 'electron';
 import { getCurrentWindow } from '@electron/remote';
 import TitleBar from 'frameless-titlebar';
 import { Menu } from 'electron/main';
+import {
+  Menu as ContextMenu,
+  Item,
+  Separator,
+  Submenu,
+  theme,
+} from 'react-contexify';
 import styles from './App.css';
 import { menu$ } from './state/system/menu';
 import { Learning } from './pages/learning/Learning';
+import { useBehavior } from './state';
+import { contextMenu$ } from './state/system/contextMenu';
 
 const currentWindow = getCurrentWindow();
 
@@ -18,6 +27,8 @@ export default function App() {
     currentWindow.isFullScreen()
   );
   const [menu, setMenu] = useState<Menu | null>(null);
+
+  const [contextMenuList] = useBehavior(contextMenu$, []);
 
   useEffect(() => {
     setShowTitleBar(!isPlayerMaximum);
@@ -125,6 +136,25 @@ export default function App() {
         />
       </div>
       <Learning />
+      <ContextMenu
+        id="MENU_ID"
+        animation={false}
+        theme={theme.dark}
+        style={{ position: 'fixed' }}
+      >
+        {contextMenuList.map((itemList, index) => {
+          return (
+            <>
+              {itemList.map((item, index) => (
+                <Item key={index} onClick={item.onClick}>
+                  {item.title}
+                </Item>
+              ))}
+              {index < contextMenuList.length - 1 && <Separator />}
+            </>
+          );
+        })}
+      </ContextMenu>
     </div>
   );
 }

@@ -356,6 +356,32 @@ export const VideoPlayer = (
       return null;
     }
     const { end, start, subtitles: localSubtitles, id } = subtitle;
+    const updateStart = (changeToValue: number) => {
+      const nextSubtitles = [
+        ...subtitles.slice(0, index),
+        { ...subtitles[index], start: changeToValue },
+        ...subtitles.slice(index + 1),
+      ].sort((a, b) => a.start - b.start);
+      const nextScrollToIndex = nextSubtitles.findIndex(
+        ({ id: _id }) => _id === id
+      );
+      setSubtitles(nextSubtitles, videoPath);
+      setScrollToIndex(nextScrollToIndex);
+      shine();
+    };
+    const updateEnd = (changeToValue: number) => {
+      const nextSubtitles = [
+        ...subtitles.slice(0, index),
+        { ...subtitles[index], end: changeToValue },
+        ...subtitles.slice(index + 1),
+      ].sort((a, b) => a.start - b.start);
+      const nextScrollToIndex = nextSubtitles.findIndex(
+        ({ id: _id }) => _id === id
+      );
+      setSubtitles(nextSubtitles, videoPath);
+      setScrollToIndex(nextScrollToIndex);
+      shine();
+    };
     return (
       <List.Item
         key={key}
@@ -416,22 +442,41 @@ export const VideoPlayer = (
               </div>
               <div>
                 <LazyInput
+                  menu={[
+                    [
+                      {
+                        onClick: () => {
+                          updateStart(start + 250);
+                        },
+                        title: '+ 0.25s',
+                      },
+                      {
+                        onClick: () => {
+                          updateStart(start - 250);
+                        },
+                        title: '- 0.25s',
+                      },
+                    ],
+                    [
+                      {
+                        onClick: () => {
+                          updateStart(start + 500);
+                        },
+                        title: '+ 0.5s',
+                      },
+                      {
+                        onClick: () => {
+                          updateStart(start - 500);
+                        },
+                        title: '- 0.5s',
+                      },
+                    ],
+                  ]}
                   modalTitle="修改起始时间（单位: ms）"
                   value={parseInt(start, 10)}
                   displayValueTo={(value) => millisecondsToTime(value)}
                   onChange={(value) => {
-                    const changeToValue = parseInt(value, 10) || 0;
-                    const nextSubtitles = [
-                      ...subtitles.slice(0, index),
-                      { ...subtitles[index], start: changeToValue },
-                      ...subtitles.slice(index + 1),
-                    ].sort((a, b) => a.start - b.start);
-                    const nextScrollToIndex = nextSubtitles.findIndex(
-                      ({ id: _id }) => _id === id
-                    );
-                    setSubtitles(nextSubtitles, videoPath);
-                    setScrollToIndex(nextScrollToIndex);
-                    shine();
+                    updateStart(parseInt(value, 10) || 0);
                   }}
                 />
               </div>
@@ -451,6 +496,16 @@ export const VideoPlayer = (
                   <Row key={s}>
                     <Col span={24}>
                       <LazyInput
+                        menu={[
+                          [
+                            {
+                              title: '翻译',
+                              onClick: () => {
+                                searchSentence(localSubtitles.join(' '));
+                              },
+                            },
+                          ],
+                        ]}
                         onWordClick={(word) => {
                           tapWord$.next(word);
                         }}
@@ -492,18 +547,38 @@ export const VideoPlayer = (
                   displayValueTo={(value) => millisecondsToTime(value)}
                   onChange={(value) => {
                     const changeToValue = parseInt(value, 10) || 0;
-                    const nextSubtitles = [
-                      ...subtitles.slice(0, index),
-                      { ...subtitles[index], end: changeToValue },
-                      ...subtitles.slice(index + 1),
-                    ].sort((a, b) => a.start - b.start);
-                    const nextScrollToIndex = nextSubtitles.findIndex(
-                      ({ id: _id }) => _id === id
-                    );
-                    setSubtitles(nextSubtitles, videoPath);
-                    setScrollToIndex(nextScrollToIndex);
-                    shine();
+                    updateEnd(changeToValue);
                   }}
+                  menu={[
+                    [
+                      {
+                        onClick: () => {
+                          updateEnd(start + 250);
+                        },
+                        title: '+ 0.25s',
+                      },
+                      {
+                        onClick: () => {
+                          updateEnd(start - 250);
+                        },
+                        title: '- 0.25s',
+                      },
+                    ],
+                    [
+                      {
+                        onClick: () => {
+                          updateEnd(start + 500);
+                        },
+                        title: '+ 0.5s',
+                      },
+                      {
+                        onClick: () => {
+                          updateEnd(start - 500);
+                        },
+                        title: '- 0.5s',
+                      },
+                    ],
+                  ]}
                 />
               </Col>
             </div>
@@ -597,21 +672,6 @@ export const VideoPlayer = (
               </Button>
             </Dropdown>
           </div>
-          <Button
-            type="text"
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              right: 0,
-              color: 'wheat',
-              fontSize: '20px',
-            }}
-            onClick={() => {
-              searchSentence(localSubtitles.join(' '));
-            }}
-          >
-            <SearchOutlined></SearchOutlined>
-          </Button>
         </div>
       </List.Item>
     );
@@ -756,7 +816,7 @@ export const VideoPlayer = (
         <AutoSizer>
           {({ width, height }) => (
             <VList
-              style={{ outline: 'none' }}
+              style={{ outline: 'none', overflow: 'hidden auto' }}
               width={width}
               height={height}
               overscanRowCount={10}

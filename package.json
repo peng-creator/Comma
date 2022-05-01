@@ -244,6 +244,7 @@
     "pdfjs-dist": "^2.13.216",
     "query-lines-reader": "^0.2.3",
     "react": "^17.0.1",
+    "react-contexify": "^5.0.0",
     "react-dom": "^17.0.1",
     "react-horizontal-scrolling-menu": "^2.7.1",
     "react-router-dom": "^6.2.1",

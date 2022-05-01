@@ -3,6 +3,7 @@
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
 @import '~antd/dist/antd.css';
+@import '~react-contexify/dist/ReactContexify.css';
 
 /* 设置滚动条的样式 */
 ::-webkit-scrollbar {
