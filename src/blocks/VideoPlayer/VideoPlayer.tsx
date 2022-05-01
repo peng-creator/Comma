@@ -182,6 +182,7 @@ export const VideoPlayer = (
     console.log('待播字幕 从外部播放字幕, setCurrentTime:', start);
     player.setCurrentTime(start);
     console.log('待播字幕 从外部播放字幕, playIndex:', playIndex);
+    console.log('player.setCurrClipIndex(playIndex):', playIndex);
     player.setCurrClipIndex(playIndex);
     setCurrentSubtitleIndex(playIndex);
     setTimeout(() => {
@@ -242,6 +243,7 @@ export const VideoPlayer = (
         if (subtitles.length > 0) {
           console.log('播放第一字幕');
           player.setCurrentTime(subtitles[0].start);
+          console.log('player.setCurrClipIndex(0):', 0);
           player.setCurrClipIndex(0);
         } else {
           console.log('没有可以播放的字幕！');
@@ -262,12 +264,9 @@ export const VideoPlayer = (
       return;
     }
     const interval = setInterval(() => {
-      // console.log(
-      //   'setCurrentSubtitleIndex player.currClipIndex:',
-      //   player.currClipIndex
-      // );
       if (player.currClipIndex !== currentSubtitleIndex) {
         setCurrentSubtitleIndex(player.currClipIndex);
+        console.log('setScrollToIndex(player.currClipIndex):', player.currClipIndex);
         setScrollToIndex(player.currClipIndex);
         shine();
       }
@@ -757,6 +756,7 @@ export const VideoPlayer = (
               player?.setCurrentTime(nextSub.start);
               player?.setCurrClipIndex(nextIndex);
               setScrollToIndex(nextIndex);
+              setCurrentSubtitleIndex(nextIndex);
               shine();
             }}
             onPlayPrevFile={() => {
@@ -769,6 +769,7 @@ export const VideoPlayer = (
               player?.setCurrentTime(nextSub.start);
               player?.setCurrClipIndex(nextIndex);
               setScrollToIndex(nextIndex);
+              setCurrentSubtitleIndex(nextIndex);
               shine();
             }}
             player={player}

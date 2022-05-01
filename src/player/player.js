@@ -82,7 +82,6 @@ export class MyPlayer {
   }
 
   setCurrClipIndex(index) {
-    console.log('in player.js setCurrClipIndex:', index);
     this.currClipIndex = index;
     this.currClip = this.clips[index];
   }
@@ -286,21 +285,14 @@ export class MyPlayer {
         this.currClip !== undefined &&
         current * 1000 >= this.currClip.end
       ) {
-        if (this.clipLoop) {
-          console.log('this.clipLoop, so this.setCurrentTime');
-          this.setCurrentTime(this.currClip.start);
-        } else {
-          this.currClipIndex += 1;
+        if (!this.clipLoop) {
           console.log(
-            'in player.js this.currClipIndex += 1:',
-            this.currClipIndex
+            'this.setCurrClipIndex(this.currClipIndex + 1):',
+            this.currClipIndex + 1
           );
-          this.currClip = this.clips[this.currClipIndex];
-          console.log(
-            'in player.js this.currClipIndex += 1, so this.setCurrentTime'
-          );
-          this.setCurrentTime(this.currClip.start);
+          this.setCurrClipIndex(this.currClipIndex + 1);
         }
+        this.setCurrentTime(this.currClip.start);
       }
 
       const { videoWidth, videoHeight } = videoEl;
@@ -308,20 +300,31 @@ export class MyPlayer {
         return;
       }
       this.resizeSubtitle();
-      const currentTime = player.currentTime() * 1000;
+      const currentTime = current * 1000;
       const ass =
-        this.ass.find(({ start, end }) => {
-          // console.log("start, end, currentTime:", start, end, currentTime);
-          return start <= currentTime && end >= currentTime;
+        this.ass.find(({ start, end }, index) => {
+          const isCurrent = start <= currentTime && end >= currentTime;
+          if (isCurrent) {
+            console.log(
+              'start, end, currentTime:',
+              start,
+              end,
+              currentTime,
+              index
+            );
+          }
+          return isCurrent;
         }) || prevAss;
       console.log('current subtitle is:', ass);
       if (this.playByClip === false && this.clipLoop === false) {
-        this.currClipIndex = this.ass.indexOf(ass);
+        const nextIndex = this.ass.indexOf(ass);
         console.log(
-          'in player.js this.currClipIndex = this.ass.indexOf(ass):',
-          this.currClipIndex
+          'this.setCurrClipIndex(nextIndex)',
+          nextIndex,
+          currentTime,
+          ass
         );
-        this.currClip = ass;
+        this.setCurrClipIndex(nextIndex);
       }
       const renderSubtitle = () => {
         if (ass !== undefined) {
@@ -378,7 +381,6 @@ export class MyPlayer {
       ) {
         console.log('显示字幕：', this.showSubtitle);
         this.subtitleContainer.innerHTML = '';
-        prevAss = ass;
         renderSubtitle();
       } else if (
         !ass ||
@@ -391,6 +393,7 @@ export class MyPlayer {
         console.log('else, 显示字幕：', this.showSubtitle);
       }
       prevShowSubtitle = this.showSubtitle;
+      prevAss = ass;
     });
   }
 
