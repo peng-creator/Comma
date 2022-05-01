@@ -203,6 +203,7 @@ const Component = () => {
             onChange={(key) => setTabKey(key)}
           >
             <TabPane tab="有道" key="youdao"></TabPane>
+            <TabPane tab="隐藏词典" key="none"></TabPane>
           </Tabs>
           <div style={{ height: 'calc(100% - 120px)', overflow: 'hidden' }}>
             <Dict
