@@ -551,13 +551,13 @@ export const VideoPlayer = (
                     [
                       {
                         onClick: () => {
-                          updateEnd(start + 250);
+                          updateEnd(end + 250);
                         },
                         title: '+ 0.25s',
                       },
                       {
                         onClick: () => {
-                          updateEnd(start - 250);
+                          updateEnd(end - 250);
                         },
                         title: '- 0.25s',
                       },
@@ -565,13 +565,13 @@ export const VideoPlayer = (
                     [
                       {
                         onClick: () => {
-                          updateEnd(start + 500);
+                          updateEnd(end + 500);
                         },
                         title: '+ 0.5s',
                       },
                       {
                         onClick: () => {
-                          updateEnd(start - 500);
+                          updateEnd(end - 500);
                         },
                         title: '- 0.5s',
                       },
