@@ -35,6 +35,7 @@ export const LazyInput = ({
           event.preventDefault();
           if (menu) {
             setContextMenu([
+              ...menu,
               [
                 {
                   onClick: () => {
@@ -43,7 +44,6 @@ export const LazyInput = ({
                   title: '修改',
                 },
               ],
-              ...menu,
             ]);
           } else {
             setContextMenu([
