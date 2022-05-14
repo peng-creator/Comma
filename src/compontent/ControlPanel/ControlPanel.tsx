@@ -201,20 +201,11 @@ export const ControlPanelComponent = ({
             width: '30%',
             display: 'flex',
             flexGrow: 1,
-            justifyContent: 'space-around',
+            // justifyContent: 'space-around',
           }}
         >
-          <div>字幕:</div>
-          <div>
-            <Switch
-              defaultChecked
-              onChange={(checked) => {
-                player?.setShowSubtitle(checked);
-              }}
-            />
-          </div>
           <div>逐句切换:</div>
-          <div>
+          <div style={{ marginLeft: '15px' }}>
             <Switch
               checked={playByClip}
               onChange={(checked) => {
@@ -222,7 +213,9 @@ export const ControlPanelComponent = ({
               }}
             />
           </div>
-          <div>单句循环:</div>
+          <div style={{ marginLeft: '30px', marginRight: '15px' }}>
+            单句循环:
+          </div>
           <div>
             <Switch
               // defaultChecked={player?.clipLoop}
@@ -251,37 +244,11 @@ export const ControlPanelComponent = ({
             width: '30%',
             flexGrow: 1,
             display: 'flex',
-            justifyContent: 'space-around',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <div>字幕调节: </div>
-          </div>
-          <div>
-            <Button
-              type="text"
-              style={{ width: '100%', color: '#fff' }}
-              onClick={() => onSubtitleMoveBack()}
-            >
-              - 0.5s
-            </Button>
-          </div>
-          <div>
-            <Button
-              type="text"
-              style={{ width: '100%', color: '#fff' }}
-              onClick={() => onSubtitleMoveForward()}
-            >
-              + 0.5s
-            </Button>
-          </div>
-          <div>
+          <div style={{ margin: '14px' }}>
             <Button
               type="text"
               style={{ color: '#fff' }}

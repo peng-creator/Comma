@@ -266,7 +266,10 @@ export const VideoPlayer = (
     const interval = setInterval(() => {
       if (player.currClipIndex !== currentSubtitleIndex) {
         setCurrentSubtitleIndex(player.currClipIndex);
-        console.log('setScrollToIndex(player.currClipIndex):', player.currClipIndex);
+        console.log(
+          'setScrollToIndex(player.currClipIndex):',
+          player.currClipIndex
+        );
         setScrollToIndex(player.currClipIndex);
         shine();
       }
@@ -367,6 +370,7 @@ export const VideoPlayer = (
       setSubtitles(nextSubtitles, videoPath);
       setScrollToIndex(nextScrollToIndex);
       shine();
+      player?.setCurrClipIndex(nextScrollToIndex);
     };
     const updateEnd = (changeToValue: number) => {
       const nextSubtitles = [
@@ -380,6 +384,18 @@ export const VideoPlayer = (
       setSubtitles(nextSubtitles, videoPath);
       setScrollToIndex(nextScrollToIndex);
       shine();
+      player?.setCurrClipIndex(nextScrollToIndex);
+    };
+    const ajustFrom = (index: number, time: number) => {
+      const nextSubtitles = subtitles.map((s: any, i: number) => {
+        if (i >= index) {
+          return { ...s, start: s.start + time, end: s.end + time };
+        }
+        return s;
+      });
+      setSubtitles(nextSubtitles, videoPath);
+      shine();
+      player?.setCurrClipIndex(scrollToIndex);
     };
     return (
       <List.Item
@@ -445,15 +461,15 @@ export const VideoPlayer = (
                     [
                       {
                         onClick: () => {
-                          updateStart(start + 250);
+                          updateStart(start + 1000);
                         },
-                        title: '+ 0.25s',
+                        title: '+ 1s',
                       },
                       {
                         onClick: () => {
-                          updateStart(start - 250);
+                          updateStart(start - 1000);
                         },
-                        title: '- 0.25s',
+                        title: '- 1s',
                       },
                     ],
                     [
@@ -468,6 +484,20 @@ export const VideoPlayer = (
                           updateStart(start - 500);
                         },
                         title: '- 0.5s',
+                      },
+                    ],
+                    [
+                      {
+                        onClick: () => {
+                          updateStart(start + 250);
+                        },
+                        title: '+ 0.25s',
+                      },
+                      {
+                        onClick: () => {
+                          updateStart(start - 250);
+                        },
+                        title: '- 0.25s',
                       },
                     ],
                   ]}
@@ -502,6 +532,48 @@ export const VideoPlayer = (
                           title: '翻译',
                           onClick: () => {
                             searchSentence(localSubtitles.join(' '));
+                          },
+                        },
+                      ],
+                      [
+                        {
+                          title: '当前及后续字幕 +1s',
+                          onClick: () => {
+                            ajustFrom(subIndex, 1000);
+                          },
+                        },
+                        {
+                          title: '当前及后续字幕 -1s',
+                          onClick: () => {
+                            ajustFrom(subIndex, -1000);
+                          },
+                        },
+                      ],
+                      [
+                        {
+                          title: '当前及后续字幕 +0.5s',
+                          onClick: () => {
+                            ajustFrom(subIndex, 500);
+                          },
+                        },
+                        {
+                          title: '当前及后续字幕 -0.5s',
+                          onClick: () => {
+                            ajustFrom(subIndex, -500);
+                          },
+                        },
+                      ],
+                      [
+                        {
+                          title: '当前及后续字幕 +0.25s',
+                          onClick: () => {
+                            ajustFrom(subIndex, +250);
+                          },
+                        },
+                        {
+                          title: '当前及后续字幕 -0.25s',
+                          onClick: () => {
+                            ajustFrom(subIndex, -250);
                           },
                         },
                       ],
@@ -551,15 +623,15 @@ export const VideoPlayer = (
                     [
                       {
                         onClick: () => {
-                          updateEnd(end + 250);
+                          updateEnd(end + 1000);
                         },
-                        title: '+ 0.25s',
+                        title: '+ 1s',
                       },
                       {
                         onClick: () => {
-                          updateEnd(end - 250);
+                          updateEnd(end - 1000);
                         },
-                        title: '- 0.25s',
+                        title: '- 1s',
                       },
                     ],
                     [
@@ -574,6 +646,20 @@ export const VideoPlayer = (
                           updateEnd(end - 500);
                         },
                         title: '- 0.5s',
+                      },
+                    ],
+                    [
+                      {
+                        onClick: () => {
+                          updateEnd(end + 250);
+                        },
+                        title: '+ 0.25s',
+                      },
+                      {
+                        onClick: () => {
+                          updateEnd(end - 250);
+                        },
+                        title: '- 0.25s',
                       },
                     ],
                   ]}

@@ -33,7 +33,7 @@ export class MyPlayer {
     this.playSpeed = 1;
     this.playButton = null;
     this.timePadding = 6000;
-    this.showSubtitle = true;
+    this.showSubtitle = false;
     // 片段
     this.clips = [];
     this.clipLoop = true; // 片段循环
