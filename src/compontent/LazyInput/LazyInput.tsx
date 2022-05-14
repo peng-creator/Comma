@@ -12,18 +12,22 @@ export const LazyInput = ({
   modalTitle,
   onWordClick,
   menu,
+  canEdit,
 }: {
   value: any;
   menu?: DynamicMenu;
   displayValueTo?: (value: any) => any;
-  onChange: (value: any) => void;
+  onChange?: (value: any) => void;
   onWordClick?: (word: string) => void;
   modalTitle?: string;
+  canEdit?: boolean;
 }) => {
   const inputRef = useRef<Input | null>();
   const [editing, setEditing] = useState(false);
   const content = displayValueTo && displayValueTo(value);
-
+  if (canEdit === undefined) {
+    canEdit = true;
+  }
   const { show } = useContextMenu({
     id: MENU_ID,
   });
@@ -36,16 +40,18 @@ export const LazyInput = ({
           if (menu) {
             setContextMenu([
               ...menu,
-              [
-                {
-                  onClick: () => {
-                    setEditing(true);
-                  },
-                  title: '修改',
-                },
-              ],
+              canEdit
+                ? [
+                    {
+                      onClick: () => {
+                        setEditing(true);
+                      },
+                      title: '修改',
+                    },
+                  ]
+                : [],
             ]);
-          } else {
+          } else if (canEdit) {
             setContextMenu([
               [
                 {
@@ -87,7 +93,7 @@ export const LazyInput = ({
           );
         })}
       </div>
-      {editing ? (
+      {editing && canEdit ? (
         <Modal
           title={modalTitle}
           visible={editing}

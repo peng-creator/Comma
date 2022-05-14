@@ -7,6 +7,7 @@ import {
   Empty,
   Input,
   message,
+  Modal,
   Popconfirm,
   Row,
   Select,
@@ -17,11 +18,13 @@ import {
   PlayCircleOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
+import * as remote from '@electron/remote';
 import PATH from 'path';
 import { promises as fs } from 'fs';
 import { v5 as uuidv5 } from 'uuid';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SearchResult } from 'minisearch';
+import { ipcMain } from 'electron';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 import { FlashCard } from '../../types/FlashCard';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
@@ -582,7 +585,107 @@ const Component = () => {
                           }
                         }}
                       >
-                        {stringFolder(sentence.content, 60)}
+                        <LazyInput
+                          value={stringFolder(sentence.content, 60)}
+                          canEdit={false}
+                          menu={[
+                            [
+                              {
+                                onClick: () => {
+                                  Modal.info({
+                                    width: 800,
+                                    title: '详情',
+                                    content: (
+                                      <pre>
+                                        {JSON.stringify(sentence, null, 2)}
+                                      </pre>
+                                    ),
+                                    onOk: () => {},
+                                    onCancel: () => {},
+                                  });
+                                },
+                                title: '详情',
+                              },
+                            ],
+                            [
+                              {
+                                title: '重选资源',
+                                onClick: () => {
+                                  remote.ipcMain.emit(
+                                    'selectResource',
+                                    'txt',
+                                    PATH.join(dbRoot, 'resource')
+                                  );
+                                  remote.ipcMain.once(
+                                    'onSelectResourceTxT',
+                                    (data) => {
+                                      console.log('onSelectResourceTxT:', data);
+                                      const file = data as unknown as string;
+                                      if (!file.startsWith(dbRoot)) {
+                                        message.warn(
+                                          '只能选Comma资源目录下的文件!'
+                                        );
+                                        return;
+                                      }
+                                      sentence.file = file.slice(dbRoot.length);
+                                      // const updatedSentences =
+                                      //   currentCard.front.sentences.filter(
+                                      //     (s) => s !== sentence
+                                      //   );
+                                      const nextCard: FlashCard = {
+                                        ...currentCard,
+                                        hasChanged: true,
+                                      };
+                                      // currentCard.front.sentences =
+                                      //   updatedSentences;
+                                      const currentCardIndex =
+                                        flashCards.findIndex(
+                                          (f) => f === currentCard
+                                        );
+                                      const nextCards = [
+                                        ...flashCards.slice(
+                                          0,
+                                          currentCardIndex
+                                        ),
+                                        nextCard,
+                                        ...flashCards.slice(
+                                          currentCardIndex + 1
+                                        ),
+                                      ];
+                                      setFlashCards(nextCards);
+                                      setCurrentCard(nextCard);
+                                    }
+                                  );
+                                },
+                              },
+                              {
+                                title: '删除',
+                                onClick: () => {
+                                  const updatedSentences =
+                                    currentCard.front.sentences.filter(
+                                      (s) => s !== sentence
+                                    );
+                                  const nextCard: FlashCard = {
+                                    ...currentCard,
+                                    hasChanged: true,
+                                  };
+                                  currentCard.front.sentences =
+                                    updatedSentences;
+                                  const currentCardIndex = flashCards.findIndex(
+                                    (f) => f === currentCard
+                                  );
+                                  const nextCards = [
+                                    ...flashCards.slice(0, currentCardIndex),
+                                    nextCard,
+                                    ...flashCards.slice(currentCardIndex + 1),
+                                  ];
+                                  setFlashCards(nextCards);
+                                  setCurrentCard(nextCard);
+                                },
+                              },
+                            ],
+                          ]}
+                        ></LazyInput>
                       </div>
                     );
                   })}
@@ -657,6 +760,7 @@ const Component = () => {
                                   displayValueTo={(value) =>
                                     millisecondsToTime(value)
                                   }
+                                  canEdit={false}
                                 ></LazyInput>
                                 <div>至</div>
                                 <LazyInput
@@ -665,6 +769,7 @@ const Component = () => {
                                   displayValueTo={(value) =>
                                     millisecondsToTime(value)
                                   }
+                                  canEdit={false}
                                 ></LazyInput>
                               </div>
                             </div>

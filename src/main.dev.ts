@@ -36,7 +36,28 @@ ipcMain.on('selectMainDir', () => {
       }
     })
     .catch((e) => {
-      console.error('showOpenDialog to selectVideoFile error', e);
+      console.error('showOpenDialog to selectMainDir error', e);
+    });
+});
+
+ipcMain.on('selectResource', (ext, openDir) => {
+  const extension = ext as unknown as string;
+  dialog
+    .showOpenDialog({
+      title: '请选择源文件',
+      defaultPath: openDir,
+      buttonLabel: '选择源文件',
+      filters: [{ extensions: [extension, extension.toUpperCase()], name: '' }],
+      properties: ['openFile'],
+      message: '请选择源文件',
+    })
+    .then(({ filePaths }) => {
+      if (filePaths && filePaths.length > 0) {
+        ipcMain.emit('onSelectResourceTxT', filePaths[0]);
+      }
+    })
+    .catch((e) => {
+      console.error('showOpenDialog to selectResource error', e);
     });
 });
 
