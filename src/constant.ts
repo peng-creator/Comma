@@ -1,18 +1,16 @@
-import { join } from 'path';
+import PATH, { join } from 'path';
 import { app } from '@electron/remote';
 import { mkdir } from './util/mkdir';
 
-export const dbRoot = join(app.getPath('userData'), 'comma_data');
-export const thumbnailPath = join(
-  app.getPath('userData'),
-  'comma_data',
-  'thumbnail'
-);
-export const thumbnailRemovePath = join(
-  app.getPath('userData'),
-  'comma_data',
-  'thumbnail_to_remove'
-);
+export const defaultDbRoot = join(app.getPath('userData'), 'comma_data');
+export const dbRoot = localStorage.getItem('dbRoot') || defaultDbRoot;
+
+export const getAbsolutePath = (filePath: string) => {
+  console.log('getAbsolutePath of:', filePath);
+  if (filePath.startsWith(defaultDbRoot)) {
+    return PATH.join(dbRoot, filePath.slice(defaultDbRoot.length));
+  }
+  return PATH.join(dbRoot, filePath);
+};
 
 mkdir(dbRoot);
-mkdir(thumbnailPath);

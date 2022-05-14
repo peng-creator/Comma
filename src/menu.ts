@@ -1,5 +1,15 @@
-import { app, Menu, BrowserWindow, MenuItemConstructorOptions } from 'electron';
+import {
+  app,
+  Menu,
+  BrowserWindow,
+  MenuItemConstructorOptions,
+  shell,
+} from 'electron';
 import * as remote from '@electron/remote';
+import confirm from 'antd/lib/modal/confirm';
+import PATH from 'path';
+import { showChangeMainDirAction$ } from './state/user_input/showChangeMainDirAction';
+import { dbRoot, defaultDbRoot } from './constant';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -129,6 +139,51 @@ export default class MenuBuilder {
         { label: '全部窗口', selector: 'arrangeInFront:' },
       ],
     };
+    const subMenuSettings: DarwinMenuItemConstructorOptions = {
+      label: '设置',
+      submenu: [
+        {
+          label: '更换数据目录',
+          click() {
+            remote.ipcMain.emit('selectMainDir');
+            remote.ipcMain.once('onSelectMainDir', (dir) => {
+              console.log('remote.ipcMain onSelectMainDir:', dir);
+              confirm({
+                mask: true,
+                title: '确认更换数据目录',
+                content: '将为您打开旧数据目录，请您手动迁移数据',
+                okText: '确认并重启应用',
+                cancelText: '取消更换',
+                onOk: () => {
+                  shell.showItemInFolder(dbRoot);
+                  localStorage.setItem('dbRoot', dir as unknown as string);
+                  remote.ipcMain.emit('exitAPP');
+                },
+                onCancel: () => {},
+              });
+            });
+          },
+        },
+        {
+          label: '切换回默认数据目录',
+          click() {
+            confirm({
+              mask: true,
+              title: '确认切换为默认数据目录',
+              content: '将为您打开旧数据目录，请您手动迁移数据',
+              okText: '确认并重启应用',
+              cancelText: '取消切换',
+              onOk: () => {
+                shell.showItemInFolder(defaultDbRoot);
+                localStorage.removeItem('dbRoot');
+                remote.ipcMain.emit('exitAPP');
+              },
+              onCancel: () => {},
+            });
+          },
+        },
+      ],
+    };
     const subMenuHelp: MenuItemConstructorOptions = {
       label: '帮助',
       submenu: [
@@ -149,7 +204,14 @@ export default class MenuBuilder {
         ? subMenuViewDev
         : subMenuViewProd;
 
-    return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
+    return [
+      subMenuAbout,
+      subMenuEdit,
+      subMenuView,
+      subMenuWindow,
+      subMenuSettings,
+      subMenuHelp,
+    ];
   }
 
   buildDefaultTemplate() {
@@ -162,6 +224,17 @@ export default class MenuBuilder {
             accelerator: 'Ctrl+W',
             click: () => {
               this.mainWindow.close();
+            },
+          },
+        ],
+      },
+      {
+        label: '设置',
+        submenu: [
+          {
+            label: '更换数据目录',
+            click() {
+              showChangeMainDirAction$.next(true);
             },
           },
         ],

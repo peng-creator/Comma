@@ -13,6 +13,7 @@ import { Sentence } from '../../types/Article';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { focusSearch$, isDragging$ } from '../DictAndCardMaker/DictAndCardMaker';
 import { tapWord$ } from '../../state/user_input/tapWordAction';
+import { dbRoot, getAbsolutePath } from '../../constant';
 
 const readerBuilder = (pageSize = 10) => {
   let reader: QueryLinesReader = null;
@@ -288,7 +289,9 @@ const Component = (
         if (sentence === null) {
           return;
         }
-        const { file, page, paragraph, index } = sentence;
+        const { page, paragraph, index } = sentence;
+        let { file } = sentence;
+        file = getAbsolutePath(file);
         console.log(
           'open sentence, file:',
           file,
@@ -599,7 +602,7 @@ const Component = (
                             'sentence',
                             JSON.stringify({
                               content: sentence,
-                              file: articleFilePath,
+                              file: articleFilePath.slice(dbRoot.length),
                               page: currentPage,
                               paragraph: paragraphIndex,
                               index: sentenceIndex,

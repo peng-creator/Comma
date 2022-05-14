@@ -14,6 +14,7 @@ import { useBehavior, useObservable } from '../../state';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import styles from './PDF.css';
 import { tapWord$ } from '../../state/user_input/tapWordAction';
+import { dbRoot, getAbsolutePath } from '../../constant';
 // import { BehaviorSubject } from 'rxjs';
 
 // const isDark$ = new BehaviorSubject();
@@ -27,7 +28,8 @@ export const PDF = () => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [markMap] = useObservable(markMap$, {} as MarkMap);
   const [noteList, setNoteList] = useState<PDFNote[]>([]);
-  const [file, setFile] = useBehavior(openPdf$, '');
+  let [file, setFile] = useBehavior(openPdf$, '');
+  file = getAbsolutePath(file);
   const setMarkMap = (markMap: MarkMap) => nextMarkMap$.next(markMap);
   const [documentLoaded, setDocumentLoaded] = useState(false);
 
@@ -206,7 +208,7 @@ export const PDF = () => {
                           firstKey: validKeys[0],
                           marks: markMap,
                           mergedStr,
-                          file,
+                          file: file.slice(dbRoot.length),
                         },
                         ...noteList,
                       ]);

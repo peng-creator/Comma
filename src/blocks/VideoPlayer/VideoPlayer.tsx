@@ -23,6 +23,7 @@ import { searchSentence } from '../DictAndCardMaker/DictAndCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
 import { tapWord$ } from '../../state/user_input/tapWordAction';
+import { dbRoot, getAbsolutePath } from '../../constant';
 
 export const VideoPlayer = (
   { onClose }: { onClose: () => void } = { onClose: () => {} }
@@ -217,7 +218,7 @@ export const VideoPlayer = (
         console.log('播放字幕');
         if (videoPath !== subtitle.file) {
           console.log('播放字幕引起了视频更换.');
-          videoPath = subtitle.file;
+          videoPath = getAbsolutePath(subtitle.file);
           await playTheVideoPath(videoPath);
         }
         console.log('playSubtitle(player.getSubtitle(), subtitle, player)');
@@ -679,7 +680,7 @@ export const VideoPlayer = (
                       onClick={() => {
                         const subtitle = subtitles[index];
                         addSubtitle$.next({
-                          file: videoPath,
+                          file: videoPath.slice(dbRoot.length),
                           ...subtitle,
                         });
                       }}

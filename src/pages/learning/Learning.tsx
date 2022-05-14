@@ -19,7 +19,7 @@ import { CardReview } from '../../blocks/CardReview/CardReview';
 import styles from './Learning.css';
 
 import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCardMaker';
-import { dbRoot } from '../../constant';
+import { dbRoot, defaultDbRoot, getAbsolutePath } from '../../constant';
 import { PDF } from '../../blocks/PDF/PDF';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 
@@ -50,7 +50,7 @@ const Component = () => {
     const sp = openSentence$.subscribe({
       next(sentence) {
         if (sentence !== null) {
-          setArticle(sentence.file);
+          setArticle(getAbsolutePath(sentence.file));
         }
       },
     });
@@ -61,7 +61,7 @@ const Component = () => {
     const sp = playSubtitle$.subscribe({
       next(subtitle) {
         if (subtitle !== null) {
-          setVideoFile(subtitle.file);
+          setVideoFile(getAbsolutePath(subtitle.file));
         }
       },
     });

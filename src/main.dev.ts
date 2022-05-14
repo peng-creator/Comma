@@ -20,22 +20,29 @@ import { MIN_HEIGHT, MIN_WIDTH } from './contant/windowSize';
 
 initialize();
 
-ipcMain.on('selectVideoFile', (event) => {
+ipcMain.on('selectMainDir', () => {
   dialog
     .showOpenDialog({
-      title: '请选择视频文件所在文件夹',
+      title: '请选择一个文件夹作为数据目录',
       // 默认打开的路径，比如这里默认打开下载文件夹
       defaultPath: app.getPath('desktop'),
-      buttonLabel: '导入',
-      properties: ['openDirectory', 'multiSelections'],
-      message: '请选择视频文件所在文件夹',
+      buttonLabel: '选取数据目录',
+      properties: ['openDirectory'],
+      message: '请选择一个文件夹作为数据目录',
     })
     .then(({ filePaths }) => {
-      event.reply('videoFileSelected', filePaths);
+      if (filePaths && filePaths.length > 0) {
+        ipcMain.emit('onSelectMainDir', filePaths[0]);
+      }
     })
     .catch((e) => {
       console.error('showOpenDialog to selectVideoFile error', e);
     });
+});
+
+ipcMain.on('exitAPP', () => {
+  console.log('exitAPP');
+  app.quit();
 });
 
 export default class AppUpdater {
