@@ -14,7 +14,7 @@ export function assContentToCutProject(assText) {
     const result = dialogue.map(({ End, Start, Text }, i) => {
       const { parsed } = Text;
       const subtitles = parsed
-        .map(({ text }) => text.replace(/\\N/g, ''))
+        .map(({ text }) => text.replace(/\\N/g, ' '))
         .filter((t) => t.length > 0);
       const words = subtitles
         .join(' ')

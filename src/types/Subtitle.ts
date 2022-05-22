@@ -1,5 +1,6 @@
 export type Subtitle = {
-  file: string;
+  id?: string;
+  file?: string;
   start: number;
   end: number;
   subtitles: string[];

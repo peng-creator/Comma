@@ -24,6 +24,11 @@ import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
 import { tapWord$ } from '../../state/user_input/tapWordAction';
 import { dbRoot, getAbsolutePath } from '../../constant';
+import {
+  mergeByComma$,
+  mergeByChar$,
+} from '../../state/user_input/mergeSubtitleAction';
+import { Subtitle } from '../../types/Subtitle';
 
 export const VideoPlayer = (
   { onClose }: { onClose: () => void } = { onClose: () => {} }
@@ -352,6 +357,92 @@ export const VideoPlayer = (
     }, 16);
     return () => clearInterval(interval);
   }, [player, videoContainerRef, currentSubtitleIndex]);
+
+  const mergeSubtitles = (subtitleA: Subtitle, subtitleB: Subtitle) => {
+    const maxLength = Math.max(
+      subtitleA.subtitles.length,
+      subtitleB.subtitles.length
+    );
+    const mergeSubtitles = [];
+    for (let i = 0; i < maxLength; i += 1) {
+      const a = subtitleA.subtitles[i] || '';
+      const b = subtitleB.subtitles[i] || '';
+      mergeSubtitles.push(`${a} ${b}`);
+    }
+    return {
+      id: subtitleA.id,
+      start: subtitleA.start,
+      end: subtitleB.end,
+      subtitles: mergeSubtitles,
+    };
+  };
+
+  useEffect(() => {
+    const sp1 = mergeByComma$.subscribe({
+      next: () => {
+        const nextSubtitles = subtitles.reduce((acc, curr) => {
+          let last = acc[acc.length - 1];
+          let shouldMerge =
+            last &&
+            last.subtitles.find((s: string) => s.trim().endsWith(',')) !==
+              undefined;
+          if (shouldMerge) {
+            const merged = mergeSubtitles(last, curr);
+            last.end = merged.end;
+            last.subtitles = merged.subtitles;
+          } else {
+            acc.push(curr);
+          }
+          return acc;
+        }, []);
+        setSubtitles(nextSubtitles, videoPath);
+        const nextScrollToIndex = 0;
+        player?.setCurrentTime(nextSubtitles[nextScrollToIndex].start);
+        player?.setCurrClipIndex(nextScrollToIndex);
+        setScrollToIndex(nextScrollToIndex);
+        shine();
+      },
+    });
+    const sp2 = mergeByChar$.subscribe({
+      next: () => {
+        /**
+         *  P：标点字符；
+            L：字母； 
+            M：标记符号（一般不会单独出现）； 
+            Z：分隔符（比如空格、换行等）； 
+            S：符号（比如数学符号、货币符号等）； 
+            N：数字（比如阿拉伯数字、罗马数字等）； 
+            C：其他字符 
+         */
+        const nextSubtitles = subtitles.reduce((acc, curr) => {
+          let last = acc[acc.length - 1];
+          let shouldMerge =
+            last &&
+            last.subtitles.find(
+              (s: string) => /\p{L}$/u.test(s.trim()) // 以字结尾
+            ) !== undefined;
+          if (shouldMerge) {
+            const merged = mergeSubtitles(last, curr);
+            last.end = merged.end;
+            last.subtitles = merged.subtitles;
+          } else {
+            acc.push(curr);
+          }
+          return acc;
+        }, []);
+        setSubtitles(nextSubtitles, videoPath);
+        const nextScrollToIndex = 0;
+        player?.setCurrentTime(nextSubtitles[nextScrollToIndex].start);
+        player?.setCurrClipIndex(nextScrollToIndex);
+        setScrollToIndex(nextScrollToIndex);
+        shine();
+      },
+    });
+    return () => {
+      sp1.unsubscribe();
+      sp2.unsubscribe();
+    };
+  }, [subtitles, videoPath, player]);
 
   const renderItem = ({ index, key, style }: any) => {
     const subtitle = subtitles[index];
@@ -698,24 +789,9 @@ export const VideoPlayer = (
                         if (index < nextPlaySubtitleIndex) {
                           nextPlaySubtitleIndex -= 1;
                         }
-                        const maxLength = Math.max(
-                          currentSubtitle.subtitles.length,
-                          nextSubtitle.subtitles.length
-                        );
-                        const mergeSubtitles = [];
-                        for (let i = 0; i < maxLength; i += 1) {
-                          const curr = currentSubtitle.subtitles[i] || '';
-                          const next = nextSubtitle.subtitles[i] || '';
-                          mergeSubtitles.push(`${curr} ${next}`);
-                        }
                         const nextSubtitles = [
                           ...subtitles.slice(0, index),
-                          {
-                            id,
-                            start: currentSubtitle.start,
-                            end: nextSubtitle.end,
-                            subtitles: mergeSubtitles,
-                          },
+                          mergeSubtitles(currentSubtitle, nextSubtitle),
                           ...subtitles.slice(index + 2),
                         ];
                         setSubtitles(nextSubtitles, videoPath);

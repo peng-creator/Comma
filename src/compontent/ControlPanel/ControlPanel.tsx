@@ -1,6 +1,17 @@
-import { Button, Col, Input, Modal, Row, Switch, Tooltip } from 'antd';
+import {
+  Button,
+  Col,
+  Dropdown,
+  Input,
+  Menu,
+  Modal,
+  Row,
+  Switch,
+  Tooltip,
+} from 'antd';
 import React, { CSSProperties, useEffect, useState } from 'react';
 import { StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
+import { id } from 'react-horizontal-scrolling-menu/dist/types/constants';
 import { MySlider } from '../MySlider';
 import playBtnSrc from '../../../assets/play_btn.svg';
 import pauseBtnSrc from '../../../assets/pause_btn.svg';
@@ -10,6 +21,12 @@ import { useObservable } from '../../state';
 import { ClipSlider } from './ClipSlider';
 import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
 import { millisecondsToTime } from '../../util/index.mjs';
+import { dbRoot } from '../../constant';
+import { addSubtitle$ } from '../FlashCardMaker/FlashCardMaker';
+import {
+  mergeByComma$,
+  mergeByChar$,
+} from '../../state/user_input/mergeSubtitleAction';
 
 export type ControlPanelComponentProps = {
   onPlayNextFile: () => void;
@@ -248,6 +265,34 @@ export const ControlPanelComponent = ({
             alignItems: 'center',
           }}
         >
+          <div style={{ margin: '14px' }}>
+            <Dropdown
+              trigger={['click']}
+              overlay={
+                <Menu>
+                  <Menu.Item
+                    onClick={() => {
+                      mergeByComma$.next(1);
+                    }}
+                  >
+                    逗号结尾的合并
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={() => {
+                      mergeByChar$.next(1);
+                    }}
+                  >
+                    非标点结尾的合并
+                  </Menu.Item>
+                </Menu>
+              }
+              placement="bottom"
+            >
+              <Button type="text" style={{ color: '#fff' }}>
+                字幕合并
+              </Button>
+            </Dropdown>
+          </div>
           <div style={{ margin: '14px' }}>
             <Button
               type="text"
