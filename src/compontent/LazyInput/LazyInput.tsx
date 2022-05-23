@@ -86,7 +86,7 @@ export const LazyInput = ({
                   onWordClick(word);
                 }
               }}
-              style={{ margin: '0 3px', cursor: 'pointer' }}
+              style={{ padding: '0 4px', cursor: 'pointer' }}
             >
               {word}
             </span>
