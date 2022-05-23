@@ -225,7 +225,7 @@ export const ResourceLoader = ({
       <div style={{ flexGrow: 1 }}>
         {pdfs.map((pdfFile, index) => {
           const openPdf = () => {
-            const filePath = PATH.join(L1, ...paths, pdfFile);
+            const filePath = PATH.join('resource', ...paths, pdfFile);
             openPdf$.next(filePath);
           };
           return (
@@ -288,7 +288,7 @@ export const ResourceLoader = ({
           articles.length > 0 &&
           firstLines.map((line, index) => {
             const openBook = () => {
-              const filePath = PATH.join(L1, ...paths, articles[index]);
+              const filePath = PATH.join('resource', ...paths, articles[index]);
               console.log(`open article: ${filePath}`);
               openSentence$.next({
                 content: '',
