@@ -345,7 +345,7 @@ export class MyPlayer {
             subtitle.split(/\s/).forEach((w) => {
               const span = document.createElement('span');
               span.style.cursor = 'pointer';
-              let word = w.replace(/[^a-zA-Z'-]+/g, '');
+              let word = w;
               span.addEventListener('click', () => {
                 if (word.length > 0) {
                   this.searchWord(word);

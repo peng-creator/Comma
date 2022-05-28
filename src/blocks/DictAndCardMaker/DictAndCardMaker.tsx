@@ -71,11 +71,12 @@ const Component = () => {
         console.log('searchWords:', searchWords);
         tapCache = [];
         setTapCache('');
-        if (searchWords.length === 1) {
-          search(searchWords[0].replace(/[^a-zA-Z-]/g, ''));
-        } else {
-          search(searchWords.join(' '));
-        }
+        search(
+          searchWords
+            .join(' ')
+            .trim()
+            .replace(/\p{P}+$/u, '')
+        );
       },
     });
     return () => sp.unsubscribe();

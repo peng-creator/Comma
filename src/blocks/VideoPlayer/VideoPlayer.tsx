@@ -2,11 +2,25 @@
 /* eslint-disable promise/no-nesting */
 import {
   CloseOutlined,
+  DeleteOutlined,
+  FileAddOutlined,
+  MergeCellsOutlined,
   MoreOutlined,
   PlayCircleOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { Button, Col, Dropdown, Input, List, Menu, Row, Switch } from 'antd';
+import {
+  Button,
+  Col,
+  Dropdown,
+  Input,
+  List,
+  Menu,
+  Popconfirm,
+  Row,
+  Switch,
+  Tooltip,
+} from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { AutoSizer } from 'react-virtualized';
 import VList from 'react-virtualized/dist/commonjs/List';
@@ -494,7 +508,7 @@ export const VideoPlayer = (
         key={key}
         style={{
           ...style,
-          padding: '0 14px',
+          padding: '14px 14px',
           marginLeft: '6px',
           borderBottom: '2px solid #c4bfbf',
           background:
@@ -512,23 +526,6 @@ export const VideoPlayer = (
             position: 'relative',
           }}
         >
-          <Button
-            type="text"
-            onClick={() => {
-              player?.setCurrentTime(start);
-              player?.setCurrClipIndex(index);
-            }}
-            style={{
-              fontSize: '20px',
-              color: 'wheat',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              zIndex: 2,
-            }}
-          >
-            <PlayCircleOutlined></PlayCircleOutlined>
-          </Button>
           <div
             style={{
               display: 'flex',
@@ -605,94 +602,103 @@ export const VideoPlayer = (
             <div
               style={{
                 display: 'flex',
-                flexGrow: 1,
                 flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                textAlign: 'center',
-                margin: '10px 14px',
+                flexGrow: 1,
                 overflowY: 'auto',
+                fontSize: scrollToIndex === index ? '20px' : '14px',
               }}
             >
-              {localSubtitles.map((s: string, subIndex: number) => {
-                return (
-                  <LazyInput
-                    key={s + subIndex}
-                    menu={[
-                      [
-                        {
-                          title: '翻译',
-                          onClick: () => {
-                            searchSentence(localSubtitles.join(' '));
+              <div
+                style={{
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  margin: '10px 14px',
+                }}
+              >
+                {localSubtitles.map((s: string, subIndex: number) => {
+                  return (
+                    <LazyInput
+                      key={s + subIndex}
+                      menu={[
+                        [
+                          {
+                            title: '翻译',
+                            onClick: () => {
+                              searchSentence(localSubtitles.join(' '));
+                            },
                           },
-                        },
-                      ],
-                      [
-                        {
-                          title: '当前及后续字幕 +1s',
-                          onClick: () => {
-                            ajustFrom(subIndex, 1000);
+                        ],
+                        [
+                          {
+                            title: '当前及后续字幕 +1s',
+                            onClick: () => {
+                              ajustFrom(subIndex, 1000);
+                            },
                           },
-                        },
-                        {
-                          title: '当前及后续字幕 -1s',
-                          onClick: () => {
-                            ajustFrom(subIndex, -1000);
+                          {
+                            title: '当前及后续字幕 -1s',
+                            onClick: () => {
+                              ajustFrom(subIndex, -1000);
+                            },
                           },
-                        },
-                      ],
-                      [
-                        {
-                          title: '当前及后续字幕 +0.5s',
-                          onClick: () => {
-                            ajustFrom(subIndex, 500);
+                        ],
+                        [
+                          {
+                            title: '当前及后续字幕 +0.5s',
+                            onClick: () => {
+                              ajustFrom(subIndex, 500);
+                            },
                           },
-                        },
-                        {
-                          title: '当前及后续字幕 -0.5s',
-                          onClick: () => {
-                            ajustFrom(subIndex, -500);
+                          {
+                            title: '当前及后续字幕 -0.5s',
+                            onClick: () => {
+                              ajustFrom(subIndex, -500);
+                            },
                           },
-                        },
-                      ],
-                      [
-                        {
-                          title: '当前及后续字幕 +0.25s',
-                          onClick: () => {
-                            ajustFrom(subIndex, +250);
+                        ],
+                        [
+                          {
+                            title: '当前及后续字幕 +0.25s',
+                            onClick: () => {
+                              ajustFrom(subIndex, +250);
+                            },
                           },
-                        },
-                        {
-                          title: '当前及后续字幕 -0.25s',
-                          onClick: () => {
-                            ajustFrom(subIndex, -250);
+                          {
+                            title: '当前及后续字幕 -0.25s',
+                            onClick: () => {
+                              ajustFrom(subIndex, -250);
+                            },
                           },
-                        },
-                      ],
-                    ]}
-                    onWordClick={(word) => {
-                      tapWord$.next(word);
-                    }}
-                    value={s}
-                    onChange={(value) => {
-                      console.log('changed to:', value);
-                      const nextSubtitles = [
-                        ...subtitles.slice(0, index),
-                        {
-                          ...subtitles[index],
-                          subtitles: [
-                            ...localSubtitles.slice(0, subIndex),
-                            value,
-                            ...localSubtitles.slice(subIndex + 1),
-                          ],
-                        },
-                        ...subtitles.slice(index + 1),
-                      ];
-                      setSubtitles(nextSubtitles, videoPath);
-                    }}
-                  ></LazyInput>
-                );
-              })}
+                        ],
+                      ]}
+                      onWordClick={(word) => {
+                        tapWord$.next(word);
+                      }}
+                      value={s}
+                      onChange={(value) => {
+                        console.log('changed to:', value);
+                        const nextSubtitles = [
+                          ...subtitles.slice(0, index),
+                          {
+                            ...subtitles[index],
+                            subtitles: [
+                              ...localSubtitles.slice(0, subIndex),
+                              value,
+                              ...localSubtitles.slice(subIndex + 1),
+                            ],
+                          },
+                          ...subtitles.slice(index + 1),
+                        ];
+                        setSubtitles(nextSubtitles, videoPath);
+                      }}
+                    ></LazyInput>
+                  );
+                })}
+              </div>
             </div>
             <div
               style={{
@@ -759,79 +765,93 @@ export const VideoPlayer = (
               </Col>
             </div>
           </div>
-
-          <div style={{ position: 'absolute', top: 0, right: 0 }}>
-            <Dropdown
-              trigger={['click']}
-              overlay={
-                <Menu>
-                  <Menu.Item>
-                    <Button
-                      type="text"
-                      onClick={() => {
-                        const subtitle = subtitles[index];
-                        addSubtitle$.next({
-                          file: videoPath.slice(dbRoot.length),
-                          ...subtitle,
-                        });
-                      }}
-                    >
-                      加入卡片
-                    </Button>
-                  </Menu.Item>
-                  <Menu.Item>
-                    <Button
-                      type="text"
-                      onClick={() => {
-                        const currentSubtitle = subtitles[index];
-                        const nextSubtitle = subtitles[index + 1];
-                        let nextPlaySubtitleIndex = currentSubtitleIndex;
-                        if (index < nextPlaySubtitleIndex) {
-                          nextPlaySubtitleIndex -= 1;
-                        }
-                        const nextSubtitles = [
-                          ...subtitles.slice(0, index),
-                          mergeSubtitles(currentSubtitle, nextSubtitle),
-                          ...subtitles.slice(index + 2),
-                        ];
-                        setSubtitles(nextSubtitles, videoPath);
-                        const nextScrollToIndex = nextSubtitles.findIndex(
-                          ({ id: _id }) => _id === id
-                        );
-                        player?.setCurrentTime(
-                          subtitles[nextPlaySubtitleIndex].start
-                        );
-                        player?.setCurrClipIndex(nextPlaySubtitleIndex);
-                        setScrollToIndex(nextScrollToIndex);
-                        shine();
-                      }}
-                    >
-                      向下合并
-                    </Button>
-                  </Menu.Item>
-                  <Menu.Item>
-                    <Button
-                      type="link"
-                      style={{ color: 'red' }}
-                      onClick={() => {
-                        const nextSubtitles = [
-                          ...subtitles.slice(0, index),
-                          ...subtitles.slice(index + 1),
-                        ];
-                        setSubtitles(nextSubtitles, videoPath);
-                      }}
-                    >
-                      删除
-                    </Button>
-                  </Menu.Item>
-                </Menu>
-              }
-              placement="bottom"
-            >
-              <Button type="text" style={{ fontSize: '20px', color: 'wheat' }}>
-                <MoreOutlined></MoreOutlined>
+          <div style={{ position: 'absolute', top: 0, left: 0 }}>
+            <Tooltip placement="bottom" title="播放这条字幕">
+              <Button
+                type="text"
+                onClick={() => {
+                  player?.setCurrentTime(start);
+                  player?.setCurrClipIndex(index);
+                }}
+                style={{
+                  color: 'white',
+                }}
+              >
+                <PlayCircleOutlined></PlayCircleOutlined>
               </Button>
-            </Dropdown>
+            </Tooltip>
+          </div>
+          <div style={{ position: 'absolute', top: 0, right: 0 }}>
+            <Tooltip placement="bottom" title="加入当前卡片">
+              <Button
+                type="text"
+                onClick={() => {
+                  const subtitle = subtitles[index];
+                  addSubtitle$.next({
+                    file: videoPath.slice(dbRoot.length),
+                    ...subtitle,
+                  });
+                }}
+                style={{
+                  color: 'white',
+                }}
+              >
+                <FileAddOutlined />
+              </Button>
+            </Tooltip>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, right: 0 }}>
+            <Tooltip placement="bottom" title="与下方字幕合并">
+              <Button
+                style={{ color: 'white', transform: 'rotate(90deg)' }}
+                type="text"
+                onClick={() => {
+                  const currentSubtitle = subtitles[index];
+                  const nextSubtitle = subtitles[index + 1];
+                  let nextPlaySubtitleIndex = currentSubtitleIndex;
+                  if (index < nextPlaySubtitleIndex) {
+                    nextPlaySubtitleIndex -= 1;
+                  }
+                  const nextSubtitles = [
+                    ...subtitles.slice(0, index),
+                    mergeSubtitles(currentSubtitle, nextSubtitle),
+                    ...subtitles.slice(index + 2),
+                  ];
+                  setSubtitles(nextSubtitles, videoPath);
+                  const nextScrollToIndex = nextSubtitles.findIndex(
+                    ({ id: _id }) => _id === id
+                  );
+                  player?.setCurrentTime(
+                    subtitles[nextPlaySubtitleIndex].start
+                  );
+                  player?.setCurrClipIndex(nextPlaySubtitleIndex);
+                  setScrollToIndex(nextScrollToIndex);
+                  shine();
+                }}
+              >
+                <MergeCellsOutlined />
+              </Button>
+            </Tooltip>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: 0 }}>
+            <Popconfirm
+              title="确定要删除当前字幕？"
+              onConfirm={() => {
+                const nextSubtitles = [
+                  ...subtitles.slice(0, index),
+                  ...subtitles.slice(index + 1),
+                ];
+                setSubtitles(nextSubtitles, videoPath);
+              }}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Tooltip placement="bottom" title="删除字幕">
+                <Button type="link" style={{ color: 'white' }}>
+                  <DeleteOutlined></DeleteOutlined>
+                </Button>
+              </Tooltip>
+            </Popconfirm>
           </div>
         </div>
       </List.Item>
@@ -984,7 +1004,7 @@ export const VideoPlayer = (
               height={height}
               overscanRowCount={10}
               rowCount={subtitles.length}
-              rowHeight={100}
+              rowHeight={130}
               rowRenderer={renderItem}
               scrollToAlignment="start"
               // scrollToIndex={scrollToIndex}

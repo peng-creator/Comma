@@ -14,14 +14,8 @@ export function assContentToCutProject(assText) {
     const result = dialogue.map(({ End, Start, Text }, i) => {
       const { parsed } = Text;
       const subtitles = parsed
-        .map(({ text }) => text.replace(/\\N/g, ' '))
+        .map(({ text }) => text.replace(/\\N/g, ' ').toLowerCase())
         .filter((t) => t.length > 0);
-      const words = subtitles
-        .join(' ')
-        .split(/[^a-zA-Z'-]+/)
-        .map((s) => s.toLowerCase())
-        .flat()
-        .filter((s) => s.length > 1);
       let localStart;
       let localEnd;
       if (Number.isNaN(Start)) {
@@ -37,7 +31,6 @@ export function assContentToCutProject(assText) {
       return {
         start: localStart,
         end: localEnd,
-        words: [...new Set(words)],
         subtitles,
       };
     });

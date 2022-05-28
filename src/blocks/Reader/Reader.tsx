@@ -330,7 +330,7 @@ const Component = (
     return (
       <span
         key={index}
-        onClick={() => search(word.replace(/[^a-zA-Z-]/g, ''))}
+        onClick={() => search(word)}
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {

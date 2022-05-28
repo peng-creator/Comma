@@ -12,7 +12,7 @@ export function srtContentToCutProject(content) {
       console.log('text:', text);
       const div = document.createElement('div');
       div.innerHTML = text;
-      text = div.textContent; // 脱去 text 里的标签。
+      text = div.textContent.toLowerCase(); // 脱去 text 里的标签。
       return {
         id,
         start: timeToMilliseconds(startTime.replace(',', '.')),

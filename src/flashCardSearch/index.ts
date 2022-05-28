@@ -25,7 +25,7 @@ export const addSearchItems = (items: FlashCardSearchItem[]) => {
 };
 
 export const searchFlashCardCollections = (keyword: string) => {
-  const searchResult = flashCardMiniSearch.search(keyword, { fuzzy: 0.2 });
+  const searchResult = flashCardMiniSearch.search(keyword, { fuzzy: 0.3 });
   console.log('searchResult of keyword:', keyword, ': ', searchResult);
   return searchResult;
 };

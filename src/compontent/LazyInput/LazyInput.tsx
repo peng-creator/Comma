@@ -33,7 +33,7 @@ export const LazyInput = ({
   });
 
   return (
-    <div>
+    <>
       <div
         onContextMenu={(event) => {
           event.preventDefault();
@@ -113,7 +113,7 @@ export const LazyInput = ({
           <Input ref={inputRef} autoFocus defaultValue={value}></Input>
         </Modal>
       ) : null}
-    </div>
+    </>
   );
 };
 LazyInput.defaultProps = {
