@@ -33,6 +33,8 @@
   "build": {
     "productName": "Comma",
     "appId": "org.Comma.Comma",
+    "asar": false,
+    "asarUnpack": "**\\*.{node,dll}",
     "files": [
       "pdftron/",
       "dist/",

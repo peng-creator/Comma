@@ -33,7 +33,7 @@ export const PDFView = () => {
     if (ref.current !== null) {
       WebViewer(
         {
-          path: path.resolve(__dirname, '../../pdftron'), // point to where the files you copied are served from
+          path: 'pdftron', // point to where the files you copied are served from
           initialDoc: '',
         },
         ref.current
