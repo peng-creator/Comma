@@ -5,7 +5,7 @@ import path from 'path';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import { dbRoot, getAbsolutePath } from '../../constant';
 import { useBehavior } from '../../state';
-import { tapWord$ } from '../../state/user_input/tapWordAction';
+import { tapWord$, s, searchSentence } from '../../state/user_input/tapWordAction';
 import {
   openNote$,
   pdfNote$,
@@ -55,7 +55,7 @@ export const PDFView = () => {
 
     let relativeFile = '';
     let loaded = false;
-    console.log('PDFView: init WebViewer');
+    let selectedText = '';
 
     const sp1 = openPdf$.subscribe({
       next(nextFile) {
@@ -161,6 +161,11 @@ export const PDFView = () => {
       }
     );
     documentViewer.addEventListener('mouseLeftUp', (evt) => {
+      if (selectedText !== '') {
+        searchSentence(selectedText);
+        selectedText = '';
+        return;
+      }
       const { pageNumber, x, y } =
         documentViewer.getViewerCoordinatesFromMouseEvent(evt);
       const document = documentViewer.getDocument();
@@ -176,6 +181,16 @@ export const PDFView = () => {
           }
         });
     });
+    documentViewer.addEventListener(
+      'textSelected',
+      (quads, selectedContent, pageNumber) => {
+        // quads will be an array of 'Quad' objects
+        // text is the selected text as a string
+        if (selectedContent.length > 0) {
+          selectedText = selectedContent;
+        }
+      }
+    );
     return () => {
       instance.UI.closeDocument();
       instance.Core.unsetCanvasMultiplier();

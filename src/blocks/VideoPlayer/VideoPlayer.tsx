@@ -33,10 +33,9 @@ import { playVideo$ } from '../../state/user_input/playVideoAction';
 import { Ass } from '../../util/ass.mjs';
 import { srtContentToCutProject } from '../../util/srt_util.mjs';
 import { millisecondsToTime } from '../../util/index.mjs';
-import { searchSentence } from '../DictAndCardMaker/DictAndCardMaker';
 import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { addSubtitleContentAction$ } from '../../state/user_input/addSubtitleContentAction';
-import { tapWord$ } from '../../state/user_input/tapWordAction';
+import { tapWord$, searchSentence } from '../../state/user_input/tapWordAction';
 import { dbRoot, getAbsolutePath } from '../../constant';
 import {
   mergeByComma$,
