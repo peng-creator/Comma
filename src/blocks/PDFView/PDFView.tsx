@@ -160,10 +160,21 @@ export const PDFView = () => {
         }
       }
     );
+    let mouseDownTime = 0;
+    let clickTime = 0;
     documentViewer.addEventListener('mouseLeftUp', (evt) => {
+      clickTime = Date.now().valueOf() - mouseDownTime;
       if (selectedText !== '') {
         searchSentence(selectedText);
         selectedText = '';
+      }
+    });
+    documentViewer.addEventListener('mouseLeftDown', (evt) => {
+      mouseDownTime = Date.now().valueOf();
+    });
+
+    documentViewer.addEventListener('click', (evt) => {
+      if (clickTime > 300) {
         return;
       }
       const { pageNumber, x, y } =
@@ -181,6 +192,7 @@ export const PDFView = () => {
           }
         });
     });
+
     documentViewer.addEventListener(
       'textSelected',
       (quads, selectedContent, pageNumber) => {

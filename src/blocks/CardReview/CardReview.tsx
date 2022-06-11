@@ -18,7 +18,7 @@ import { playSubtitle$ } from '../../state/user_input/playClipAction';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import { stringFolder } from '../../util/string_util';
-import { searchSentence } from '../DictAndCardMaker/DictAndCardMaker';
+import { searchSentence } from '../../state/user_input/tapWordAction';
 
 const L1 = PATH.join(dbRoot, 'flash_cards');
 mkdir(L1);
