@@ -6,6 +6,9 @@ export const defaultDbRoot = join(app.getPath('userData'), 'comma_data');
 export const dbRoot = localStorage.getItem('dbRoot') || defaultDbRoot;
 
 export const getAbsolutePath = (filePath: string) => {
+  if (filePath === '') {
+    return '';
+  }
   console.log('getAbsolutePath of:', filePath);
   if (filePath.startsWith(defaultDbRoot)) {
     return PATH.join(dbRoot, filePath.slice(defaultDbRoot.length));

@@ -7,6 +7,7 @@ logs
 */ffprobe
 */ffmpeg.exe
 */ffprobe.exe
+src/pdftron
 video_output
 db
 # Runtime data

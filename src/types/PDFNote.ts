@@ -7,4 +7,5 @@ export type PDFNote = {
   mergedStr: string;
   marks: MarkMap;
   file?: string;
+  id?: string;
 };

@@ -22,6 +22,7 @@ import { openCardReviewAction$ } from '../../compontent/FlashCardMaker/FlashCard
 import { dbRoot, defaultDbRoot, getAbsolutePath } from '../../constant';
 import { PDF } from '../../blocks/PDF/PDF';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
+import { PDFView } from '../../blocks/PDFView/PDFView';
 
 const L1 = PATH.join(dbRoot, 'resource');
 mkdir(L1);
@@ -39,6 +40,7 @@ const Component = () => {
         if (file) {
           setShowPdf(true);
         } else {
+          console.log('setShowPdf: false');
           setShowPdf(false);
         }
       },
@@ -117,16 +119,7 @@ const Component = () => {
             <CardReview></CardReview>
           </div>
         )}
-        {showPdf && (
-          <div
-            style={{
-              height: '100%',
-              margin: '0 14px',
-            }}
-          >
-            <PDF></PDF>
-          </div>
-        )}
+        {showPdf ? <PDFView></PDFView> : null}
         {article && (
           <div
             style={{

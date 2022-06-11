@@ -24,7 +24,6 @@ import { promises as fs } from 'fs';
 import { v5 as uuidv5 } from 'uuid';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SearchResult } from 'minisearch';
-import { ipcMain } from 'electron';
 import { flashCardKeyword$ } from '../../state/user_input/flashCardKeyword';
 import { FlashCard } from '../../types/FlashCard';
 import { openSentence$ } from '../../state/user_input/openSentenceAction';

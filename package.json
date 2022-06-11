@@ -34,6 +34,7 @@
     "productName": "Comma",
     "appId": "org.Comma.Comma",
     "files": [
+      "pdftron/",
       "dist/",
       "node_modules/",
       "index.html",
@@ -229,6 +230,7 @@
     "@ant-design/icons": "^4.6.2",
     "@electron/remote": "^2.0.4",
     "@material-ui/core": "^4.11.4",
+    "@pdftron/webviewer": "^8.5.0",
     "@react-pdf-viewer/core": "^3.2.0",
     "@react-pdf-viewer/default-layout": "^3.2.0",
     "antd": "^4.19.2",

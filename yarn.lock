@@ -1719,6 +1719,11 @@
     mkdirp "^1.0.4"
     rimraf "^3.0.2"
 
+"@pdftron/webviewer@^8.5.0":
+  version "8.5.0"
+  resolved "https://registry.npmmirror.com/@pdftron/webviewer/-/webviewer-8.5.0.tgz#1a45b04224115eafd453ab69d250e8fa8b684025"
+  integrity sha512-UYWJ7tT4OKhPjZ6MLv359T2fXkzy2sd+OAubNM9anmQXEpTkk8ZZVTTK4nAKpW5ycK4th+HzhXFlDD5Z18I7gQ==
+
 "@pmmmwh/react-refresh-webpack-plugin@^0.4.3":
   version "0.4.3"
   resolved "https://registry.nlark.com/@pmmmwh/react-refresh-webpack-plugin/download/@pmmmwh/react-refresh-webpack-plugin-0.4.3.tgz#1eec460596d200c0236bf195b078a5d1df89b766"
