@@ -11,6 +11,11 @@ git clone https://github.com/peng-creator/Comma.git
 ```
 cd Comma && yarn
 ```
+### 配置 pdftron
+
+```
+cp -r node_modules/@pdftron/webviewer/public src/pdftron
+```
 
 ### 开发调试
 ```
