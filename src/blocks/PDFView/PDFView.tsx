@@ -203,6 +203,28 @@ export const PDFView = () => {
       }, 300);
     });
 
+    annotationManager.addEventListener(
+      'annotationSelected',
+      (annotations, action) => {
+        if (action === 'selected') {
+          console.log('annotation selection');
+          // 点击注解时防止点击事件。
+          clearTimeout(clickTimer);
+          setTimeout(() => {
+            clearTimeout(clickTimer);
+          }, 1);
+          const annotations = annotationManager.getSelectedAnnotations();
+          const selectedText =
+            annotations[annotations.length - 1].getCustomData(
+              'trn-annot-preview'
+            );
+          searchSentence(selectedText);
+        } else if (action === 'deselected') {
+          console.log('annotation deselection');
+        }
+      }
+    );
+
     documentViewer.addEventListener(
       'textSelected',
       (quads, selectedContent, pageNumber) => {
