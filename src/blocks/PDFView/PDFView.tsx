@@ -5,7 +5,11 @@ import path from 'path';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import { dbRoot, getAbsolutePath } from '../../constant';
 import { useBehavior } from '../../state';
-import { tapWord$, s, searchSentence } from '../../state/user_input/tapWordAction';
+import {
+  tapWord$,
+  s,
+  searchSentence,
+} from '../../state/user_input/tapWordAction';
 import {
   openNote$,
   pdfNote$,
@@ -171,26 +175,32 @@ export const PDFView = () => {
     });
     documentViewer.addEventListener('mouseLeftDown', (evt) => {
       mouseDownTime = Date.now().valueOf();
+      selectedText = '';
     });
-
+    let clickTimer: any = null;
     documentViewer.addEventListener('click', (evt) => {
       if (clickTime > 300) {
         return;
       }
-      const { pageNumber, x, y } =
-        documentViewer.getViewerCoordinatesFromMouseEvent(evt);
-      const document = documentViewer.getDocument();
-      // eslint-disable-next-line promise/no-nesting
-      document
-        .getTextByPageAndRect(
-          pageNumber,
-          instance.Core.Math.Rect.createFromDimensions(x, y, 1, 2)
-        )
-        .then((word) => {
-          if (word.trim().length > 0) {
-            tapWord$.next(word.trim());
-          }
-        });
+      if (clickTimer !== null) {
+        clearTimeout(clickTimer);
+      }
+      clickTimer = setTimeout(() => {
+        const { pageNumber, x, y } =
+          documentViewer.getViewerCoordinatesFromMouseEvent(evt);
+        const document = documentViewer.getDocument();
+        // eslint-disable-next-line promise/no-nesting
+        document
+          .getTextByPageAndRect(
+            pageNumber,
+            instance.Core.Math.Rect.createFromDimensions(x, y, 1, 2)
+          )
+          .then((word) => {
+            if (word.trim().length > 0) {
+              tapWord$.next(word.trim());
+            }
+          });
+      }, 300);
     });
 
     documentViewer.addEventListener(
