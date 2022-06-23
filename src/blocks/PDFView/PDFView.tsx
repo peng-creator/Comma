@@ -5,11 +5,7 @@ import path from 'path';
 import { openPdf$ } from '../../state/user_input/openPdfAction';
 import { dbRoot, getAbsolutePath } from '../../constant';
 import { useBehavior } from '../../state';
-import {
-  tapWord$,
-  s,
-  searchSentence,
-} from '../../state/user_input/tapWordAction';
+import { tapWord$, searchSentence } from '../../state/user_input/tapWordAction';
 import {
   openNote$,
   pdfNote$,
@@ -147,9 +143,14 @@ export const PDFView = () => {
         },
       });
     });
+    let isAnnotationAutoSelected = false;
     annotationManager.addEventListener(
       'annotationChanged',
       async (annotations, action) => {
+        if (action === 'add') {
+          // 屏蔽自动选择事件
+          isAnnotationAutoSelected = true;
+        }
         if (action === 'add' || action === 'delete') {
           const doc = documentViewer.getDocument();
           const xfdfString = await annotationManager.exportAnnotations();
@@ -197,7 +198,7 @@ export const PDFView = () => {
           )
           .then((word) => {
             if (word.trim().length > 0) {
-              tapWord$.next(word.trim());
+              tapWord$.next(word.trim().split(/\s/)[0]);
             }
           });
       }, 300);
@@ -207,6 +208,10 @@ export const PDFView = () => {
       'annotationSelected',
       (annotations, action) => {
         if (action === 'selected') {
+          if (isAnnotationAutoSelected) {
+            isAnnotationAutoSelected = false; // add annotation时自动选中，不响应该事件
+            return;
+          }
           console.log('annotation selection');
           // 点击注解时防止点击事件。
           clearTimeout(clickTimer);
